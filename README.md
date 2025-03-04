@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# منصة المسرعات والحاضنات
 
-## Getting Started
+منصة متكاملة لإدارة برامج المسرعات والحاضنات، تربط بين الشركات الناشئة والموجهين والمستثمرين ومديري البرامج.
 
-First, run the development server:
+## نظرة عامة
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+منصة المسرعات والحاضنات هي منصة متكاملة تهدف إلى تسهيل إدارة برامج المسرعات والحاضنات وتعزيز التواصل بين جميع الأطراف المعنية. توفر المنصة لوحات تحكم مخصصة لكل نوع من المستخدمين:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **المديرون**: إدارة جميع جوانب المنصة
+- **مديرو البرامج**: إدارة برامج المسرعات والحاضنات
+- **الشركات الناشئة**: إدارة مشاركتهم في البرامج
+- **الموجهون**: إدارة جلسات الإرشاد والتوجيه
+- **المستثمرون**: استعراض الفرص الاستثمارية وإدارة الاستثمارات
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## المميزات الرئيسية
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- لوحات تحكم مخصصة لكل نوع من المستخدمين
+- إدارة برامج المسرعات والحاضنات
+- إدارة الشركات الناشئة والموجهين
+- إدارة جلسات الإرشاد والتوجيه
+- إدارة الفرص الاستثمارية
+- تقارير وتحليلات متقدمة
+- واجهة مستخدم سهلة الاستخدام باللغة العربية
 
-## Learn More
+## التقنيات المستخدمة
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js**: إطار عمل React للتطبيقات الويب
+- **TypeScript**: لغة برمجة قوية ومطورة من JavaScript
+- **Tailwind CSS**: إطار عمل CSS للتصميم
+- **Shadcn UI**: مكتبة مكونات واجهة المستخدم
+- **Framer Motion**: مكتبة للرسوم المتحركة
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## متطلبات النظام
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Node.js (الإصدار 18 أو أحدث)
+- npm (الإصدار 9 أو أحدث)
 
-## Deploy on Vercel
+## كيفية التثبيت
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. استنساخ المشروع:
+   ```
+   git clone https://github.com/yourusername/haam.git
+   cd haam
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. تثبيت الاعتمادات:
+   ```
+   npm install
+   ```
+
+## كيفية التشغيل
+
+1. تشغيل التطبيق في وضع التطوير:
+   ```
+   npm run dev
+   ```
+   أو
+   ```
+   node run.js
+   ```
+
+2. افتح المتصفح وانتقل إلى:
+   ```
+   http://localhost:3000
+   ```
+
+## الوثائق
+
+للحصول على معلومات مفصلة حول كيفية استخدام المنصة، يرجى الاطلاع على [دليل الاستخدام](./instruction.md).
+
+## المساهمة
+
+نرحب بمساهماتكم في تطوير هذه المنصة. يرجى اتباع الخطوات التالية للمساهمة:
+
+1. قم بعمل fork للمشروع
+2. قم بإنشاء فرع جديد للميزة التي ترغب في إضافتها
+3. قم بتنفيذ التغييرات
+4. قم بإرسال طلب سحب (Pull Request)
+
+## الترخيص
+
+هذا المشروع مرخص بموجب [MIT License](LICENSE).
+
+## الاتصال
+
+للاستفسارات أو الدعم، يرجى التواصل معنا عبر البريد الإلكتروني: support@haam.sa

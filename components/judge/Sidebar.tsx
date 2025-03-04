@@ -5,31 +5,27 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
-  Users, 
-  Settings, 
-  BarChart, 
+  Home, 
   FileText, 
-  DollarSign, 
-  Calendar, 
   ChevronLeft, 
   ChevronRight,
-  Layers,
-  Shield,
-  Code
+  Award,
+  Star,
+  BarChart,
+  CheckCircle,
+  Clock,
+  Rocket
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/admin-dashboard", icon: BarChart },
-  { name: "إدارة المستخدمين", href: "/admin-dashboard/users", icon: Users },
-  { name: "إدارة البرامج", href: "/admin-dashboard/programs", icon: Layers },
-  { name: "إدارة الهاكاثونات", href: "/admin-dashboard/hackathons", icon: Code },
-  { name: "إدارة التمويل", href: "/admin-dashboard/funding", icon: DollarSign },
-  { name: "التقارير والتحليلات", href: "/admin-dashboard/reports", icon: FileText },
-  { name: "الفعاليات", href: "/admin-dashboard/events", icon: Calendar },
-  { name: "الإعدادات", href: "/admin-dashboard/settings", icon: Settings },
-  { name: "الصلاحيات", href: "/admin-dashboard/permissions", icon: Shield },
+  { name: "لوحة التحكم", href: "/judge-dashboard", icon: Home },
+  { name: "المشاريع بانتظار التقييم", href: "/judge-dashboard/pending", icon: Clock },
+  { name: "التقييمات المكتملة", href: "/judge-dashboard/completed", icon: CheckCircle },
+  { name: "الهاكاثونات", href: "/judge-dashboard/hackathons", icon: Rocket },
+  { name: "معايير التقييم", href: "/judge-dashboard/criteria", icon: Star },
+  { name: "التقارير والإحصائيات", href: "/judge-dashboard/reports", icon: BarChart },
 ]
 
 export default function Sidebar() {

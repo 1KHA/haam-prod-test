@@ -1,6 +1,92 @@
 # دليل استخدام منصة المسرعات والحاضنات
 
-هذا الدليل يشرح كيفية الوصول إلى لوحات التحكم المختلفة في منصة المسرعات والحاضنات وكيفية استخدامها.
+هذا الدليل يشرح كيفية الوصول إلى لوحات التحكم المختلفة في منصة المسرعات والحاضنات وكيفية استخدامها، ويتضمن قائمة شاملة بجميع الصفحات والمسارات المتاحة في المنصة.
+
+# جميع المسارات والصفحات في المنصة
+
+فيما يلي قائمة شاملة بجميع المسارات والصفحات المتاحة في المنصة:
+
+## قائمة المسارات الرئيسية
+
+| المسار | الوصف | المستخدمون |
+|--------|-------|------------|
+| `/` | الصفحة الرئيسية | جميع المستخدمين |
+| `/auth/signin` | تسجيل الدخول | جميع المستخدمين |
+| `/auth/signup` | إنشاء حساب جديد | المستخدمون الجدد |
+| `/auth/signup/role` | اختيار نوع الحساب | المستخدمون الجدد |
+| `/auth/signup/form` | استكمال بيانات التسجيل | المستخدمون الجدد |
+| `/admin-dashboard` | لوحة تحكم المدير | مديرو النظام |
+| `/admin-dashboard/users` | إدارة المستخدمين | مديرو النظام |
+| `/admin-dashboard/programs` | إدارة البرامج | مديرو النظام |
+| `/admin-dashboard/hackathons` | إدارة الهاكاثونات | مديرو النظام |
+| `/admin-dashboard/hackathons/[id]` | تفاصيل الهاكاثون | مديرو النظام |
+| `/admin-dashboard/funding` | إدارة التمويل | مديرو النظام |
+| `/admin-dashboard/reports` | التقارير والتحليلات | مديرو النظام |
+| `/admin-dashboard/events` | إدارة الفعاليات | مديرو النظام |
+| `/admin-dashboard/settings` | الإعدادات | مديرو النظام |
+| `/admin-dashboard/permissions` | الصلاحيات | مديرو النظام |
+| `/program-manager-dashboard` | لوحة تحكم مدير البرنامج | مديرو البرامج |
+| `/program-manager-dashboard/cohorts` | إدارة الدفعات | مديرو البرامج |
+| `/program-manager-dashboard/mentors` | تعيين الموجهين | مديرو البرامج |
+| `/program-manager-dashboard/events` | إدارة الفعاليات | مديرو البرامج |
+| `/program-manager-dashboard/feedback` | التقييم والملاحظات | مديرو البرامج |
+| `/program-manager-dashboard/milestones` | المهام والمراحل | مديرو البرامج |
+| `/program-manager-dashboard/discussions` | المناقشات | مديرو البرامج |
+| `/startup-dashboard` | لوحة تحكم الشركة الناشئة | الشركات الناشئة |
+| `/startup-dashboard/team` | إدارة فريق العمل | الشركات الناشئة |
+| `/startup-dashboard/milestones` | متابعة المراحل والأهداف | الشركات الناشئة |
+| `/startup-dashboard/mentors` | التواصل مع الموجهين | الشركات الناشئة |
+| `/startup-dashboard/events` | الفعاليات والأحداث | الشركات الناشئة |
+| `/startup-dashboard/funding` | إدارة طلبات التمويل | الشركات الناشئة |
+| `/startup-dashboard/resources` | الموارد التعليمية | الشركات الناشئة |
+| `/startup-dashboard/reports` | تقارير أداء الشركة | الشركات الناشئة |
+| `/startup-dashboard/discussions` | المناقشات | الشركات الناشئة |
+| `/mentor-dashboard` | لوحة تحكم الموجه | الموجهون |
+| `/mentor-dashboard/startups` | الشركات الناشئة تحت الإشراف | الموجهون |
+| `/mentor-dashboard/sessions` | إدارة جلسات الإرشاد | الموجهون |
+| `/mentor-dashboard/feedback` | التقييمات والملاحظات | الموجهون |
+| `/mentor-dashboard/resources` | الموارد التعليمية | الموجهون |
+| `/mentor-dashboard/discussions` | المناقشات | الموجهون |
+| `/mentor-dashboard/reports` | التقارير | الموجهون |
+| `/mentor-dashboard/community` | مجتمع الموجهين | الموجهون |
+| `/investor-dashboard` | لوحة تحكم المستثمر | المستثمرون |
+| `/investor-dashboard/discover` | اكتشاف الشركات الناشئة | المستثمرون |
+| `/investor-dashboard/portfolio` | المحفظة الاستثمارية | المستثمرون |
+| `/investor-dashboard/opportunities` | الفرص الاستثمارية | المستثمرون |
+| `/investor-dashboard/reports` | التقارير المالية | المستثمرون |
+| `/investor-dashboard/analytics` | تحليلات الاستثمارات | المستثمرون |
+| `/investor-dashboard/events` | الفعاليات | المستثمرون |
+| `/investor-dashboard/discussions` | المناقشات | المستثمرون |
+| `/judge-dashboard` | لوحة تحكم المحكم | المحكمون |
+| `/judge-dashboard/pending` | المشاريع بانتظار التقييم | المحكمون |
+| `/judge-dashboard/completed` | التقييمات المكتملة | المحكمون |
+| `/judge-dashboard/hackathons` | الهاكاثونات | المحكمون |
+| `/judge-dashboard/criteria` | معايير التقييم | المحكمون |
+| `/judge-dashboard/reports` | التقارير والإحصائيات | المحكمون |
+| `/judge-dashboard/evaluate/[id]` | تقييم مشروع محدد | المحكمون |
+| `/participant-dashboard` | لوحة تحكم المشارك | المشاركون |
+| `/participant-dashboard/hackathons` | الهاكاثونات المتاحة | المشاركون |
+| `/participant-dashboard/projects` | المشاريع | المشاركون |
+| `/participant-dashboard/teams` | الفرق | المشاركون |
+| `/participant-dashboard/submissions` | التقديمات | المشاركون |
+| `/participant-dashboard/feedback` | الملاحظات والتقييمات | المشاركون |
+
+## المكونات الرئيسية
+
+| المكون | الوصف |
+|--------|-------|
+| `TopBar.tsx` | شريط علوي يظهر في جميع الصفحات |
+| `Sidebar.tsx` | قائمة جانبية للتنقل بين صفحات لوحة التحكم |
+| `Header.tsx` | رأس الصفحة يعرض معلومات المستخدم والبحث |
+| `DataTable.tsx` | جدول لعرض البيانات |
+| `Charts.tsx` | رسوم بيانية لعرض الإحصائيات |
+| `ui/button.tsx` | مكون الأزرار |
+| `ui/card.tsx` | مكون البطاقات |
+| `ui/input.tsx` | مكون حقول الإدخال |
+| `ui/table.tsx` | مكون الجداول |
+| `ui/tabs.tsx` | مكون التبويبات |
+| `ui/dropdown-menu.tsx` | مكون القوائم المنسدلة |
+| `ui/textarea.tsx` | مكون مناطق النص |
 
 ## الصفحة الرئيسية
 

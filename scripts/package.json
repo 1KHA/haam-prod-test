@@ -1,0 +1,7 @@
+{
+  "name": "haam-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for the HAAM platform",
+  "type": "module",
+  "private": true
+}

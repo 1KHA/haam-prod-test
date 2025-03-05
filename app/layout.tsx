@@ -2,6 +2,7 @@ import type React from "react"
 import "./globals.css"
 import { Cairo } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Providers } from "@/app/providers"
 
 const cairo = Cairo({ subsets: ["arabic"] })
 
@@ -19,10 +20,11 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <body className={cairo.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <Providers>
+            {children}
+          </Providers>
         </ThemeProvider>
       </body>
     </html>
   )
 }
-

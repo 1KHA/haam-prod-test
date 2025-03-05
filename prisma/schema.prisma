@@ -1,0 +1,198 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profile       Profile?
+  participantProfile ParticipantProfile?
+  startupProfile StartupProfile?
+  mentorProfile MentorProfile?
+  investorProfile InvestorProfile?
+  judgeProfile JudgeProfile?
+  adminProfile AdminProfile?
+  programManagerProfile ProgramManagerProfile?
+}
+
+model Profile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio           String?
+  avatar        String?
+  phone         String?
+  address       String?
+  city          String?
+  country       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ParticipantProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills        String?
+  interests     String?
+  education     String?
+  experience    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model StartupProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String
+  industry      String?
+  stage         String?
+  foundingDate  DateTime?
+  website       String?
+  description   String?
+  teamSize      Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model MentorProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertise     String?
+  experience    String?
+  availability  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model InvestorProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String?
+  investmentFocus String?
+  investmentStage String?
+  investmentSize String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model JudgeProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialty     String?
+  experience    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model AdminProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department    String?
+  permissions   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ProgramManagerProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programs      String?
+  responsibilities String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Hackathon {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  location      String?
+  status        HackathonStatus @default(UPCOMING)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  teams         Team[]
+  judges        Judge[]
+  prizes        Prize[]
+  timeline      TimelineEvent[]
+}
+
+model Team {
+  id            String    @id @default(uuid())
+  name          String
+  hackathonId   String
+  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members       Int?
+  project       String?
+  status        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Judge {
+  id            String    @id @default(uuid())
+  name          String
+  hackathonId   String
+  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  specialty     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Prize {
+  id            String    @id @default(uuid())
+  rank          String
+  amount        String
+  hackathonId   String
+  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model TimelineEvent {
+  id            String    @id @default(uuid())
+  date          DateTime
+  event         String
+  hackathonId   String
+  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  PROGRAM_MANAGER
+  STARTUP
+  MENTOR
+  INVESTOR
+  JUDGE
+  PARTICIPANT
+}
+
+enum HackathonStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}

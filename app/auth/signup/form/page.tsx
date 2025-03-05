@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/contexts/auth-context"
+import { UserRole } from "@/lib/auth"
 
 export default function SignUpForm() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const { signUp, isLoading, error } = useAuth()
   const [signupType, setSignupType] = useState<string | null>(null)
   const [signupRole, setSignupRole] = useState<string | null>(null)
   
@@ -87,28 +89,42 @@ export default function SignUpForm() {
       return
     }
     
-    setIsLoading(true)
+    // Get the role from localStorage
+    const role = localStorage.getItem("signupRole")
     
-    // Simulate registration
-    setTimeout(() => {
-      setIsLoading(false)
-      
-      // Get the role from localStorage
-      const role = localStorage.getItem("signupRole")
-      
-      // Clear localStorage
-      localStorage.removeItem("signupType")
-      localStorage.removeItem("signupRole")
-      
-      // Redirect based on role
-      if (role === "moderator") {
-        // Redirect moderators to the admin dashboard
-        router.push("/dashboard")
+    // Map the role to UserRole enum
+    let userRole: UserRole;
+    if (role === "moderator") {
+      if (signupType === "hackathon") {
+        userRole = UserRole.JUDGE;
       } else {
-        // Redirect regular users to the participant dashboard
-        router.push("/participant-dashboard")
+        userRole = UserRole.MENTOR;
       }
-    }, 1500)
+    } else {
+      if (signupType === "hackathon") {
+        userRole = UserRole.PARTICIPANT;
+      } else {
+        userRole = UserRole.STARTUP;
+      }
+    }
+    
+    // Create user data
+    const userData = {
+      name: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      password: formData.password,
+      role: userRole,
+      companyName: userRole === UserRole.STARTUP ? "My Startup" : undefined,
+    };
+    
+    // Sign up user
+    await signUp(userData);
+    
+    // Clear localStorage
+    localStorage.removeItem("signupType");
+    localStorage.removeItem("signupRole");
+    
+    // No need to handle redirection here as it's handled in the auth context
   }
 
   return (
@@ -121,6 +137,12 @@ export default function SignUpForm() {
             : (signupRole === "user" ? "أكمل بياناتك للتسجيل كرائد أعمال" : "أكمل بياناتك للتسجيل كمرشد في المسرع")}
         </p>
       </div>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4">
+          {error}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

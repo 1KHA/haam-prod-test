@@ -1,0 +1,53 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { isAuthenticated } from '@/lib/auth';
+
+export async function GET(request: NextRequest) {
+  try {
+    // Get authorization header
+    const authHeader = request.headers.get('authorization');
+    
+    // Check if user is authenticated
+    const user = await isAuthenticated(authHeader || undefined);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get user data from database
+    const userData = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: {
+        profile: true,
+        participantProfile: user.role === 'PARTICIPANT',
+        startupProfile: user.role === 'STARTUP',
+        mentorProfile: user.role === 'MENTOR',
+        investorProfile: user.role === 'INVESTOR',
+        judgeProfile: user.role === 'JUDGE',
+        adminProfile: user.role === 'ADMIN',
+        programManagerProfile: user.role === 'PROGRAM_MANAGER',
+      },
+    });
+
+    if (!userData) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Remove password from response
+    const { password, ...userWithoutPassword } = userData;
+
+    // Return user data
+    return NextResponse.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Get user error:', error);
+    return NextResponse.json(
+      { error: 'An error occurred while fetching user data' },
+      { status: 500 }
+    );
+  }
+}

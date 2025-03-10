@@ -1,44 +1,74 @@
 "use client"
 
 import { useAuth } from "@/contexts/auth-context"
-import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import { Bell, User, Search, LogOut, LogIn } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useTheme } from "next-themes"
 
 export default function Header() {
   const { user, signOut } = useAuth()
   const router = useRouter()
+  const { setTheme, theme } = useTheme()
 
   return (
-    <header className="mb-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {user ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={signOut}
-              >
-                تسجيل الخروج
+    <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4 text-right">
+      <div className="flex-1">
+        <h1 className="text-xl font-bold">مرحباً بك في منصة الشركات الناشئة</h1>
+        <p className="text-sm text-muted-foreground">ابدأ رحلة شركتك الناشئة وانضم إلى برامج مسرعات الأعمال</p>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="relative w-64">
+          <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="بحث..." className="pr-8 w-full" />
+        </div>
+        <Button variant="outline" size="icon" onClick={() => router.push("/accelerator-dashboard/notifications")}>
+          <Bell className="h-4 w-4" />
+        </Button>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <User className="h-4 w-4" />
               </Button>
-              <span className="text-sm">
-                مرحباً، {user.name}
-              </span>
-            </>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/auth/signin")}
-            >
-              تسجيل الدخول
-            </Button>
-          )}
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold">مرحباً بك في منصة الشركات الناشئة</h1>
-          <p className="text-muted-foreground">ابدأ رحلة شركتك الناشئة وانضم إلى برامج مسرعات الأعمال</p>
-        </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>حسابي</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/accelerator-dashboard/profile")}>
+                الملف الشخصي
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/accelerator-dashboard/settings")}>
+                الإعدادات
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                تبديل المظهر
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut}>
+                تسجيل الخروج
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/auth/signin")}
+          >
+            <LogIn className="h-4 w-4 ml-2" />
+            تسجيل الدخول
+          </Button>
+        )}
       </div>
     </header>
   )

@@ -1,84 +1,78 @@
 "use client"
 
-import { useRouter, usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { motion } from "framer-motion"
+import { 
+  Home, 
+  User, 
+  Users, 
+  Rocket, 
+  BookOpen, 
+  Calendar, 
+  FileText, 
+  DollarSign, 
+  Target, 
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+
+const navItems = [
+  { name: "لوحة التحكم", href: "/accelerator-dashboard", icon: Home },
+  { name: "الملف الشخصي", href: "/accelerator-dashboard/profile", icon: User },
+  { name: "فريق العمل", href: "/accelerator-dashboard/team", icon: Users },
+  { name: "التقديم للبرامج", href: "/accelerator-dashboard/apply", icon: Rocket },
+  { name: "الموجهون", href: "/accelerator-dashboard/mentors", icon: BookOpen },
+  { name: "الفعاليات", href: "/accelerator-dashboard/events", icon: Calendar },
+  { name: "الموارد التعليمية", href: "/accelerator-dashboard/resources", icon: FileText },
+  { name: "طلبات التمويل", href: "/accelerator-dashboard/funding", icon: DollarSign },
+  { name: "المراحل والتقدم", href: "/accelerator-dashboard/milestones", icon: Target },
+  { name: "الدعم والمساعدة", href: "/accelerator-dashboard/support", icon: HelpCircle },
+]
 
 export default function Sidebar() {
-  const router = useRouter()
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
 
-  const menuItems = [
-    {
-      name: "لوحة التحكم",
-      path: "/accelerator-dashboard",
-      icon: "📊",
-    },
-    {
-      name: "الملف الشخصي",
-      path: "/accelerator-dashboard/profile",
-      icon: "👤",
-    },
-    {
-      name: "فريق العمل",
-      path: "/accelerator-dashboard/team",
-      icon: "👥",
-    },
-    {
-      name: "التقديم للبرامج",
-      path: "/accelerator-dashboard/apply",
-      icon: "🚀",
-    },
-    {
-      name: "الموجهون",
-      path: "/accelerator-dashboard/mentors",
-      icon: "👨‍🏫",
-    },
-    {
-      name: "الفعاليات",
-      path: "/accelerator-dashboard/events",
-      icon: "📅",
-    },
-    {
-      name: "الموارد التعليمية",
-      path: "/accelerator-dashboard/resources",
-      icon: "📚",
-    },
-    {
-      name: "طلبات التمويل",
-      path: "/accelerator-dashboard/funding",
-      icon: "💰",
-    },
-    {
-      name: "المراحل والتقدم",
-      path: "/accelerator-dashboard/milestones",
-      icon: "🏆",
-    },
-    {
-      name: "الدعم والمساعدة",
-      path: "/accelerator-dashboard/support",
-      icon: "🆘",
-    },
-  ]
-
   return (
-    <aside className="fixed top-24 right-0 bottom-0 w-64 bg-card border-l p-4 overflow-y-auto z-30">
-      <nav className="space-y-2">
-        {menuItems.map((item) => (
-          <Button
-            key={item.path}
-            variant="ghost"
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              pathname === item.path && "bg-muted font-medium"
-            )}
-            onClick={() => router.push(item.path)}
-          >
-            <span className="mr-2">{item.icon}</span>
-            {item.name}
+    <motion.aside
+      className={cn(
+        "fixed top-12 right-0 bg-card text-card-foreground border-l h-[calc(100vh-3rem)]",
+        isCollapsed ? "w-16" : "w-64",
+      )}
+      animate={{ width: isCollapsed ? 64 : 256 }}
+    >
+      <div className="flex flex-col h-full text-right">
+        <div className="flex items-center justify-end p-4 border-b">
+          <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
+            {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
-        ))}
-      </nav>
-    </aside>
+        </div>
+        <nav className="flex-1 overflow-y-auto">
+          <ul className="py-2">
+            {navItems.map((item) => (
+              <li key={item.name}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center justify-end p-2 mx-2 rounded-lg",
+                    pathname === item.href
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent hover:text-accent-foreground",
+                  )}
+                >
+                  <span className={cn("ml-2", { "sr-only": isCollapsed })}>{item.name}</span>
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </motion.aside>
   )
 }

@@ -23,7 +23,7 @@ export default function AcceleratorDashboardLayout({
   }, [user, isLoading, router])
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div className="flex h-screen items-center justify-center">جاري التحميل...</div>
   }
 
   if (!user || user.role !== UserRole.ACCELERATOR) {
@@ -31,12 +31,14 @@ export default function AcceleratorDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="flex flex-col min-h-screen text-right">
       <TopBar />
-      <Sidebar />
-      <div className="pt-12 pr-64">
-        <main className="p-6">{children}</main>
+      <div className="flex flex-1">
+        <main className="flex-1 overflow-y-auto p-6 mr-64">
+          <Header />
+          {children}
+        </main>
+        <Sidebar />
       </div>
     </div>
   )

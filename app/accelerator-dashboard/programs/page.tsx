@@ -13,53 +13,53 @@ export default function AcceleratorPrograms() {
   const programs = [
     {
       id: "1",
-      name: "Summer Cohort 2025",
-      description: "3-month intensive program for early-stage startups",
-      startDate: "June 1, 2025",
-      endDate: "August 31, 2025",
-      status: "Upcoming",
+      name: "دفعة صيف 2025",
+      description: "برنامج مكثف لمدة 3 أشهر للشركات الناشئة في مراحلها الأولى",
+      startDate: "1 يونيو 2025",
+      endDate: "31 أغسطس 2025",
+      status: "قادم",
       startups: 12,
       mentors: 8,
     },
     {
       id: "2",
-      name: "FinTech Accelerator",
-      description: "Specialized program for financial technology startups",
-      startDate: "April 15, 2025",
-      endDate: "October 15, 2025",
-      status: "Active",
+      name: "مسرع التقنية المالية",
+      description: "برنامج متخصص للشركات الناشئة في مجال التكنولوجيا المالية",
+      startDate: "15 أبريل 2025",
+      endDate: "15 أكتوبر 2025",
+      status: "نشط",
       startups: 8,
       mentors: 6,
     },
     {
       id: "3",
-      name: "Healthcare Innovation",
-      description: "Supporting startups in the healthcare and wellness sector",
-      startDate: "March 1, 2025",
-      endDate: "September 1, 2025",
-      status: "Active",
+      name: "ابتكار الرعاية الصحية",
+      description: "دعم الشركات الناشئة في قطاع الرعاية الصحية والعافية",
+      startDate: "1 مارس 2025",
+      endDate: "1 سبتمبر 2025",
+      status: "نشط",
       startups: 10,
       mentors: 7,
     },
     {
       id: "4",
-      name: "Winter Cohort 2024",
-      description: "3-month intensive program for early-stage startups",
-      startDate: "January 1, 2025",
-      endDate: "March 31, 2025",
-      status: "Completed",
+      name: "دفعة شتاء 2024",
+      description: "برنامج مكثف لمدة 3 أشهر للشركات الناشئة في مراحلها الأولى",
+      startDate: "1 يناير 2025",
+      endDate: "31 مارس 2025",
+      status: "مكتمل",
       startups: 15,
       mentors: 9,
     },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Programs</h1>
         <Button onClick={() => router.push("/accelerator-dashboard/programs/new")}>
-          Create New Program
+          إنشاء برنامج جديد
         </Button>
+        <h1 className="text-3xl font-bold">البرامج</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,41 +67,41 @@ export default function AcceleratorPrograms() {
           <Card key={program.id} className="overflow-hidden">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{program.name}</CardTitle>
-                  <CardDescription>{program.description}</CardDescription>
-                </div>
                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  program.status === "Active" ? "bg-green-100 text-green-800" :
-                  program.status === "Upcoming" ? "bg-blue-100 text-blue-800" :
+                  program.status === "نشط" ? "bg-green-100 text-green-800" :
+                  program.status === "قادم" ? "bg-blue-100 text-blue-800" :
                   "bg-gray-100 text-gray-800"
                 }`}>
                   {program.status}
+                </div>
+                <div>
+                  <CardTitle>{program.name}</CardTitle>
+                  <CardDescription>{program.description}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Duration:</span>
                   <span>{program.startDate} - {program.endDate}</span>
+                  <span className="text-muted-foreground">المدة:</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Startups:</span>
                   <span>{program.startups}</span>
+                  <span className="text-muted-foreground">الشركات الناشئة:</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Mentors:</span>
                   <span>{program.mentors}</span>
+                  <span className="text-muted-foreground">الموجهون:</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" size="sm" onClick={() => router.push(`/accelerator-dashboard/programs/${program.id}`)}>
-                View Details
-              </Button>
               <Button variant="outline" size="sm" onClick={() => router.push(`/accelerator-dashboard/programs/${program.id}/edit`)}>
-                Edit Program
+                تعديل البرنامج
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.push(`/accelerator-dashboard/programs/${program.id}`)}>
+                عرض التفاصيل
               </Button>
             </CardFooter>
           </Card>

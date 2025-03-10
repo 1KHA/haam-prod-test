@@ -13,84 +13,84 @@ export default function AcceleratorStartups() {
   const startups = [
     {
       id: "1",
-      name: "TechInnovate",
+      name: "تك إنوفيت",
       logo: "🚀",
-      industry: "SaaS",
-      stage: "Seed",
-      program: "Summer Cohort 2025",
-      description: "AI-powered project management platform for remote teams",
-      founders: "Sarah Johnson, Michael Chen",
+      industry: "برمجيات كخدمة",
+      stage: "تمويل أولي",
+      program: "دفعة صيف 2025",
+      description: "منصة إدارة مشاريع مدعومة بالذكاء الاصطناعي للفرق عن بعد",
+      founders: "سارة الأحمد، محمد الخالد",
       progress: 75,
     },
     {
       id: "2",
-      name: "HealthTrack",
+      name: "هيلث تراك",
       logo: "🏥",
-      industry: "Healthcare",
-      stage: "Pre-seed",
-      program: "Healthcare Innovation",
-      description: "Mobile app for tracking health metrics and medication adherence",
-      founders: "Dr. James Wilson, Emma Rodriguez",
+      industry: "الرعاية الصحية",
+      stage: "ما قبل التمويل",
+      program: "ابتكار الرعاية الصحية",
+      description: "تطبيق جوال لتتبع المؤشرات الصحية والالتزام بالأدوية",
+      founders: "د. جميل الوليد، إيمان الرشيد",
       progress: 60,
     },
     {
       id: "3",
-      name: "FinFlow",
+      name: "فين فلو",
       logo: "💰",
-      industry: "FinTech",
-      stage: "Seed",
-      program: "FinTech Accelerator",
-      description: "Automated financial planning and investment platform for millennials",
-      founders: "Alex Thompson, Priya Patel",
+      industry: "التقنية المالية",
+      stage: "تمويل أولي",
+      program: "مسرع التقنية المالية",
+      description: "منصة آلية للتخطيط المالي والاستثمار لجيل الألفية",
+      founders: "أحمد التميمي، بريا باتيل",
       progress: 80,
     },
     {
       id: "4",
-      name: "GreenGrow",
+      name: "جرين جرو",
       logo: "🌱",
-      industry: "AgTech",
-      stage: "Series A",
-      program: "Summer Cohort 2025",
-      description: "Smart farming solutions using IoT and data analytics",
-      founders: "Robert Garcia, Lisa Wong",
+      industry: "التقنية الزراعية",
+      stage: "سلسلة أ",
+      program: "دفعة صيف 2025",
+      description: "حلول زراعية ذكية باستخدام إنترنت الأشياء وتحليل البيانات",
+      founders: "روبرت جارسيا، ليلى الوهيبي",
       progress: 90,
     },
     {
       id: "5",
-      name: "EduSpark",
+      name: "إدو سبارك",
       logo: "📚",
-      industry: "EdTech",
-      stage: "Seed",
-      program: "Winter Cohort 2024",
-      description: "Personalized learning platform using AI to adapt to student needs",
-      founders: "David Kim, Sophia Martinez",
+      industry: "تقنية التعليم",
+      stage: "تمويل أولي",
+      program: "دفعة شتاء 2024",
+      description: "منصة تعليمية مخصصة تستخدم الذكاء الاصطناعي للتكيف مع احتياجات الطلاب",
+      founders: "داود الكريم، صفية المرزوقي",
       progress: 65,
     },
     {
       id: "6",
-      name: "RetailAI",
+      name: "ريتيل أي",
       logo: "🛒",
-      industry: "Retail",
-      stage: "Pre-seed",
-      program: "Summer Cohort 2025",
-      description: "AI-powered inventory management and demand forecasting for retailers",
-      founders: "Jennifer Lee, Omar Hassan",
+      industry: "تجارة التجزئة",
+      stage: "ما قبل التمويل",
+      program: "دفعة صيف 2025",
+      description: "إدارة المخزون والتنبؤ بالطلب لتجار التجزئة باستخدام الذكاء الاصطناعي",
+      founders: "جنى اللحيدان، عمر حسن",
       progress: 40,
     },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Startups</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/accelerator-dashboard/startups/invite")}>
-            Invite Startup
-          </Button>
           <Button onClick={() => router.push("/accelerator-dashboard/startups/applications")}>
-            View Applications
+            عرض الطلبات
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/accelerator-dashboard/startups/invite")}>
+            دعوة شركة ناشئة
           </Button>
         </div>
+        <h1 className="text-3xl font-bold">الشركات الناشئة</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -98,28 +98,26 @@ export default function AcceleratorStartups() {
           <Card key={startup.id} className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <div className="text-3xl">{startup.logo}</div>
-                  <div>
-                    <CardTitle>{startup.name}</CardTitle>
-                    <CardDescription>{startup.industry} • {startup.stage}</CardDescription>
-                  </div>
+                <div>
+                  <CardTitle>{startup.name}</CardTitle>
+                  <CardDescription>{startup.industry} • {startup.stage}</CardDescription>
                 </div>
+                <div className="text-3xl">{startup.logo}</div>
               </div>
             </CardHeader>
             <CardContent className="pb-2">
               <div className="space-y-2">
                 <p className="text-sm">{startup.description}</p>
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Founders:</span> {startup.founders}
+                  <span className="text-muted-foreground">المؤسسون:</span> {startup.founders}
                 </div>
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Program:</span> {startup.program}
+                  <span className="text-muted-foreground">البرنامج:</span> {startup.program}
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Progress:</span>
                     <span>{startup.progress}%</span>
+                    <span className="text-muted-foreground">التقدم:</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
                     <div 
@@ -131,11 +129,11 @@ export default function AcceleratorStartups() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" size="sm" onClick={() => router.push(`/accelerator-dashboard/startups/${startup.id}`)}>
-                View Details
-              </Button>
               <Button variant="outline" size="sm" onClick={() => router.push(`/accelerator-dashboard/startups/${startup.id}/mentor`)}>
-                Assign Mentor
+                تعيين موجه
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.push(`/accelerator-dashboard/startups/${startup.id}`)}>
+                عرض التفاصيل
               </Button>
             </CardFooter>
           </Card>

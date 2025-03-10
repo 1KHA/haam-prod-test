@@ -9,35 +9,36 @@ export default function Header() {
   const router = useRouter()
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-50">
-      <div className="flex items-center">
-        <h1 className="text-xl font-bold">Hackathon Accelerator</h1>
-      </div>
-      <div className="flex items-center gap-4">
-        {user ? (
-          <>
-            <span className="text-sm">
-              Welcome, {user.name} | {user.role}
-            </span>
+    <header className="mb-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {user ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={signOut}
+              >
+                تسجيل الخروج
+              </Button>
+              <span className="text-sm">
+                مرحباً، {user.name}
+              </span>
+            </>
+          ) : (
             <Button
               variant="outline"
               size="sm"
-              onClick={signOut}
-              className="text-primary-foreground bg-transparent hover:bg-primary-foreground hover:text-primary"
+              onClick={() => router.push("/auth/signin")}
             >
-              Sign Out
+              تسجيل الدخول
             </Button>
-          </>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/auth/signin")}
-            className="text-primary-foreground bg-transparent hover:bg-primary-foreground hover:text-primary"
-          >
-            Sign In
-          </Button>
-        )}
+          )}
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold">مرحباً بك في لوحة تحكم مسرع الأعمال</h1>
+          <p className="text-muted-foreground">إدارة البرامج والشركات الناشئة بكفاءة</p>
+        </div>
       </div>
     </header>
   )

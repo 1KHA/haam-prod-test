@@ -10,47 +10,47 @@ export default function Sidebar() {
 
   const menuItems = [
     {
-      name: "Dashboard",
+      name: "لوحة التحكم",
       path: "/accelerator-dashboard",
       icon: "📊",
     },
     {
-      name: "Programs",
+      name: "البرامج",
       path: "/accelerator-dashboard/programs",
       icon: "🚀",
     },
     {
-      name: "Startups",
+      name: "الشركات الناشئة",
       path: "/accelerator-dashboard/startups",
       icon: "💼",
     },
     {
-      name: "Mentors",
+      name: "الموجهون",
       path: "/accelerator-dashboard/mentors",
       icon: "👨‍🏫",
     },
     {
-      name: "Events",
+      name: "الفعاليات",
       path: "/accelerator-dashboard/events",
       icon: "📅",
     },
     {
-      name: "Resources",
+      name: "الموارد",
       path: "/accelerator-dashboard/resources",
       icon: "📚",
     },
     {
-      name: "Funding",
+      name: "التمويل",
       path: "/accelerator-dashboard/funding",
       icon: "💰",
     },
     {
-      name: "Reports",
+      name: "التقارير",
       path: "/accelerator-dashboard/reports",
       icon: "📈",
     },
     {
-      name: "Community",
+      name: "المجتمع",
       path: "/accelerator-dashboard/community",
       icon: "👥",
     },

@@ -36,8 +36,8 @@ export default function Header() {
           )}
         </div>
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold">مرحباً بك في لوحة تحكم مسرع الأعمال</h1>
-          <p className="text-muted-foreground">إدارة البرامج والشركات الناشئة بكفاءة</p>
+          <h1 className="text-2xl font-bold">مرحباً بك في منصة الشركات الناشئة</h1>
+          <p className="text-muted-foreground">ابدأ رحلة شركتك الناشئة وانضم إلى برامج مسرعات الأعمال</p>
         </div>
       </div>
     </header>

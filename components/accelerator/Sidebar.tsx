@@ -15,14 +15,19 @@ export default function Sidebar() {
       icon: "📊",
     },
     {
-      name: "البرامج",
-      path: "/accelerator-dashboard/programs",
-      icon: "🚀",
+      name: "الملف الشخصي",
+      path: "/accelerator-dashboard/profile",
+      icon: "👤",
     },
     {
-      name: "الشركات الناشئة",
-      path: "/accelerator-dashboard/startups",
-      icon: "💼",
+      name: "فريق العمل",
+      path: "/accelerator-dashboard/team",
+      icon: "👥",
+    },
+    {
+      name: "التقديم للبرامج",
+      path: "/accelerator-dashboard/apply",
+      icon: "🚀",
     },
     {
       name: "الموجهون",
@@ -35,24 +40,24 @@ export default function Sidebar() {
       icon: "📅",
     },
     {
-      name: "الموارد",
+      name: "الموارد التعليمية",
       path: "/accelerator-dashboard/resources",
       icon: "📚",
     },
     {
-      name: "التمويل",
+      name: "طلبات التمويل",
       path: "/accelerator-dashboard/funding",
       icon: "💰",
     },
     {
-      name: "التقارير",
-      path: "/accelerator-dashboard/reports",
-      icon: "📈",
+      name: "المراحل والتقدم",
+      path: "/accelerator-dashboard/milestones",
+      icon: "🏆",
     },
     {
-      name: "المجتمع",
-      path: "/accelerator-dashboard/community",
-      icon: "👥",
+      name: "الدعم والمساعدة",
+      path: "/accelerator-dashboard/support",
+      icon: "🆘",
     },
   ]
 

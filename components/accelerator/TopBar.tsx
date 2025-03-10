@@ -34,7 +34,7 @@ export default function TopBar() {
         </Button>
       </div>
       <div className="flex items-center">
-        <h2 className="text-lg font-semibold">لوحة تحكم مسرع الأعمال</h2>
+        <h2 className="text-lg font-semibold">منصة الشركات الناشئة</h2>
       </div>
     </div>
   )

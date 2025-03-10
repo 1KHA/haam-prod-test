@@ -11,24 +11,23 @@ export default function AcceleratorDashboard() {
 
   // Mock data for the dashboard
   const stats = [
-    { title: "البرامج النشطة", value: 3, icon: "🚀" },
-    { title: "الشركات الناشئة", value: 24, icon: "💼" },
-    { title: "الموجهون", value: 18, icon: "👨‍🏫" },
-    { title: "الفعاليات القادمة", value: 5, icon: "📅" },
+    { title: "حالة الطلب", value: "جديد", icon: "📝" },
+    { title: "الموجهون المتاحون", value: 15, icon: "👨‍🏫" },
+    { title: "البرامج المفتوحة", value: 3, icon: "🚀" },
+    { title: "الفعاليات القادمة", value: 4, icon: "📅" },
   ]
 
-  const recentActivities = [
-    { id: 1, type: "شركة ناشئة", name: "تك إنوفيت", action: "انضمت إلى برنامجك", time: "منذ ساعتين" },
-    { id: 2, type: "فعالية", name: "يوم العرض", action: "تم جدولتها", time: "منذ يوم واحد" },
-    { id: 3, type: "موجه", name: "أحمد محمد", action: "أضاف ملاحظات", time: "منذ يومين" },
-    { id: 4, type: "برنامج", name: "دفعة الصيف", action: "سيتم إغلاق التقديم قريباً", time: "منذ 3 أيام" },
+  const upcomingEvents = [
+    { id: 1, name: "ورشة عمل: كيفية بناء نموذج أعمال", date: "15 مارس 2025", time: "10:00 صباحاً", type: "ورشة عمل" },
+    { id: 2, name: "جلسة تعريفية: برنامج مسرع الأعمال", date: "20 مارس 2025", time: "2:00 مساءً", type: "جلسة تعريفية" },
+    { id: 3, name: "لقاء مع المستثمرين", date: "25 مارس 2025", time: "4:00 مساءً", type: "شبكات" },
   ]
 
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
-        <Button onClick={() => router.push("/accelerator-dashboard/programs/new")}>
-          إنشاء برنامج جديد
+        <Button onClick={() => router.push("/accelerator-dashboard/startup/new")}>
+          إنشاء شركة ناشئة
         </Button>
         <h1 className="text-3xl font-bold">مرحباً، {user?.name}</h1>
       </div>
@@ -50,24 +49,23 @@ export default function AcceleratorDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>النشاطات الأخيرة</CardTitle>
-            <CardDescription>آخر التحديثات من مسرع الأعمال الخاص بك</CardDescription>
+            <CardTitle>الفعاليات القادمة</CardTitle>
+            <CardDescription>فعاليات وورش عمل لمساعدتك في رحلة الشركة الناشئة</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-4">
+              {upcomingEvents.map((event) => (
+                <div key={event.id} className="flex items-start space-x-4">
                   <div className="space-y-1 flex-grow">
                     <p className="text-sm font-medium">
-                      <span className="font-bold">{activity.name}</span> {activity.action}
+                      <span className="font-bold">{event.name}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    <p className="text-xs text-muted-foreground">{event.date} • {event.time}</p>
                   </div>
                   <div className="bg-primary/10 p-2 rounded-full">
-                    {activity.type === "شركة ناشئة" && "💼"}
-                    {activity.type === "فعالية" && "📅"}
-                    {activity.type === "موجه" && "👨‍🏫"}
-                    {activity.type === "برنامج" && "🚀"}
+                    {event.type === "ورشة عمل" && "🔧"}
+                    {event.type === "جلسة تعريفية" && "📢"}
+                    {event.type === "شبكات" && "🤝"}
                   </div>
                 </div>
               ))}
@@ -78,27 +76,27 @@ export default function AcceleratorDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>إجراءات سريعة</CardTitle>
-            <CardDescription>المهام الشائعة لمديري مسرعات الأعمال</CardDescription>
+            <CardDescription>ابدأ رحلة شركتك الناشئة</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/programs")}>
-                إدارة البرامج <span className="ml-2">🚀</span>
+              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/profile")}>
+                إكمال الملف الشخصي <span className="ml-2">👤</span>
               </Button>
-              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/startups")}>
-                عرض الشركات الناشئة <span className="ml-2">💼</span>
+              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/team")}>
+                إضافة أعضاء الفريق <span className="ml-2">👥</span>
               </Button>
-              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/events/new")}>
-                جدولة فعالية <span className="ml-2">📅</span>
+              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/apply")}>
+                التقديم للبرامج <span className="ml-2">🚀</span>
               </Button>
               <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/mentors")}>
-                تعيين موجهين <span className="ml-2">👨‍🏫</span>
+                البحث عن موجهين <span className="ml-2">👨‍🏫</span>
               </Button>
-              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/resources/new")}>
-                إضافة مورد <span className="ml-2">📚</span>
+              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/resources")}>
+                استكشاف الموارد <span className="ml-2">📚</span>
               </Button>
-              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/reports")}>
-                إنشاء تقارير <span className="ml-2">📈</span>
+              <Button variant="outline" className="justify-end" onClick={() => router.push("/accelerator-dashboard/events")}>
+                التسجيل في الفعاليات <span className="ml-2">📅</span>
               </Button>
             </div>
           </CardContent>

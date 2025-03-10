@@ -64,6 +64,15 @@
 | `/judge-dashboard/criteria` | معايير التقييم | المحكمون |
 | `/judge-dashboard/reports` | التقارير والإحصائيات | المحكمون |
 | `/judge-dashboard/evaluate/[id]` | تقييم مشروع محدد | المحكمون |
+| `/accelerator-dashboard` | لوحة تحكم مسرع الأعمال | مسرعات الأعمال |
+| `/accelerator-dashboard/programs` | إدارة البرامج | مسرعات الأعمال |
+| `/accelerator-dashboard/startups` | إدارة الشركات الناشئة | مسرعات الأعمال |
+| `/accelerator-dashboard/mentors` | إدارة الموجهين | مسرعات الأعمال |
+| `/accelerator-dashboard/events` | إدارة الفعاليات | مسرعات الأعمال |
+| `/accelerator-dashboard/resources` | إدارة الموارد | مسرعات الأعمال |
+| `/accelerator-dashboard/funding` | إدارة التمويل | مسرعات الأعمال |
+| `/accelerator-dashboard/reports` | التقارير والإحصائيات | مسرعات الأعمال |
+| `/accelerator-dashboard/community` | مجتمع مسرعات الأعمال | مسرعات الأعمال |
 | `/participant-dashboard` | لوحة تحكم المشارك | المشاركون |
 | `/participant-dashboard/hackathons` | الهاكاثونات المتاحة | المشاركون |
 | `/participant-dashboard/projects` | المشاريع | المشاركون |
@@ -217,6 +226,23 @@
   - **معايير التقييم** (`/judge-dashboard/criteria`): معايير تقييم المشاريع.
   - **التقارير والإحصائيات** (`/judge-dashboard/reports`): تقارير وإحصائيات التقييم.
   - **تقييم مشروع** (`/judge-dashboard/evaluate/[id]`): صفحة تقييم مشروع محدد.
+
+### لوحة تحكم مسرع الأعمال
+
+- **الرابط**: `/accelerator-dashboard`
+- **الوصف**: لوحة تحكم مسرع الأعمال، تتيح إدارة برامج المسرعات والشركات الناشئة.
+- **المستخدمون**: مسرعات الأعمال فقط.
+- **كيفية الوصول**: تسجيل الدخول بحساب مسرع أعمال.
+- **الصفحات الفرعية**:
+  - **نظرة عامة** (`/accelerator-dashboard`): إحصائيات ومؤشرات أداء المسرع.
+  - **إدارة البرامج** (`/accelerator-dashboard/programs`): إدارة برامج المسرع.
+  - **الشركات الناشئة** (`/accelerator-dashboard/startups`): إدارة الشركات الناشئة المشاركة في البرامج.
+  - **الموجهون** (`/accelerator-dashboard/mentors`): إدارة الموجهين وتعيينهم للشركات الناشئة.
+  - **الفعاليات** (`/accelerator-dashboard/events`): إدارة الفعاليات والأحداث.
+  - **الموارد** (`/accelerator-dashboard/resources`): إدارة الموارد التعليمية والتدريبية.
+  - **التمويل** (`/accelerator-dashboard/funding`): إدارة التمويل والاستثمارات.
+  - **التقارير والإحصائيات** (`/accelerator-dashboard/reports`): تقارير وإحصائيات أداء البرامج والشركات الناشئة.
+  - **مجتمع المسرعات** (`/accelerator-dashboard/community`): التواصل مع مسرعات الأعمال الأخرى.
 
 ## كيفية تشغيل التطبيق
 

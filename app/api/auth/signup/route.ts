@@ -124,6 +124,14 @@ export async function POST(request: NextRequest) {
           },
         });
         break;
+      case UserRole.ACCELERATOR:
+        await prisma.acceleratorProfile.create({
+          data: {
+            userId: user.id,
+            organizationName: body.organizationName || 'Default Organization Name',
+          },
+        });
+        break;
     }
 
     // Generate token

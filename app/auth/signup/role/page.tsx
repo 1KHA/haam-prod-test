@@ -22,7 +22,7 @@ export default function SignUpRoleSelection() {
     }
   }, [router])
 
-  const handleSelect = (role: "user" | "moderator") => {
+  const handleSelect = (role: "user" | "moderator" | "accelerator") => {
     setIsLoading(true)
     
     // Store the selection in localStorage
@@ -45,7 +45,7 @@ export default function SignUpRoleSelection() {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card 
           className="cursor-pointer hover:border-primary transition-colors"
           onClick={() => handleSelect("user")}
@@ -75,6 +75,21 @@ export default function SignUpRoleSelection() {
             </p>
           </CardContent>
         </Card>
+        
+        {signupType !== "hackathon" && (
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => handleSelect("accelerator")}
+          >
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <Shield className="h-12 w-12 mb-4 text-primary" />
+              <h2 className="text-xl font-bold">مسرع أعمال</h2>
+              <p className="text-muted-foreground mt-2">
+                سجل كمسرع أعمال لإدارة البرامج والشركات الناشئة
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
       
       <div className="flex justify-between">

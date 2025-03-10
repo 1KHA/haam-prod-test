@@ -94,7 +94,9 @@ export default function SignUpForm() {
     
     // Map the role to UserRole enum
     let userRole: UserRole;
-    if (role === "moderator") {
+    if (role === "accelerator") {
+      userRole = UserRole.ACCELERATOR;
+    } else if (role === "moderator") {
       if (signupType === "hackathon") {
         userRole = UserRole.JUDGE;
       } else {

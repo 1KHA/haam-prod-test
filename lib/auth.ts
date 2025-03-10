@@ -9,7 +9,8 @@ export enum UserRole {
   MENTOR = 'MENTOR',
   INVESTOR = 'INVESTOR',
   JUDGE = 'JUDGE',
-  PARTICIPANT = 'PARTICIPANT'
+  PARTICIPANT = 'PARTICIPANT',
+  ACCELERATOR = 'ACCELERATOR'
 }
 
 // Secret key for JWT

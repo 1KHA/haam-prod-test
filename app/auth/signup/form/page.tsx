@@ -94,9 +94,7 @@ export default function SignUpForm() {
     
     // Map the role to UserRole enum
     let userRole: UserRole;
-    if (role === "accelerator") {
-      userRole = UserRole.ACCELERATOR;
-    } else if (role === "moderator") {
+    if (role === "moderator") {
       if (signupType === "hackathon") {
         userRole = UserRole.JUDGE;
       } else {
@@ -106,7 +104,7 @@ export default function SignUpForm() {
       if (signupType === "hackathon") {
         userRole = UserRole.PARTICIPANT;
       } else {
-        userRole = UserRole.STARTUP;
+        userRole = UserRole.ACCELERATOR;
       }
     }
     
@@ -116,7 +114,7 @@ export default function SignUpForm() {
       email: formData.email,
       password: formData.password,
       role: userRole,
-      companyName: userRole === UserRole.STARTUP ? "My Startup" : undefined,
+      organizationName: userRole === UserRole.ACCELERATOR ? "My Accelerator" : undefined,
     };
     
     // Sign up user
@@ -136,7 +134,7 @@ export default function SignUpForm() {
         <p className="text-muted-foreground mt-2">
           {signupType === "hackathon" 
             ? (signupRole === "user" ? "أكمل بياناتك للتسجيل كمشارك في الهاكاثون" : "أكمل بياناتك للتسجيل كمشرف في الهاكاثون")
-            : (signupRole === "user" ? "أكمل بياناتك للتسجيل كرائد أعمال" : "أكمل بياناتك للتسجيل كمرشد في المسرع")}
+            : (signupRole === "user" ? "أكمل بياناتك للتسجيل كمسرع أعمال" : "أكمل بياناتك للتسجيل كمرشد في المسرع")}
         </p>
       </div>
       

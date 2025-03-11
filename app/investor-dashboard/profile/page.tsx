@@ -141,7 +141,7 @@ export default function ProfilePage() {
               </Tabs>
             </CardHeader>
             <CardContent>
-              <TabsContent value="personal" className="mt-0">
+              {activeTab === "personal" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -191,9 +191,9 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-              </TabsContent>
+              )}
               
-              <TabsContent value="investment" className="mt-0">
+              {activeTab === "investment" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -342,9 +342,9 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+              )}
               
-              <TabsContent value="preferences" className="mt-0">
+              {activeTab === "preferences" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b pb-2">
                     <div className="flex items-center">
@@ -450,7 +450,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+              )}
             </CardContent>
           </Card>
         </div>

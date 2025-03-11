@@ -17,7 +17,7 @@ export default function Header() {
   const { setTheme, theme } = useTheme()
 
   return (
-    <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4 text-right">
+    <header className="bg-background border-b px-4 py-3 flex items-center justify-between mb-4 text-right mt-12">
       <div className="flex-1">
         <h1 className="text-xl font-bold">لوحة تحكم الشركة الناشئة</h1>
       </div>

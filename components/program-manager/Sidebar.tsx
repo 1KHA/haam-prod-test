@@ -13,7 +13,14 @@ import {
   ChevronRight,
   Layers,
   ClipboardList,
-  Award
+  Award,
+  FileCheck,
+  UserCheck,
+  DollarSign,
+  BookOpen,
+  BarChart,
+  Briefcase,
+  Handshake
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -21,10 +28,17 @@ import { Button } from "@/components/ui/button"
 const navItems = [
   { name: "لوحة التحكم", href: "/program-manager-dashboard", icon: Layers },
   { name: "إدارة الدفعات", href: "/program-manager-dashboard/cohorts", icon: Users },
+  { name: "إدارة الشركات الناشئة", href: "/program-manager-dashboard/startups", icon: Briefcase },
+  { name: "مراجعة الطلبات", href: "/program-manager-dashboard/applications", icon: FileCheck },
+  { name: "اختيار المتقدمين", href: "/program-manager-dashboard/selection", icon: UserCheck },
   { name: "تعيين الموجهين", href: "/program-manager-dashboard/mentors", icon: Award },
+  { name: "جدولة الجلسات", href: "/program-manager-dashboard/sessions", icon: Handshake },
   { name: "إدارة الفعاليات", href: "/program-manager-dashboard/events", icon: Calendar },
+  { name: "إدارة التمويل", href: "/program-manager-dashboard/funding", icon: DollarSign },
+  { name: "الموارد التعليمية", href: "/program-manager-dashboard/resources", icon: BookOpen },
   { name: "التقييم والملاحظات", href: "/program-manager-dashboard/feedback", icon: FileText },
   { name: "المهام والمراحل", href: "/program-manager-dashboard/milestones", icon: ClipboardList },
+  { name: "التقارير والتحليلات", href: "/program-manager-dashboard/reports", icon: BarChart },
   { name: "المناقشات", href: "/program-manager-dashboard/discussions", icon: MessageSquare },
 ]
 

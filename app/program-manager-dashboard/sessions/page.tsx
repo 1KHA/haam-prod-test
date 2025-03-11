@@ -5,21 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { 
-  Handshake, 
-  Search, 
-  Filter, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  Calendar,
-  FileText,
-  Users,
-  Award,
-  Plus,
-  MessageSquare,
-  Star
-} from "lucide-react"
+import { Search, Filter, CheckCircle, XCircle, Clock, Plus, Star } from "lucide-react"
 
 export default function SessionsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -105,39 +91,6 @@ export default function SessionsPage() {
         mentorFeedback: "الشركة تعمل على تقنية مبتكرة، وأنصح بالتركيز على اختبارات المستخدمين",
         startupFeedback: "جلسة مفيدة جداً، حصلنا على رؤى قيمة من خبير في المجال"
       }
-    },
-    {
-      id: 6,
-      startupName: "جميع الشركات",
-      mentorName: "أ. نورة الغامدي",
-      mentorExpertise: "تمويل واستثمار",
-      sessionType: "جماعية",
-      date: "2025/03/12",
-      time: "11:00 ص",
-      duration: "90 دقيقة",
-      status: "completed",
-      topic: "كيفية جذب المستثمرين",
-      location: "قاعة الاجتماعات الرئيسية",
-      feedback: {
-        mentorRating: 4.7,
-        startupRating: 4.6,
-        mentorFeedback: "الشركات متحمسة ولديها أفكار جيدة، لكن تحتاج إلى تحسين عروضها التقديمية",
-        startupFeedback: "ورشة عمل مفيدة جداً، تعلمنا الكثير عن كيفية التواصل مع المستثمرين"
-      }
-    },
-    {
-      id: 7,
-      startupName: "فينتك",
-      mentorName: "د. سارة الأحمد",
-      mentorExpertise: "تقنية مالية",
-      sessionType: "فردية",
-      date: "2025/03/18",
-      time: "3:00 م",
-      duration: "60 دقيقة",
-      status: "scheduled",
-      topic: "تطوير المنتج",
-      location: "عن بعد (زوم)",
-      feedback: null
     },
     {
       id: 8,
@@ -257,354 +210,90 @@ export default function SessionsPage() {
               <TabsTrigger value="all">الكل</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="all" className="mt-0">
-              <div className="space-y-4">
-                {filteredSessions.map((session) => (
-                  <div key={session.id} className="border rounded-lg overflow-hidden">
-                    <div className="p-4 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getSessionTypeColor(session.sessionType)}`}>
-                            {session.sessionType}
-                          </div>
-                          <div className={`px-3 py-1 rounded-full text-xs ${
-                            session.status === "scheduled" ? "bg-blue-100 text-blue-800" :
-                            session.status === "completed" ? "bg-green-100 text-green-800" :
-                            "bg-red-100 text-red-800"
-                          }`}>
-                            {getStatusText(session.status)}
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <h3 className="font-bold text-lg ml-2">{session.topic}</h3>
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(session.status)}`}></div>
-                        </div>
+            {filteredSessions.map((session) => (
+              <div key={session.id} className="border rounded-lg overflow-hidden mt-4">
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`px-3 py-1 rounded-full text-xs ${getSessionTypeColor(session.sessionType)}`}>
+                        {session.sessionType}
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-xs ${
+                        session.status === "scheduled" ? "bg-blue-100 text-blue-800" :
+                        session.status === "completed" ? "bg-green-100 text-green-800" :
+                        "bg-red-100 text-red-800"
+                      }`}>
+                        {getStatusText(session.status)}
                       </div>
                     </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">الشركة الناشئة</div>
-                          <div className="font-medium">{session.startupName}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الموجه</div>
-                          <div className="font-medium">{session.mentorName}</div>
-                          <div className="text-sm text-muted-foreground">{session.mentorExpertise}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">التاريخ</div>
-                          <div className="font-medium">{session.date}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الوقت</div>
-                          <div className="font-medium">{session.time}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">المدة</div>
-                          <div className="font-medium">{session.duration}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm text-muted-foreground">المكان</div>
-                        <div className="font-medium">{session.location}</div>
-                      </div>
-                      
-                      {session.feedback && (
-                        <div className="bg-muted p-3 rounded-lg mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center">
-                              <div className="font-medium ml-1">{session.feedback.mentorRating}/5</div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
-                                    className={`h-4 w-4 ${star <= Math.round(session.feedback.mentorRating) ? "text-amber-500 fill-amber-500" : "text-muted"}`} 
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="text-sm font-medium">تقييم الموجه</div>
-                          </div>
-                          <div className="text-sm mb-3">{session.feedback.mentorFeedback}</div>
-                          
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center">
-                              <div className="font-medium ml-1">{session.feedback.startupRating}/5</div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
-                                    className={`h-4 w-4 ${star <= Math.round(session.feedback.startupRating) ? "text-amber-500 fill-amber-500" : "text-muted"}`} 
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="text-sm font-medium">تقييم الشركة</div>
-                          </div>
-                          <div className="text-sm">{session.feedback.startupFeedback}</div>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between mt-4">
-                        {session.status === "scheduled" && (
-                          <>
-                            <Button variant="outline" size="sm">تعديل الجلسة</Button>
-                            <div className="flex gap-2">
-                              <Button variant="destructive" size="sm">إلغاء</Button>
-                              <Button variant="default" size="sm">إرسال تذكير</Button>
-                            </div>
-                          </>
-                        )}
-                        {session.status === "completed" && (
-                          <>
-                            <Button variant="outline" size="sm">عرض التفاصيل</Button>
-                            {session.feedback ? (
-                              <Button variant="default" size="sm">تصدير التقييم</Button>
-                            ) : (
-                              <Button variant="default" size="sm">طلب تقييم</Button>
-                            )}
-                          </>
-                        )}
-                        {session.status === "cancelled" && (
-                          <>
-                            <Button variant="outline" size="sm">عرض التفاصيل</Button>
-                            <Button variant="default" size="sm">إعادة جدولة</Button>
-                          </>
-                        )}
-                      </div>
+                    <div className="flex items-center">
+                      <h3 className="font-bold text-lg ml-2">{session.topic}</h3>
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(session.status)}`}></div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="upcoming" className="mt-0">
-              <div className="space-y-4">
-                {filteredSessions.map((session) => (
-                  <div key={session.id} className="border rounded-lg overflow-hidden">
-                    <div className="p-4 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getSessionTypeColor(session.sessionType)}`}>
-                            {session.sessionType}
-                          </div>
-                          <div className={`px-3 py-1 rounded-full text-xs ${
-                            session.status === "scheduled" ? "bg-blue-100 text-blue-800" :
-                            session.status === "completed" ? "bg-green-100 text-green-800" :
-                            "bg-red-100 text-red-800"
-                          }`}>
-                            {getStatusText(session.status)}
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <h3 className="font-bold text-lg ml-2">{session.topic}</h3>
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(session.status)}`}></div>
-                        </div>
-                      </div>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">الشركة الناشئة</div>
+                      <div className="font-medium">{session.startupName}</div>
                     </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">الشركة الناشئة</div>
-                          <div className="font-medium">{session.startupName}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الموجه</div>
-                          <div className="font-medium">{session.mentorName}</div>
-                          <div className="text-sm text-muted-foreground">{session.mentorExpertise}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">التاريخ</div>
-                          <div className="font-medium">{session.date}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الوقت</div>
-                          <div className="font-medium">{session.time}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">المدة</div>
-                          <div className="font-medium">{session.duration}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm text-muted-foreground">المكان</div>
-                        <div className="font-medium">{session.location}</div>
-                      </div>
-                      
-                      <div className="flex justify-between mt-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">الموجه</div>
+                      <div className="font-medium">{session.mentorName}</div>
+                      <div className="text-sm text-muted-foreground">{session.mentorExpertise}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">التاريخ</div>
+                      <div className="font-medium">{session.date}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">الوقت</div>
+                      <div className="font-medium">{session.time}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">المدة</div>
+                      <div className="font-medium">{session.duration}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="text-sm text-muted-foreground">المكان</div>
+                    <div className="font-medium">{session.location}</div>
+                  </div>
+                  
+                  <div className="flex justify-between mt-4">
+                    {session.status === "scheduled" && (
+                      <>
                         <Button variant="outline" size="sm">تعديل الجلسة</Button>
                         <div className="flex gap-2">
                           <Button variant="destructive" size="sm">إلغاء</Button>
                           <Button variant="default" size="sm">إرسال تذكير</Button>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="completed" className="mt-0">
-              <div className="space-y-4">
-                {filteredSessions.map((session) => (
-                  <div key={session.id} className="border rounded-lg overflow-hidden">
-                    <div className="p-4 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getSessionTypeColor(session.sessionType)}`}>
-                            {session.sessionType}
-                          </div>
-                          <div className={`px-3 py-1 rounded-full text-xs ${
-                            session.status === "scheduled" ? "bg-blue-100 text-blue-800" :
-                            session.status === "completed" ? "bg-green-100 text-green-800" :
-                            "bg-red-100 text-red-800"
-                          }`}>
-                            {getStatusText(session.status)}
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <h3 className="font-bold text-lg ml-2">{session.topic}</h3>
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(session.status)}`}></div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">الشركة الناشئة</div>
-                          <div className="font-medium">{session.startupName}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الموجه</div>
-                          <div className="font-medium">{session.mentorName}</div>
-                          <div className="text-sm text-muted-foreground">{session.mentorExpertise}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">التاريخ</div>
-                          <div className="font-medium">{session.date}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الوقت</div>
-                          <div className="font-medium">{session.time}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">المدة</div>
-                          <div className="font-medium">{session.duration}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <div className="text-sm text-muted-foreground">المكان</div>
-                        <div className="font-medium">{session.location}</div>
-                      </div>
-                      
-                      {session.feedback && (
-                        <div className="bg-muted p-3 rounded-lg mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center">
-                              <div className="font-medium ml-1">{session.feedback.mentorRating}/5</div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
-                                    className={`h-4 w-4 ${star <= Math.round(session.feedback.mentorRating) ? "text-amber-500 fill-amber-500" : "text-muted"}`} 
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="text-sm font-medium">تقييم الموجه</div>
-                          </div>
-                          <div className="text-sm mb-3">{session.feedback.mentorFeedback}</div>
-                          
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center">
-                              <div className="font-medium ml-1">{session.feedback.startupRating}/5</div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
-                                    className={`h-4 w-4 ${star <= Math.round(session.feedback.startupRating) ? "text-amber-500 fill-amber-500" : "text-muted"}`} 
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="text-sm font-medium">تقييم الشركة</div>
-                          </div>
-                          <div className="text-sm">{session.feedback.startupFeedback}</div>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between mt-4">
+                      </>
+                    )}
+                    {session.status === "completed" && (
+                      <>
                         <Button variant="outline" size="sm">عرض التفاصيل</Button>
-                        {session.feedback ? (
-                          <Button variant="default" size="sm">تصدير التقييم</Button>
-                        ) : (
-                          <Button variant="default" size="sm">طلب تقييم</Button>
-                        )}
-                      </div>
-                    </div>
+                        <Button variant="default" size="sm">تصدير التقييم</Button>
+                      </>
+                    )}
+                    {session.status === "cancelled" && (
+                      <>
+                        <Button variant="outline" size="sm">عرض التفاصيل</Button>
+                        <Button variant="default" size="sm">إعادة جدولة</Button>
+                      </>
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="cancelled" className="mt-0">
-              <div className="space-y-4">
-                {filteredSessions.map((session) => (
-                  <div key={session.id} className="border rounded-lg overflow-hidden">
-                    <div className="p-4 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getSessionTypeColor(session.sessionType)}`}>
-                            {session.sessionType}
-                          </div>
-                          <div className={`px-3 py-1 rounded-full text-xs ${
-                            session.status === "scheduled" ? "bg-blue-100 text-blue-800" :
-                            session.status === "completed" ? "bg-green-100 text-green-800" :
-                            "bg-red-100 text-red-800"
-                          }`}>
-                            {getStatusText(session.status)}
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <h3 className="font-bold text-lg ml-2">{session.topic}</h3>
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(session.status)}`}></div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">الشركة الناشئة</div>
-                          <div className="font-medium">{session.startupName}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الموجه</div>
-                          <div className="font-medium">{session.mentorName}</div>
-                          <div className="text-sm text-muted-foreground">{session.mentorExpertise}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">التاريخ</div>
-                          <div className="font-medium">{session.date}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">الوقت</div>
-                          <div className="font-medium">{session.time}</div>
-                        </div>
-                        <div>
-                          <div className="text-
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

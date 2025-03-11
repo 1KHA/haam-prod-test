@@ -7,45 +7,46 @@ const fs = require('fs');
 // Get the directory of the current script
 const scriptDir = __dirname;
 
-// Check if package.json exists
-const packageJsonPath = path.join(scriptDir, 'package.json');
-if (!fs.existsSync(packageJsonPath)) {
-  console.error('Error: package.json not found in the current directory.');
-  process.exit(1);
+// Function to run a command
+function runCommand(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(command, args, {
+      ...options,
+      stdio: 'inherit',
+      shell: true
+    });
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command failed with exit code ${code}`));
+      }
+    });
+
+    proc.on('error', (err) => {
+      reject(err);
+    });
+  });
 }
 
-// Read package.json to check for scripts
-let packageJson;
-try {
-  packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-} catch (error) {
-  console.error('Error reading package.json:', error.message);
-  process.exit(1);
-}
+// Main function to run the application
+async function main() {
+  try {
+    // Check if package.json exists
+    const packageJsonPath = path.join(scriptDir, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      throw new Error('package.json not found. Make sure you are in the correct directory.');
+    }
 
-// Check if the dev script exists
-if (!packageJson.scripts || !packageJson.scripts.dev) {
-  console.error('Error: "dev" script not found in package.json.');
-  process.exit(1);
-}
-
-console.log('Starting development server...');
-
-// Run the dev script using npm
-const npmProcess = spawn('npm', ['run', 'dev'], {
-  cwd: scriptDir,
-  stdio: 'inherit',
-  shell: true
-});
-
-npmProcess.on('error', (error) => {
-  console.error('Failed to start development server:', error.message);
-  process.exit(1);
-});
-
-npmProcess.on('close', (code) => {
-  if (code !== 0) {
-    console.error(`Development server exited with code ${code}`);
-    process.exit(code);
+    // Run the Next.js development server
+    console.log('Starting Next.js development server...');
+    await runCommand('npm', ['run', 'dev'], { cwd: scriptDir });
+  } catch (error) {
+    console.error('Error:', error.message);
+    process.exit(1);
   }
-});
+}
+
+// Run the main function
+main();

@@ -15,19 +15,33 @@ import {
   DollarSign,
   TrendingUp,
   BarChart,
-  Briefcase
+  Briefcase,
+  Users,
+  Search,
+  PieChart,
+  Video,
+  UserPlus,
+  FileCheck,
+  Activity,
+  Settings
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 const navItems = [
   { name: "لوحة التحكم", href: "/investor-dashboard", icon: Home },
-  { name: "اكتشاف الشركات الناشئة", href: "/investor-dashboard/discover", icon: Rocket },
+  { name: "الملف الشخصي", href: "/investor-dashboard/profile", icon: Settings },
+  { name: "اكتشاف الشركات الناشئة", href: "/investor-dashboard/discover", icon: Search },
   { name: "المحفظة الاستثمارية", href: "/investor-dashboard/portfolio", icon: Briefcase },
   { name: "الفرص الاستثمارية", href: "/investor-dashboard/opportunities", icon: TrendingUp },
+  { name: "العناية الواجبة", href: "/investor-dashboard/due-diligence", icon: FileCheck },
+  { name: "العروض والاجتماعات", href: "/investor-dashboard/pitches", icon: Video },
+  { name: "إدارة الصفقات", href: "/investor-dashboard/deals", icon: DollarSign },
+  { name: "أداء الشركات الناشئة", href: "/investor-dashboard/performance", icon: Activity },
   { name: "التقارير المالية", href: "/investor-dashboard/reports", icon: FileText },
   { name: "التحليلات", href: "/investor-dashboard/analytics", icon: BarChart },
   { name: "الفعاليات", href: "/investor-dashboard/events", icon: Calendar },
+  { name: "شبكة المستثمرين", href: "/investor-dashboard/network", icon: Users },
   { name: "المناقشات", href: "/investor-dashboard/discussions", icon: MessageSquare },
 ]
 

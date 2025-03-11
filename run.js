@@ -1,85 +1,66 @@
 #!/usr/bin/env node
 
 /**
- * This script is used to run the application.
- * It can be executed with `node run.js` or simply `./run.js` if the file has executable permissions.
- * 
- * Options:
- * --init-db: Initialize the database before starting the application
- * --help: Show help information
+ * This script serves as the entry point for the application.
+ * It starts the Next.js development server.
  */
 
-const { spawn, execSync } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// Parse command-line arguments
-const args = process.argv.slice(2);
-const options = {
-  initDb: args.includes('--init-db'),
-  help: args.includes('--help'),
-};
+// Get the current directory
+const currentDir = process.cwd();
 
-// Show help information if requested
-if (options.help) {
-  console.log(`
-Usage: node run.js [options]
+// Check if we're in the project root or need to navigate to it
+const isProjectRoot = fs.existsSync(path.join(currentDir, 'package.json'));
+const projectRoot = isProjectRoot ? currentDir : path.join(currentDir, 'haam');
 
-Options:
-  --init-db    Initialize the database before starting the application
-  --help       Show this help information
-  `);
-  process.exit(0);
+// Ensure we're in the project directory
+if (!fs.existsSync(path.join(projectRoot, 'package.json'))) {
+  console.error('Error: Could not find package.json. Please run this script from the project root or its parent directory.');
+  process.exit(1);
 }
 
-// Initialize the database if requested
-if (options.initDb) {
-  console.log('Initializing the database...');
-  try {
-    // Run the database initialization script
-    execSync('node scripts/init-db.js', {
-      stdio: 'inherit',
-      cwd: path.resolve(__dirname),
-    });
-    console.log('Database initialization completed.');
-  } catch (error) {
-    console.error('Database initialization failed:', error.message);
-    process.exit(1);
-  }
+// Change to the project directory if needed
+if (!isProjectRoot) {
+  process.chdir(projectRoot);
+  console.log(`Changed directory to: ${projectRoot}`);
 }
 
-// Define the command to run
-const command = 'npm';
-const npmArgs = ['run', 'dev'];
+// Command to run the Next.js development server
+const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const args = ['run', 'dev'];
 
-console.log('Starting the application...');
+console.log('Starting the development server...');
+console.log(`Running command: ${command} ${args.join(' ')}`);
 
 // Spawn the process
-const child = spawn(command, npmArgs, {
-  stdio: 'inherit', // This will pipe the child's stdio to the parent process
-  shell: true,
-  cwd: path.resolve(__dirname) // Ensure we're running in the correct directory
+const devProcess = spawn(command, args, {
+  stdio: 'inherit',
+  shell: true
 });
 
 // Handle process events
-child.on('error', (error) => {
-  console.error(`Error starting the process: ${error.message}`);
+devProcess.on('error', (error) => {
+  console.error(`Failed to start development server: ${error.message}`);
   process.exit(1);
 });
 
-child.on('close', (code) => {
+devProcess.on('close', (code) => {
   if (code !== 0) {
-    console.log(`Process exited with code ${code}`);
+    console.error(`Development server exited with code ${code}`);
+    process.exit(code);
   }
 });
 
 // Handle termination signals
 process.on('SIGINT', () => {
   console.log('Received SIGINT. Shutting down gracefully...');
-  child.kill('SIGINT');
+  devProcess.kill('SIGINT');
 });
 
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM. Shutting down gracefully...');
-  child.kill('SIGTERM');
+  devProcess.kill('SIGTERM');
 });

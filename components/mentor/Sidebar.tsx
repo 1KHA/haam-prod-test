@@ -15,7 +15,8 @@ import {
   Rocket,
   ClipboardCheck,
   BookOpen,
-  Share2
+  Share2,
+  Clock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,11 +25,12 @@ const navItems = [
   { name: "لوحة التحكم", href: "/mentor-dashboard", icon: Home },
   { name: "الشركات الناشئة", href: "/mentor-dashboard/startups", icon: Rocket },
   { name: "جلسات الإرشاد", href: "/mentor-dashboard/sessions", icon: Calendar },
+  { name: "إدارة التوفر", href: "/mentor-dashboard/availability", icon: Clock },
   { name: "التقييمات والملاحظات", href: "/mentor-dashboard/feedback", icon: ClipboardCheck },
   { name: "الموارد التعليمية", href: "/mentor-dashboard/resources", icon: BookOpen },
   { name: "المناقشات", href: "/mentor-dashboard/discussions", icon: MessageSquare },
   { name: "التقارير", href: "/mentor-dashboard/reports", icon: FileText },
-  { name: "مجتمع الموجهين", href: "/mentor-dashboard/community", icon: Share2 },
+  { name: "مجتمع الموجهين", href: "/mentor-dashboard/community", icon: Share2 }
 ]
 
 export default function Sidebar() {

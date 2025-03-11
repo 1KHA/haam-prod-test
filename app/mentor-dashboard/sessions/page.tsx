@@ -11,8 +11,6 @@ import {
   Calendar, 
   Clock, 
   Users, 
-  MessageSquare, 
-  FileText,
   Video,
   ExternalLink,
   Check,
@@ -36,7 +34,6 @@ export default function SessionsPage() {
       date: "2025/03/15",
       startTime: "10:00",
       endTime: "11:00",
-      type: "فردية",
       format: "عن بعد",
       topic: "مراجعة خطة التسويق",
       status: "confirmed",
@@ -58,7 +55,6 @@ export default function SessionsPage() {
       date: "2025/03/18",
       startTime: "14:00",
       endTime: "15:00",
-      type: "فردية",
       format: "حضوري",
       topic: "استراتيجية جمع التمويل",
       status: "pending",
@@ -80,7 +76,6 @@ export default function SessionsPage() {
       date: "2025/03/22",
       startTime: "09:00",
       endTime: "10:00",
-      type: "فردية",
       format: "عن بعد",
       topic: "تطوير المنتج",
       status: "confirmed",
@@ -96,71 +91,20 @@ export default function SessionsPage() {
       ]
     },
     {
-      id: 4,
-      startupName: "تك سوليوشنز",
-      startupLogo: "https://placehold.co/100x100/4F46E5/FFFFFF?text=TS",
-      date: "2025/03/29",
-      startTime: "11:00",
-      endTime: "12:00",
-      type: "فردية",
-      format: "عن بعد",
-      topic: "استراتيجية النمو",
-      status: "confirmed",
-      notes: "مناقشة خطط التوسع وزيادة قاعدة المستخدمين",
-      preparation: [
-        "تحليل معدلات النمو الحالية",
-        "تحضير استراتيجيات النمو المقترحة",
-        "دراسة أسواق جديدة محتملة"
-      ],
-      team: [
-        { name: "محمد العمري", role: "المؤسس والرئيس التنفيذي" },
-        { name: "سارة الخالدي", role: "مدير المنتج" }
-      ]
-    },
-    {
       id: 5,
       startupName: "هيلث تك",
       startupLogo: "https://placehold.co/100x100/10B981/FFFFFF?text=HT",
       date: "2025/02/25",
       startTime: "13:00",
       endTime: "14:00",
-      type: "فردية",
       format: "حضوري",
       topic: "تطوير النموذج الأولي",
       status: "completed",
-      feedback: {
-        strengths: "فريق متحمس ولديه فهم جيد للسوق المستهدف. النموذج الأولي يعالج مشكلة حقيقية في السوق.",
-        improvements: "يحتاج إلى تحسين تجربة المستخدم وتبسيط عملية التسجيل. ينبغي التركيز أكثر على ميزات الأمان وحماية البيانات.",
-        nextSteps: "تحسين النموذج الأولي بناءً على الملاحظات، وإجراء اختبارات مع مجموعة صغيرة من المستخدمين."
-      },
       notes: "مراجعة النموذج الأولي وتقديم ملاحظات للتحسين",
       preparation: [],
       team: [
         { name: "خالد السعيد", role: "المؤسس والرئيس التنفيذي" },
         { name: "فهد الدوسري", role: "مطور تطبيقات" }
-      ]
-    },
-    {
-      id: 6,
-      startupName: "فينتك",
-      startupLogo: "https://placehold.co/100x100/F59E0B/FFFFFF?text=FT",
-      date: "2025/03/01",
-      startTime: "10:00",
-      endTime: "11:00",
-      type: "فردية",
-      format: "عن بعد",
-      topic: "استراتيجية التسعير",
-      status: "completed",
-      feedback: {
-        strengths: "نموذج تسعير مرن يناسب مختلف شرائح العملاء. فهم جيد لديناميكيات السوق والمنافسين.",
-        improvements: "ينبغي تبسيط هيكل التسعير ليكون أكثر وضوحاً للعملاء. النظر في إضافة خطة مجانية محدودة لجذب المزيد من المستخدمين.",
-        nextSteps: "إعادة صياغة استراتيجية التسعير، وإجراء اختبارات A/B لمختلف نماذج التسعير."
-      },
-      notes: "مناقشة استراتيجية التسعير وتحليل المنافسين",
-      preparation: [],
-      team: [
-        { name: "عبدالله المالكي", role: "المؤسس والرئيس التنفيذي" },
-        { name: "ريم القحطاني", role: "مدير العمليات" }
       ]
     }
   ]
@@ -216,75 +160,11 @@ export default function SessionsPage() {
     return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
-  // Calendar functions
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate()
-  }
-  
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month, 1).getDay()
-  }
-  
-  const renderCalendar = () => {
-    const year = currentMonth.getFullYear()
-    const month = currentMonth.getMonth()
-    
-    const daysInMonth = getDaysInMonth(year, month)
-    const firstDay = getFirstDayOfMonth(year, month)
-    
-    const days = []
-    
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-24 border bg-gray-50"></div>)
-    }
-    
-    // Add cells for each day of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day)
-      const dateString = `${year}/${String(month + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}`
-      
-      // Find sessions for this day
-      const daySessions = sessions.filter(session => session.date === dateString)
-      
-      days.push(
-        <div key={day} className="h-24 border p-1 relative">
-          <div className="text-xs font-medium mb-1">{day}</div>
-          <div className="space-y-1">
-            {daySessions.map((session, index) => (
-              <div 
-                key={index} 
-                className={`text-xs p-1 rounded truncate ${getStatusColor(session.status)}`}
-                title={`${session.startupName} - ${session.topic}`}
-              >
-                {session.startTime} - {session.startupName}
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-    
-    return days
-  }
-  
   const monthNames = [
     "يناير", "فبراير", "مارس", "إبريل", "مايو", "يونيو",
     "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
   ]
   
-  const nextMonth = () => {
-    const next = new Date(currentMonth)
-    next.setMonth(next.getMonth() + 1)
-    setCurrentMonth(next)
-  }
-  
-  const prevMonth = () => {
-    const prev = new Date(currentMonth)
-    prev.setMonth(prev.getMonth() - 1)
-    setCurrentMonth(prev)
-  }
-
   const upcomingCount = sessions.filter(s => {
     const sessionDate = new Date(s.date)
     const today = new Date()
@@ -357,34 +237,6 @@ export default function SessionsPage() {
               <TabsTrigger value="pending">بانتظار التأكيد</TabsTrigger>
               <TabsTrigger value="upcoming">قادمة</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="calendar">
-              <div className="mb-4 flex justify-between items-center">
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={prevMonth}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={nextMonth}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h3 className="font-medium text-lg">
-                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                </h3>
-              </div>
-              
-              <div className="grid grid-cols-7 text-center">
-                <div className="font-medium text-sm py-2">الأحد</div>
-                <div className="font-medium text-sm py-2">الإثنين</div>
-                <div className="font-medium text-sm py-2">الثلاثاء</div>
-                <div className="font-medium text-sm py-2">الأربعاء</div>
-                <div className="font-medium text-sm py-2">الخميس</div>
-                <div className="font-medium text-sm py-2">الجمعة</div>
-                <div className="font-medium text-sm py-2">السبت</div>
-                
-                {renderCalendar()}
-              </div>
-            </TabsContent>
             
             <TabsContent value="upcoming">
               <div className="space-y-4">
@@ -620,4 +472,86 @@ export default function SessionsPage() {
                             </div>
                           </div>
                         </div>
-                      </div
+                      </div>
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                          <div>
+                            <div className="text-sm text-muted-foreground">التاريخ</div>
+                            <div className="font-medium">{formatDate(session.date)}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-muted-foreground">الوقت</div>
+                            <div className="font-medium">{session.startTime} - {session.endTime}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-muted-foreground">الموضوع</div>
+                            <div className="font-medium">{session.topic}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-muted-foreground">النوع</div>
+                            <div className="flex items-center gap-1">
+                              {getFormatIcon(session.format)}
+                              <span className="font-medium">{session.format}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <div className="text-sm text-muted-foreground">ملاحظات</div>
+                          <p className="text-muted-foreground">{session.notes}</p>
+                        </div>
+                        
+                        <div className="flex justify-end mt-4">
+                          <Button variant="outline" size="sm" className="flex items-center gap-1">
+                            <ExternalLink className="h-4 w-4" />
+                            <span>عرض التفاصيل</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center p-8 border rounded-lg">
+                    <Check className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">لا توجد جلسات مكتملة</h3>
+                    <p className="text-muted-foreground mb-4">لم يتم العثور على جلسات مكتملة تطابق معايير البحث</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="calendar">
+              <div className="mb-4 flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" onClick={() => {
+                    const prev = new Date(currentMonth);
+                    prev.setMonth(prev.getMonth() - 1);
+                    setCurrentMonth(prev);
+                  }}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => {
+                    const next = new Date(currentMonth);
+                    next.setMonth(next.getMonth() + 1);
+                    setCurrentMonth(next);
+                  }}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <h3 className="font-medium text-lg">
+                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                </h3>
+              </div>
+              
+              <div className="text-center p-8 border rounded-lg">
+                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">عرض التقويم</h3>
+                <p className="text-muted-foreground mb-4">يمكنك عرض جلساتك في التقويم</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

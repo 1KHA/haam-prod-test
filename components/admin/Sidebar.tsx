@@ -27,7 +27,8 @@ import {
   LineChart,
   PieChart,
   Server,
-  Sliders
+  Sliders,
+  Link as LinkIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,11 @@ const navItems = [
       { name: "إضافة مستخدم", href: "/admin-dashboard/users/add" },
       { name: "الأدوار والصلاحيات", href: "/admin-dashboard/users/roles" }
     ]
+  },
+  { 
+    name: "إدارة التكاملات", 
+    href: "/admin-dashboard/integrations", 
+    icon: LinkIcon 
   },
   { 
     name: "إدارة الشركات الناشئة", 

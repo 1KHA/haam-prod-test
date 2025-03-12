@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -17,9 +17,7 @@ import {
   XCircle,
   CreditCard,
   DollarSign,
-  Calendar,
   Clock,
-  FileText,
   ArrowUpRight,
   ArrowDownRight,
   BarChart,
@@ -105,76 +103,6 @@ export default function PaymentsManagement() {
       entityType: "شركة ناشئة",
       program: "حاضنة التقنيات الناشئة",
       description: "رسوم خدمات تسويقية - فشل الدفع بسبب رفض البطاقة"
-    },
-    { 
-      id: "6", 
-      reference: "INV-2025-006", 
-      amount: "10,000 ريال", 
-      type: "رسوم اشتراك", 
-      status: "مكتمل", 
-      date: "5 مارس 2025",
-      time: "13:25:40",
-      paymentMethod: "تحويل بنكي",
-      entity: "شركة سمارت هوم",
-      entityType: "شركة ناشئة",
-      program: "مسرع التقنية المالية",
-      description: "رسوم الاشتراك السنوي في برنامج المسرع"
-    },
-    { 
-      id: "7", 
-      reference: "INV-2025-007", 
-      amount: "3,000 ريال", 
-      type: "رسوم خدمات", 
-      status: "مكتمل", 
-      date: "3 مارس 2025",
-      time: "09:50:15",
-      paymentMethod: "بطاقة ائتمان",
-      entity: "شركة فينتك",
-      entityType: "شركة ناشئة",
-      program: "مسرع التقنية المالية",
-      description: "رسوم خدمات استشارية قانونية"
-    },
-    { 
-      id: "8", 
-      reference: "INV-2025-008", 
-      amount: "1,500 ريال", 
-      type: "رسوم فعالية", 
-      status: "مكتمل", 
-      date: "1 مارس 2025",
-      time: "14:15:30",
-      paymentMethod: "بطاقة ائتمان",
-      entity: "شركة تك سمارت",
-      entityType: "شركة ناشئة",
-      program: "مسرع التقنية المالية",
-      description: "رسوم المشاركة في ورشة عمل التسويق الرقمي"
-    },
-    { 
-      id: "9", 
-      reference: "INV-2025-009", 
-      amount: "8,000 ريال", 
-      type: "رسوم اشتراك", 
-      status: "معلق", 
-      date: "28 فبراير 2025",
-      time: "10:30:45",
-      paymentMethod: "تحويل بنكي",
-      entity: "شركة ميديا تك",
-      entityType: "شركة ناشئة",
-      program: "حاضنة التقنيات الناشئة",
-      description: "رسوم الاشتراك السنوي في برنامج الحاضنة"
-    },
-    { 
-      id: "10", 
-      reference: "INV-2025-010", 
-      amount: "2,500 ريال", 
-      type: "رسوم خدمات", 
-      status: "مرفوض", 
-      date: "25 فبراير 2025",
-      time: "15:20:10",
-      paymentMethod: "بطاقة ائتمان",
-      entity: "شركة إيكو سمارت",
-      entityType: "شركة ناشئة",
-      program: "حاضنة التقنيات الناشئة",
-      description: "رسوم خدمات استشارية - فشل الدفع بسبب انتهاء صلاحية البطاقة"
     }
   ]
 
@@ -200,7 +128,6 @@ export default function PaymentsManagement() {
     }
 
     // Filter by date range (simplified for demo)
-    // In a real app, you would parse the date and compare with actual date ranges
     if (dateRange === "week" && !payment.date.includes("مارس")) return false
     if (dateRange === "today" && payment.date !== "12 مارس 2025") return false
 
@@ -594,28 +521,9 @@ export default function PaymentsManagement() {
               <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '90%' }}></div>
               <span className="text-xs">يونيو</span>
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '75%' }}></div>
-              <span className="text-xs">يوليو</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '65%' }}></div>
-              <span className="text-xs">أغسطس</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '85%' }}></div>
-              <span className="text-xs">سبتمبر</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '95%' }}></div>
-              <span className="text-xs">أكتوبر</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '80%' }}></div>
-              <span className="text-xs">نوفمبر</span>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-10 bg-primary/50 rounded-t-md" style={{ height: '100%' }}></div>
-              <span className="text-xs">ديسمبر</span>
-            </div>
           </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

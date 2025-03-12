@@ -1,53 +1,61 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
+const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-// Get the directory where this script is located
-const scriptDir = __dirname;
+// Get the directory of the current script
+const currentDir = __dirname;
 
-// Function to run a command
-function runCommand(command, args, options = {}) {
-  return new Promise((resolve, reject) => {
-    console.log(`Running: ${command} ${args.join(' ')}`);
-    
-    const proc = spawn(command, args, {
-      ...options,
-      stdio: 'inherit',
-      shell: process.platform === 'win32'
-    });
-
-    proc.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Command failed with exit code ${code}`));
-      }
-    });
-
-    proc.on('error', (err) => {
-      reject(err);
-    });
-  });
+// Function to check if a directory exists
+function directoryExists(dirPath) {
+  try {
+    return fs.statSync(dirPath).isDirectory();
+  } catch (err) {
+    return false;
+  }
 }
 
-// Main function to start the application
-async function main() {
+// Function to check if Next.js is installed
+function isNextJsInstalled() {
   try {
-    // Check if we're in the right directory
-    if (!fs.existsSync(path.join(scriptDir, 'package.json'))) {
-      console.error('Error: package.json not found. Make sure you are running this script from the project root.');
+    const packageJson = JSON.parse(fs.readFileSync(path.join(currentDir, 'package.json'), 'utf8'));
+    return packageJson.dependencies && packageJson.dependencies.next;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Main function to run the application
+function runApp() {
+  console.log('Starting HAAM application...');
+  
+  // Check if node_modules exists, if not run npm install
+  if (!directoryExists(path.join(currentDir, 'node_modules'))) {
+    console.log('Node modules not found. Installing dependencies...');
+    try {
+      execSync('npm install', { cwd: currentDir, stdio: 'inherit' });
+    } catch (error) {
+      console.error('Failed to install dependencies:', error.message);
       process.exit(1);
     }
-
-    // Run the development server
-    await runCommand('npm', ['run', 'dev'], { cwd: scriptDir });
+  }
+  
+  // Check if Next.js is installed
+  if (!isNextJsInstalled()) {
+    console.error('Next.js is not installed. Please make sure it is listed in your package.json dependencies.');
+    process.exit(1);
+  }
+  
+  // Run the Next.js development server
+  try {
+    console.log('Starting Next.js development server...');
+    execSync('npm run dev', { cwd: currentDir, stdio: 'inherit' });
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Failed to start Next.js development server:', error.message);
     process.exit(1);
   }
 }
 
-// Run the main function
-main();
+// Run the application
+runApp();

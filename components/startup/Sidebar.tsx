@@ -57,14 +57,14 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-end p-2 mx-2 rounded-lg",
+                    "flex items-center justify-start p-2 mx-2 rounded-lg",
                     pathname === item.href
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
                   )}
                 >
-                  <span className={cn("ml-2", { "sr-only": isCollapsed })}>{item.name}</span>
                   <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <span className={cn("mr-2", { "sr-only": isCollapsed })}>{item.name}</span>
                 </Link>
               </li>
             ))}

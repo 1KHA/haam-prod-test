@@ -62,24 +62,24 @@ export default function AcceleratorDashboard() {
       title: "إكمال ملف الشركة الناشئة", 
       deadline: "خلال 3 أيام", 
       priority: "عالية",
-      icon: <AlertCircle className="h-5 w-5 ml-2 text-red-500" />,
-      priorityColor: "text-red-500"
+      icon: <AlertCircle className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />,
+      priorityColor: { color: "#f58f62" }
     },
     { 
       id: 2, 
       title: "تحضير عرض تقديمي للبرنامج", 
       deadline: "خلال أسبوع", 
       priority: "متوسطة",
-      icon: <Clock className="h-5 w-5 ml-2 text-amber-500" />,
-      priorityColor: "text-amber-500"
+      icon: <Clock className="h-5 w-5 ml-2" style={{ color: "#799dd7" }} />,
+      priorityColor: { color: "#799dd7" }
     },
     { 
       id: 3, 
       title: "تحديد أهداف المشروع", 
       deadline: "خلال أسبوعين", 
       priority: "منخفضة",
-      icon: <CheckCircle className="h-5 w-5 ml-2 text-green-500" />,
-      priorityColor: "text-green-500"
+      icon: <CheckCircle className="h-5 w-5 ml-2" style={{ color: "#3f4249" }} />,
+      priorityColor: { color: "#3f4249" }
     },
   ]
 
@@ -140,7 +140,7 @@ export default function AcceleratorDashboard() {
                           <div className="text-sm text-muted-foreground">{task.deadline}</div>
                         </div>
                       </div>
-                      <div className={`text-sm font-medium ${task.priorityColor}`}>{task.priority}</div>
+                      <div className="text-sm font-medium" style={task.priorityColor}>{task.priority}</div>
                     </div>
                   ))}
                 </div>
@@ -162,10 +162,10 @@ export default function AcceleratorDashboard() {
                         </p>
                         <p className="text-xs text-muted-foreground">{event.date} • {event.time}</p>
                       </div>
-                      <div className="bg-primary/10 p-2 rounded-full mr-2">
-                        {event.type === "ورشة عمل" && <Wrench className="h-4 w-4" />}
-                        {event.type === "جلسة تعريفية" && <Megaphone className="h-4 w-4" />}
-                        {event.type === "شبكات" && <Handshake className="h-4 w-4" />}
+                      <div className="p-2 rounded-full mr-2" style={{ backgroundColor: "#e0f2fe" }}>
+                        {event.type === "ورشة عمل" && <Wrench className="h-4 w-4" style={{ color: "#799dd7" }} />}
+                        {event.type === "جلسة تعريفية" && <Megaphone className="h-4 w-4" style={{ color: "#799dd7" }} />}
+                        {event.type === "شبكات" && <Handshake className="h-4 w-4" style={{ color: "#799dd7" }} />}
                       </div>
                     </div>
                   ))}
@@ -204,7 +204,7 @@ export default function AcceleratorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="border-r-4 border-[#f58f62] pr-4 py-2">
+                <div className="pr-4 py-2" style={{ borderRight: "4px solid #f58f62" }}>
                   <h3 className="font-bold">برنامج مسرع الأعمال الصيفي 2025</h3>
                   <p className="text-muted-foreground">برنامج مكثف لمدة 3 أشهر للشركات الناشئة في مراحلها الأولى</p>
                   <div className="flex justify-between mt-2">
@@ -214,7 +214,7 @@ export default function AcceleratorDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="border-r-4 border-green-500 pr-4 py-2">
+                <div className="pr-4 py-2" style={{ borderRight: "4px solid #799dd7" }}>
                   <h3 className="font-bold">برنامج التقنية المالية</h3>
                   <p className="text-muted-foreground">برنامج متخصص للشركات الناشئة في مجال التكنولوجيا المالية</p>
                   <div className="flex justify-between mt-2">
@@ -224,7 +224,7 @@ export default function AcceleratorDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="border-r-4 border-amber-500 pr-4 py-2">
+                <div className="pr-4 py-2" style={{ borderRight: "4px solid #3f4249" }}>
                   <h3 className="font-bold">برنامج ابتكار الرعاية الصحية</h3>
                   <p className="text-muted-foreground">دعم الشركات الناشئة في قطاع الرعاية الصحية والعافية</p>
                   <div className="flex justify-between mt-2">
@@ -248,11 +248,11 @@ export default function AcceleratorDashboard() {
             <CardContent>
               <div className="space-y-6">
                 {upcomingEvents.map((event) => (
-                  <div key={event.id} className="border-r-4 border-[#f58f62] pr-4 py-2">
+                  <div key={event.id} className="pr-4 py-2" style={{ borderRight: "4px solid #f58f62" }}>
                     <div className="flex items-center">
-                      {event.type === "ورشة عمل" && <Wrench className="h-5 w-5 ml-2 text-[#f58f62]" />}
-                      {event.type === "جلسة تعريفية" && <Megaphone className="h-5 w-5 ml-2 text-[#f58f62]" />}
-                      {event.type === "شبكات" && <Handshake className="h-5 w-5 ml-2 text-[#f58f62]" />}
+                      {event.type === "ورشة عمل" && <Wrench className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
+                      {event.type === "جلسة تعريفية" && <Megaphone className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
+                      {event.type === "شبكات" && <Handshake className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
                       <h3 className="font-bold">{event.name}</h3>
                     </div>
                     <div className="flex justify-between mt-2">
@@ -281,7 +281,7 @@ export default function AcceleratorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="border-r-4 border-green-500 pr-4 py-2">
+                <div className="pr-4 py-2" style={{ borderRight: "4px solid #799dd7" }}>
                   <h3 className="font-bold">دليل بناء نموذج الأعمال</h3>
                   <p className="text-muted-foreground">دليل شامل لبناء نموذج أعمال قوي لشركتك الناشئة</p>
                   <div className="flex justify-end mt-2">
@@ -290,7 +290,7 @@ export default function AcceleratorDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="border-r-4 border-[#f58f62] pr-4 py-2">
+                <div className="pr-4 py-2" style={{ borderRight: "4px solid #f58f62" }}>
                   <h3 className="font-bold">قالب خطة العمل</h3>
                   <p className="text-muted-foreground">قالب جاهز لإعداد خطة عمل احترافية</p>
                   <div className="flex justify-end mt-2">
@@ -299,7 +299,7 @@ export default function AcceleratorDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="border-r-4 border-amber-500 pr-4 py-2">
+                <div className="pr-4 py-2" style={{ borderRight: "4px solid #3f4249" }}>
                   <h3 className="font-bold">دورة تدريبية: أساسيات التسويق للشركات الناشئة</h3>
                   <p className="text-muted-foreground">دورة تدريبية لتعلم أساسيات التسويق للشركات الناشئة</p>
                   <div className="flex justify-end mt-2">

@@ -204,7 +204,7 @@ export default function AcceleratorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="border-r-4 border-blue-500 pr-4 py-2">
+                <div className="border-r-4 border-[#f58f62] pr-4 py-2">
                   <h3 className="font-bold">برنامج مسرع الأعمال الصيفي 2025</h3>
                   <p className="text-muted-foreground">برنامج مكثف لمدة 3 أشهر للشركات الناشئة في مراحلها الأولى</p>
                   <div className="flex justify-between mt-2">
@@ -248,11 +248,11 @@ export default function AcceleratorDashboard() {
             <CardContent>
               <div className="space-y-6">
                 {upcomingEvents.map((event) => (
-                  <div key={event.id} className="border-r-4 border-blue-500 pr-4 py-2">
+                  <div key={event.id} className="border-r-4 border-[#f58f62] pr-4 py-2">
                     <div className="flex items-center">
-                      {event.type === "ورشة عمل" && <Wrench className="h-5 w-5 ml-2 text-blue-500" />}
-                      {event.type === "جلسة تعريفية" && <Megaphone className="h-5 w-5 ml-2 text-blue-500" />}
-                      {event.type === "شبكات" && <Handshake className="h-5 w-5 ml-2 text-blue-500" />}
+                      {event.type === "ورشة عمل" && <Wrench className="h-5 w-5 ml-2 text-[#f58f62]" />}
+                      {event.type === "جلسة تعريفية" && <Megaphone className="h-5 w-5 ml-2 text-[#f58f62]" />}
+                      {event.type === "شبكات" && <Handshake className="h-5 w-5 ml-2 text-[#f58f62]" />}
                       <h3 className="font-bold">{event.name}</h3>
                     </div>
                     <div className="flex justify-between mt-2">
@@ -290,7 +290,7 @@ export default function AcceleratorDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="border-r-4 border-blue-500 pr-4 py-2">
+                <div className="border-r-4 border-[#f58f62] pr-4 py-2">
                   <h3 className="font-bold">قالب خطة العمل</h3>
                   <p className="text-muted-foreground">قالب جاهز لإعداد خطة عمل احترافية</p>
                   <div className="flex justify-end mt-2">

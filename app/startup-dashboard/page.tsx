@@ -40,10 +40,10 @@ export default function StartupDashboard() {
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Card className="rounded-xl border bg-card text-card-foreground shadow">
+                <CardHeader className="flex flex-row items-center justify-end space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">تقدم المشروع</CardTitle>
-                  <Rocket className="h-4 w-4 text-muted-foreground" />
+                  <Rocket className="h-4 w-4 text-muted-foreground ml-2" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">75%</div>
@@ -54,10 +54,10 @@ export default function StartupDashboard() {
               </Card>
             </motion.div>
             <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Card className="rounded-xl border bg-card text-card-foreground shadow">
+                <CardHeader className="flex flex-row items-center justify-end space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">المراحل المكتملة</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <Target className="h-4 w-4 text-muted-foreground ml-2" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">6/8</div>
@@ -66,10 +66,10 @@ export default function StartupDashboard() {
               </Card>
             </motion.div>
             <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Card className="rounded-xl border bg-card text-card-foreground shadow">
+                <CardHeader className="flex flex-row items-center justify-end space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">جلسات الإرشاد</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <BookOpen className="h-4 w-4 text-muted-foreground ml-2" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">12</div>
@@ -78,10 +78,10 @@ export default function StartupDashboard() {
               </Card>
             </motion.div>
             <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Card className="rounded-xl border bg-card text-card-foreground shadow">
+                <CardHeader className="flex flex-row items-center justify-end space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">التمويل المستلم</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <DollarSign className="h-4 w-4 text-muted-foreground ml-2" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">$50,000</div>
@@ -92,7 +92,7 @@ export default function StartupDashboard() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <Card>
+            <Card className="rounded-xl border bg-card text-card-foreground shadow">
               <CardHeader>
                 <CardTitle>المهام القادمة</CardTitle>
               </CardHeader>
@@ -132,7 +132,7 @@ export default function StartupDashboard() {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="rounded-xl border bg-card text-card-foreground shadow">
               <CardHeader>
                 <CardTitle>فريق العمل</CardTitle>
               </CardHeader>
@@ -176,7 +176,7 @@ export default function StartupDashboard() {
             </Card>
           </div>
           
-          <Card className="mt-6">
+          <Card className="mt-6 rounded-xl border bg-card text-card-foreground shadow">
             <CardHeader>
               <CardTitle>أحدث الأنشطة</CardTitle>
             </CardHeader>
@@ -203,7 +203,7 @@ export default function StartupDashboard() {
         </TabsContent>
         
         <TabsContent value="milestones">
-          <Card>
+          <Card className="rounded-xl border bg-card text-card-foreground shadow">
             <CardHeader>
               <CardTitle>المراحل والأهداف</CardTitle>
             </CardHeader>
@@ -277,7 +277,7 @@ export default function StartupDashboard() {
         </TabsContent>
         
         <TabsContent value="mentors">
-          <Card>
+          <Card className="rounded-xl border bg-card text-card-foreground shadow">
             <CardHeader>
               <CardTitle>الموجهون</CardTitle>
             </CardHeader>
@@ -376,7 +376,7 @@ export default function StartupDashboard() {
         </TabsContent>
         
         <TabsContent value="funding">
-          <Card>
+          <Card className="rounded-xl border bg-card text-card-foreground shadow">
             <CardHeader>
               <CardTitle>التمويل</CardTitle>
             </CardHeader>

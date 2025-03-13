@@ -117,7 +117,7 @@ export default function TeamManagement() {
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Card>
+          <Card className="rounded-xl border bg-card text-card-foreground shadow">
             <CardHeader>
               <CardTitle>إضافة عضو جديد للفريق</CardTitle>
               <CardDescription>أدخل بيانات العضو الجديد لإرسال دعوة انضمام</CardDescription>
@@ -190,26 +190,9 @@ export default function TeamManagement() {
                 animate="visible"
                 transition={{ delay: index * 0.1 }}
               >
-                <Card>
+                <Card className="rounded-xl border bg-card text-card-foreground shadow">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
-                      <div className="flex flex-row-reverse items-start gap-4">
-                        <div className={`h-16 w-16 rounded-full ${member.color} text-white flex items-center justify-center`}>
-                          <span className="text-xl font-bold">{member.avatar}</span>
-                        </div>
-                        <div className="text-right">
-                          <h3 className="font-bold text-lg">{member.name}</h3>
-                          <p className="text-muted-foreground">{member.role}</p>
-                          <div className="flex items-center mt-2">
-                            <span className="text-sm ml-2">{member.email}</span>
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <span className="text-sm ml-2">{member.phone}</span>
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        </div>
-                      </div>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />
@@ -220,6 +203,23 @@ export default function TeamManagement() {
                           </Button>
                         )}
                       </div>
+                      <div className="flex items-start gap-4">
+                        <div className="text-right">
+                          <h3 className="font-bold text-lg">{member.name}</h3>
+                          <p className="text-muted-foreground">{member.role}</p>
+                          <div className="flex items-center justify-end mt-2">
+                            <span className="text-sm ml-2">{member.email}</span>
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex items-center justify-end mt-1">
+                            <span className="text-sm ml-2">{member.phone}</span>
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </div>
+                        <div className={`h-16 w-16 rounded-full ${member.color} text-white flex items-center justify-center`}>
+                          <span className="text-xl font-bold">{member.avatar}</span>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -229,7 +229,7 @@ export default function TeamManagement() {
         </TabsContent>
         
         <TabsContent value="pending">
-          <Card>
+          <Card className="rounded-xl border bg-card text-card-foreground shadow">
             <CardHeader>
               <CardTitle>الدعوات المعلقة</CardTitle>
               <CardDescription>دعوات الانضمام التي تم إرسالها ولم يتم قبولها بعد</CardDescription>
@@ -266,7 +266,7 @@ export default function TeamManagement() {
         </TabsContent>
       </Tabs>
 
-      <Card>
+      <Card className="rounded-xl border bg-card text-card-foreground shadow">
         <CardHeader>
           <CardTitle>صلاحيات الفريق</CardTitle>
           <CardDescription>إدارة صلاحيات أعضاء الفريق للوصول إلى ميزات المنصة</CardDescription>
@@ -286,11 +286,11 @@ export default function TeamManagement() {
               <tbody>
                 <tr className="border-b">
                   <td className="py-3 px-4">
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center ml-2">
+                    <div className="flex items-center justify-end">
+                      <span className="mr-2">أحمد محمد</span>
+                      <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
                         <span className="font-bold">أح</span>
                       </div>
-                      <span>أحمد محمد</span>
                     </div>
                   </td>
                   <td className="text-center py-3 px-4">
@@ -308,11 +308,11 @@ export default function TeamManagement() {
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4">
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center ml-2">
+                    <div className="flex items-center justify-end">
+                      <span className="mr-2">سارة خالد</span>
+                      <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
                         <span className="font-bold">سخ</span>
                       </div>
-                      <span>سارة خالد</span>
                     </div>
                   </td>
                   <td className="text-center py-3 px-4">
@@ -330,11 +330,11 @@ export default function TeamManagement() {
                 </tr>
                 <tr>
                   <td className="py-3 px-4">
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-green-500 text-white flex items-center justify-center ml-2">
+                    <div className="flex items-center justify-end">
+                      <span className="mr-2">محمد علي</span>
+                      <div className="h-8 w-8 rounded-full bg-green-500 text-white flex items-center justify-center">
                         <span className="font-bold">مع</span>
                       </div>
-                      <span>محمد علي</span>
                     </div>
                   </td>
                   <td className="text-center py-3 px-4">

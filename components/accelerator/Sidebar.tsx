@@ -62,7 +62,7 @@ export default function Sidebar() {
                     "flex items-center justify-end p-2 mx-2 rounded-lg",
                     pathname === item.href
                       ? "bg-primary text-primary-foreground"
-                      : "hover:bg-accent hover:text-accent-foreground",
+                      : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
                   )}
                 >
                   <span className={cn("ml-2", { "sr-only": isCollapsed })}>{item.name}</span>

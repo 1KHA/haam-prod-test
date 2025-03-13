@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Code, Rocket } from "lucide-react"
+import { Rocket } from "lucide-react"
 
 export default function SignUpStep1() {
   const router = useRouter()
@@ -35,10 +35,10 @@ export default function SignUpStep1() {
           onClick={() => handleSelect("hackathon")}
         >
           <CardContent className="p-6 flex flex-col items-center text-center">
-            <Code className="h-12 w-12 mb-4 text-primary" />
-            <h2 className="text-xl font-bold">هاكاثون</h2>
+            <Rocket className="h-12 w-12 mb-4 text-primary" />
+            <h2 className="text-xl font-bold">هاكثون</h2>
             <p className="text-muted-foreground mt-2">
-              سجل في الهاكاثون وشارك في تحديات البرمجة والابتكار
+              سجل في منصة ديم وشارك في تحديات البرمجة والابتكار
             </p>
           </CardContent>
         </Card>
@@ -49,9 +49,9 @@ export default function SignUpStep1() {
         >
           <CardContent className="p-6 flex flex-col items-center text-center">
             <Rocket className="h-12 w-12 mb-4 text-primary" />
-            <h2 className="text-xl font-bold">مسرع الأعمال</h2>
+            <h2 className="text-xl font-bold">مسرعة الأعمال</h2>
             <p className="text-muted-foreground mt-2">
-              انضم إلى برنامج مسرع الأعمال لتطوير مشروعك وتنميته
+              انضم إلى برنامج مسرعة الأعمال لتطوير مشروعك وتنميته
             </p>
           </CardContent>
         </Card>

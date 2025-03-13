@@ -41,7 +41,7 @@ export default function SignUpRoleSelection() {
         <p className="text-muted-foreground mt-2">
           {signupType === "hackathon" 
             ? "حدد دورك في الهاكاثون" 
-            : "حدد دورك في مسرع الأعمال"}
+            : "حدد دورك في مسرعة الأعمال"}
         </p>
       </div>
       
@@ -56,7 +56,7 @@ export default function SignUpRoleSelection() {
             <p className="text-muted-foreground mt-2">
               {signupType === "hackathon" 
                 ? "سجل كمشارك في الهاكاثون وانضم إلى الفرق" 
-                : "سجل كمسرع أعمال لإدارة البرامج والشركات الناشئة"}
+                : "سجل في مسرعة الأعمال لإدارة البرامج والشركات الناشئة"}
             </p>
           </CardContent>
         </Card>

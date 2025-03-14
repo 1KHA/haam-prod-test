@@ -1,52 +1,238 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Building, Mail, Phone, MapPin, Globe, Upload, Save, Edit, BookOpen } from "lucide-react"
+import { User, Building, Mail, Phone, MapPin, Globe, Upload, Save, Edit, BookOpen, Briefcase } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
+// Define types for role-specific profiles
+interface AcceleratorProfile {
+  organizationName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  description?: string;
+  foundingDate?: string;
+  teamSize?: number;
+  industry?: string;
+}
+
+interface MentorProfile {
+  expertise?: string;
+  experience?: string;
+  availability?: string;
+  position?: string;
+}
+
+interface StartupProfile {
+  companyName?: string;
+  industry?: string;
+  stage?: string;
+  foundingDate?: string;
+  website?: string;
+  description?: string;
+  teamSize?: number;
+}
+
+interface ProfileData {
+  bio?: string;
+  avatar?: string;
+  phone?: string;
+  address?: string;
+}
+
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState("personal")
+  const [isLoading, setIsLoading] = useState(true)
+  const [userData, setUserData] = useState<any>(null)
   
-  // Mock data for the profile
+  // Profile data state
   const [profileData, setProfileData] = useState({
     personal: {
-      name: "أحمد محمد",
-      email: "ahmed@example.com",
-      phone: "+966 50 123 4567",
-      position: "مدير البرامج",
-      bio: "خبرة أكثر من 10 سنوات في مجال ريادة الأعمال وتطوير الشركات الناشئة. عملت مع أكثر من 50 شركة ناشئة في مجالات مختلفة.",
+      name: "",
+      email: "",
+      phone: "+966 50 123 4567", // Default phone number
+      position: "",
+      bio: "",
       avatar: "/placeholder-avatar.jpg",
-      specialization: "إدارة الأعمال"
+      specialization: "تقنية المعلومات", // Default specialization
+      role: ""
     },
     company: {
-      name: "مسرع الأعمال التقني",
-      email: "info@techaccelerator.com",
-      phone: "+966 11 123 4567",
-      website: "www.techaccelerator.com",
-      address: "الرياض، المملكة العربية السعودية",
-      description: "مسرع أعمال متخصص في دعم الشركات الناشئة في مجال التكنولوجيا. نقدم برامج تسريع مكثفة لمدة 3-6 أشهر، بالإضافة إلى التمويل والإرشاد والتوجيه.",
+      name: "",
+      email: "",
+      phone: "",
+      website: "",
+      address: "",
+      description: "",
       logo: "/placeholder-logo.jpg",
-      founded: "2018",
-      size: "10-50 موظف",
-      industry: "تكنولوجيا المعلومات"
+      founded: "",
+      size: "",
+      industry: ""
     }
   })
+
+  // Fetch user data from API
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!token) return
+      
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setUserData(data)
+          console.log("User data fetched:", data) // Debug log
+        } else {
+          console.error('Failed to fetch user data')
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchUserData()
+  }, [token])
+
+  // Initialize profile data with user data
+  useEffect(() => {
+    if (userData) {
+      // Map role to Arabic
+      const roleInArabic = mapRoleToArabic(userData.role)
+      
+      // Get profile data
+      const profile: ProfileData = userData.profile || {}
+      
+      // Get role-specific profile
+      let roleProfile: any = {}
+      if (userData.role === 'ACCELERATOR' && userData.acceleratorProfile) {
+        roleProfile = userData.acceleratorProfile as AcceleratorProfile
+      } else if (userData.role === 'MENTOR' && userData.mentorProfile) {
+        roleProfile = userData.mentorProfile as MentorProfile
+      } else if (userData.role === 'PARTICIPANT' && userData.participantProfile) {
+        roleProfile = userData.participantProfile
+      } else if (userData.role === 'STARTUP' && userData.startupProfile) {
+        roleProfile = userData.startupProfile as StartupProfile
+      } else if (userData.role === 'INVESTOR' && userData.investorProfile) {
+        roleProfile = userData.investorProfile
+      } else if (userData.role === 'JUDGE' && userData.judgeProfile) {
+        roleProfile = userData.judgeProfile
+      } else if (userData.role === 'ADMIN' && userData.adminProfile) {
+        roleProfile = userData.adminProfile
+      } else if (userData.role === 'PROGRAM_MANAGER' && userData.programManagerProfile) {
+        roleProfile = userData.programManagerProfile
+      }
+      
+      setProfileData({
+        personal: {
+          name: userData.name || "",
+          email: userData.email || "",
+          phone: profile.phone || profileData.personal.phone, // Use default if not available
+          position: (roleProfile as MentorProfile)?.position || "",
+          bio: profile.bio || "",
+          avatar: profile.avatar || "/placeholder-avatar.jpg",
+          specialization: userData.specialization || profileData.personal.specialization, // Use default if not available
+          role: roleInArabic
+        },
+        company: {
+          name: (roleProfile as AcceleratorProfile)?.organizationName || (roleProfile as StartupProfile)?.companyName || "",
+          email: (roleProfile as AcceleratorProfile)?.email || "",
+          phone: (roleProfile as AcceleratorProfile)?.phone || "",
+          website: (roleProfile as AcceleratorProfile)?.website || (roleProfile as StartupProfile)?.website || "",
+          address: profile.address || "",
+          description: (roleProfile as AcceleratorProfile)?.description || (roleProfile as StartupProfile)?.description || "",
+          logo: "/placeholder-logo.jpg",
+          founded: (roleProfile as AcceleratorProfile)?.foundingDate || (roleProfile as StartupProfile)?.foundingDate 
+            ? new Date((roleProfile as AcceleratorProfile)?.foundingDate || (roleProfile as StartupProfile)?.foundingDate || "").getFullYear().toString() 
+            : "",
+          size: (roleProfile as AcceleratorProfile)?.teamSize || (roleProfile as StartupProfile)?.teamSize 
+            ? `${(roleProfile as AcceleratorProfile)?.teamSize || (roleProfile as StartupProfile)?.teamSize} موظف` 
+            : "",
+          industry: (roleProfile as AcceleratorProfile)?.industry || (roleProfile as StartupProfile)?.industry || ""
+        }
+      })
+    } else if (user) {
+      // Fallback to auth context if API call fails
+      const roleInArabic = mapRoleToArabic(user.role)
+      
+      setProfileData(prevData => ({
+        ...prevData,
+        personal: {
+          ...prevData.personal,
+          name: user.name || "",
+          email: user.email || "",
+          specialization: user.specialization || prevData.personal.specialization, // Use default if not available
+          role: roleInArabic
+        }
+      }))
+    }
+  }, [userData, user])
+
+  // Helper function to map role to Arabic
+  const mapRoleToArabic = (role: string | undefined) => {
+    if (!role) return ""
+    
+    const roleMap: Record<string, string> = {
+      "ADMIN": "مدير النظام",
+      "PROGRAM_MANAGER": "مدير البرنامج",
+      "STARTUP": "شركة ناشئة",
+      "MENTOR": "مرشد",
+      "INVESTOR": "مستثمر",
+      "JUDGE": "محكم",
+      "PARTICIPANT": "مشارك",
+      "ACCELERATOR": "مسرع أعمال"
+    }
+    
+    return roleMap[role] || role
+  }
 
   const handleEdit = () => {
     setIsEditing(true)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsEditing(false)
+    
     // Here you would typically save the data to the backend
+    // For example:
+    /*
+    try {
+      const response = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileData)
+      })
+      
+      if (response.ok) {
+        alert("تم حفظ البيانات بنجاح")
+      } else {
+        alert("حدث خطأ أثناء حفظ البيانات")
+      }
+    } catch (error) {
+      console.error('Error saving profile data:', error)
+      alert("حدث خطأ أثناء حفظ البيانات")
+    }
+    */
+    
+    // For now, just show a success message
     alert("تم حفظ البيانات بنجاح")
   }
 
@@ -58,6 +244,10 @@ export default function ProfilePage() {
         [field]: value
       }
     })
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">جاري تحميل البيانات...</div>
   }
 
   return (
@@ -106,6 +296,18 @@ export default function ProfilePage() {
                         value={profileData.personal.name} 
                         onChange={(e) => handleChange('personal', 'name', e.target.value)}
                         disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">الدور</Label>
+                    <div className="flex items-center">
+                      <Briefcase className="h-4 w-4 ml-2 text-muted-foreground" />
+                      <Input 
+                        id="role" 
+                        value={profileData.personal.role} 
+                        disabled={true} // Role should not be editable
+                        className="text-right"
                       />
                     </div>
                   </div>

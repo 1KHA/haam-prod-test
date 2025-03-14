@@ -10,6 +10,7 @@ interface User {
   email: string;
   name: string;
   role: UserRole;
+  specialization?: string;
 }
 
 interface AuthContextType {
@@ -28,7 +29,8 @@ interface SignUpData {
   password: string;
   name: string;
   role: UserRole;
-  companyName?: string;
+  specialization?: string;
+  organizationName?: string;
   // Add other role-specific fields as needed
 }
 

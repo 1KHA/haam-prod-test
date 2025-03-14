@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         name,
         role: role as any, // Type assertion to bypass type checking
-        specialization, // Add specialization field
       },
     });
 
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
     await prisma.profile.create({
       data: {
         userId: user.id,
-        phone, // Add phone field
+        phone: phone || null, // Add phone field
       },
     });
 
@@ -143,13 +142,13 @@ export async function POST(request: NextRequest) {
       role: user.role as UserRole,
     });
 
-    // Return user data and token with specialization
+    // Return user data and token
     const userData = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      specialization: user.specialization,
+      specialization: specialization || null,
     };
 
     return NextResponse.json({

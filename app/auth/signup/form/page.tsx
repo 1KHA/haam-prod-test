@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/contexts/auth-context"
 import { UserRole } from "@/lib/auth"
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 export default function SignUpForm() {
   const router = useRouter()
@@ -20,12 +28,47 @@ export default function SignUpForm() {
     password: "",
     confirmPassword: "",
     phone: "",
+    specialization: "",
   })
   
   const [errors, setErrors] = useState({
     password: "",
     confirmPassword: "",
   })
+
+  const specializations = [
+    "هندسة البرمجيات",
+    "علوم الحاسب",
+    "الذكاء الاصطناعي",
+    "تحليل البيانات",
+    "أمن المعلومات",
+    "تطوير الويب",
+    "تطوير تطبيقات الجوال",
+    "إدارة المشاريع التقنية",
+    "تصميم واجهات المستخدم",
+    "تجربة المستخدم",
+    "التسويق الرقمي",
+    "ريادة الأعمال",
+    "الهندسة المدنية",
+    "الهندسة الميكانيكية",
+    "الهندسة الكهربائية",
+    "الهندسة الصناعية",
+    "الطب",
+    "الصيدلة",
+    "التمريض",
+    "العلوم الصحية",
+    "المحاسبة",
+    "المالية",
+    "إدارة الأعمال",
+    "الموارد البشرية",
+    "القانون",
+    "التعليم",
+    "علم النفس",
+    "علم الاجتماع",
+    "الإعلام والاتصال",
+    "الفنون والتصميم",
+    "أخرى"
+  ]
 
   useEffect(() => {
     // Retrieve the signup type and role from localStorage
@@ -49,6 +92,10 @@ export default function SignUpForm() {
     if (name === "password" || name === "confirmPassword") {
       validatePasswords(name, value)
     }
+  }
+  
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, specialization: value }))
   }
   
   const validatePasswords = (field: string, value: string) => {
@@ -114,6 +161,7 @@ export default function SignUpForm() {
       email: formData.email,
       password: formData.password,
       role: userRole,
+      specialization: formData.specialization,
       organizationName: userRole === UserRole.ACCELERATOR ? "My Accelerator" : undefined,
     };
     
@@ -199,6 +247,27 @@ export default function SignUpForm() {
             onChange={handleChange}
             required
           />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="specialization" className="text-sm font-medium">
+            التخصص
+          </Label>
+          <Select
+            value={formData.specialization}
+            onValueChange={handleSelectChange}
+          >
+            <SelectTrigger id="specialization" className="text-right justify-end">
+              <SelectValue placeholder="اختر تخصصك" />
+            </SelectTrigger>
+            <SelectContent position="item-aligned" align="start" className="text-right justify-end">
+              {specializations.map((specialization) => (
+                <SelectItem key={specialization} value={specialization} className="text-right justify-end">
+                  {specialization}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="space-y-2">

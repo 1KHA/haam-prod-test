@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         judgeProfile: user.role === 'JUDGE',
         adminProfile: user.role === 'ADMIN',
         programManagerProfile: user.role === 'PROGRAM_MANAGER',
+        acceleratorProfile: user.role === 'ACCELERATOR',
       },
     });
 

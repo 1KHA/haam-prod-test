@@ -44,6 +44,7 @@ interface ProfileData {
   avatar?: string;
   phone?: string;
   address?: string;
+  position?: string; // Added position field to match the database schema
 }
 
 export default function ProfilePage() {
@@ -52,6 +53,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("personal")
   const [isLoading, setIsLoading] = useState(true)
   const [userData, setUserData] = useState<any>(null)
+  const [saveStatus, setSaveStatus] = useState<string | null>(null)
   
   // Profile data state
   const [profileData, setProfileData] = useState({
@@ -143,7 +145,7 @@ export default function ProfilePage() {
           name: userData.name || "",
           email: userData.email || "",
           phone: profile.phone || profileData.personal.phone, // Use default if not available
-          position: (roleProfile as MentorProfile)?.position || "",
+          position: profile.position || "", // Use position from profile
           bio: profile.bio || "",
           avatar: profile.avatar || "/placeholder-avatar.jpg",
           specialization: userData.specialization || profileData.personal.specialization, // Use default if not available
@@ -166,6 +168,8 @@ export default function ProfilePage() {
           industry: (roleProfile as AcceleratorProfile)?.industry || (roleProfile as StartupProfile)?.industry || ""
         }
       })
+      
+      console.log("Profile position:", profile.position) // Debug log
     } else if (user) {
       // Fallback to auth context if API call fails
       const roleInArabic = mapRoleToArabic(user.role)
@@ -203,15 +207,16 @@ export default function ProfilePage() {
 
   const handleEdit = () => {
     setIsEditing(true)
+    setSaveStatus(null)
   }
 
   const handleSave = async () => {
     setIsEditing(false)
+    setSaveStatus("saving")
     
-    // Here you would typically save the data to the backend
-    // For example:
-    /*
     try {
+      console.log("Saving profile data:", profileData) // Debug log
+      
       const response = await fetch('/api/profile/update', {
         method: 'POST',
         headers: {
@@ -222,21 +227,25 @@ export default function ProfilePage() {
       })
       
       if (response.ok) {
-        alert("تم حفظ البيانات بنجاح")
+        const data = await response.json()
+        console.log("Profile updated successfully:", data)
+        setSaveStatus("success")
+        
+        // Update user data with the response
+        setUserData(data.user)
       } else {
-        alert("حدث خطأ أثناء حفظ البيانات")
+        console.error("Failed to update profile")
+        setSaveStatus("error")
       }
     } catch (error) {
       console.error('Error saving profile data:', error)
-      alert("حدث خطأ أثناء حفظ البيانات")
+      setSaveStatus("error")
     }
-    */
-    
-    // For now, just show a success message
-    alert("تم حفظ البيانات بنجاح")
   }
 
   const handleChange = (section: 'personal' | 'company', field: string, value: string) => {
+    console.log(`Changing ${section}.${field} to:`, value) // Debug log
+    
     setProfileData({
       ...profileData,
       [section]: {
@@ -254,23 +263,30 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">الملف الشخصي</h1>
-        <Button 
-          onClick={isEditing ? handleSave : handleEdit}
-          className="flex items-center gap-2"
-        >
-          {isEditing ? (
-            <>
-              <Save className="h-4 w-4" />
-              حفظ التغييرات
-            </>
-          ) : (
-            <>
-              <Edit className="h-4 w-4" />
-              تعديل الملف الشخصي
-            </>
+        <div className="flex items-center gap-2">
+          {saveStatus === "success" && (
+            <span className="text-green-600 text-sm">تم حفظ البيانات بنجاح</span>
           )}
-        </Button>
-        
+          {saveStatus === "error" && (
+            <span className="text-red-600 text-sm">حدث خطأ أثناء حفظ البيانات</span>
+          )}
+          <Button 
+            onClick={isEditing ? handleSave : handleEdit}
+            className="flex items-center gap-2"
+          >
+            {isEditing ? (
+              <>
+                <Save className="h-4 w-4" />
+                حفظ التغييرات
+              </>
+            ) : (
+              <>
+                <Edit className="h-4 w-4" />
+                تعديل الملف الشخصي
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -284,10 +300,26 @@ export default function ProfilePage() {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle>المعلومات الشخصية</CardTitle>
-                <CardDescription>معلوماتك الشخصية وبيانات الاتصال</CardDescription>
+                
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                <div className="space-y-2">
+                    <Label htmlFor="role">الدور</Label>
+                    <div className="flex items-center">
+                      
+                      <Input 
+                        id="role" 
+                        value={profileData.personal.role} 
+                        disabled={true} // Role should not be editable
+                        className="text-right"
+                      />
+                      <Briefcase className="h-4 w-4 ml-2 text-muted-foreground" />
+                    </div>
+                  </div>
+                  
+                  
                   <div className="space-y-2">
                     <Label htmlFor="name">الاسم الكامل</Label>
                     <div className="flex items-center">
@@ -302,19 +334,7 @@ export default function ProfilePage() {
                       <User className="h-4 w-4 ml-2 text-muted-foreground" />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">الدور</Label>
-                    <div className="flex items-center">
-                      
-                      <Input 
-                        id="role" 
-                        value={profileData.personal.role} 
-                        disabled={true} // Role should not be editable
-                        className="text-right"
-                      />
-                      <Briefcase className="h-4 w-4 ml-2 text-muted-foreground" />
-                    </div>
-                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="position">المنصب</Label>
                     <Input 
@@ -386,7 +406,7 @@ export default function ProfilePage() {
             <Card>
               <CardHeader>
                 <CardTitle>الصورة الشخصية</CardTitle>
-                <CardDescription>صورتك الشخصية المعروضة في الملف</CardDescription>
+                
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden">

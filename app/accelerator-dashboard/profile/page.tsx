@@ -290,25 +290,28 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <Label htmlFor="name">الاسم الكامل</Label>
                     <div className="flex items-center">
-                      <User className="h-4 w-4 ml-2 text-muted-foreground" />
+                      
                       <Input 
+                        className="text-end"
                         id="name" 
                         value={profileData.personal.name} 
                         onChange={(e) => handleChange('personal', 'name', e.target.value)}
                         disabled={!isEditing}
                       />
+                      <User className="h-4 w-4 ml-2 text-muted-foreground" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">الدور</Label>
                     <div className="flex items-center">
-                      <Briefcase className="h-4 w-4 ml-2 text-muted-foreground" />
+                      
                       <Input 
                         id="role" 
                         value={profileData.personal.role} 
                         disabled={true} // Role should not be editable
                         className="text-right"
                       />
+                      <Briefcase className="h-4 w-4 ml-2 text-muted-foreground" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -323,26 +326,30 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <Label htmlFor="email">البريد الإلكتروني</Label>
                     <div className="flex items-center">
-                      <Mail className="h-4 w-4 ml-2 text-muted-foreground" />
+                      
                       <Input 
+                        className="text-end"
                         id="email" 
                         type="email" 
                         value={profileData.personal.email} 
                         onChange={(e) => handleChange('personal', 'email', e.target.value)}
                         disabled={!isEditing}
                       />
+                      <Mail className="h-4 w-4 ml-2 text-muted-foreground text-end" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">رقم الهاتف</Label>
                     <div className="flex items-center">
-                      <Phone className="h-4 w-4 ml-2 text-muted-foreground" />
+                      
                       <Input 
+                        className="text-end"
                         id="phone" 
                         value={profileData.personal.phone} 
                         onChange={(e) => handleChange('personal', 'phone', e.target.value)}
                         disabled={!isEditing}
                       />
+                      <Phone className="h-4 w-4 ml-2 text-muted-foreground" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -356,6 +363,7 @@ export default function ProfilePage() {
                         disabled={!isEditing}
                         className="text-right"
                       />
+                      <BookOpen className="h-4 w-4 ml-2 text-muted-foreground" />
                     </div>
                   </div>
                 </div>

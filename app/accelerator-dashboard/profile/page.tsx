@@ -195,7 +195,7 @@ export default function ProfilePage() {
       "INVESTOR": "مستثمر",
       "JUDGE": "محكم",
       "PARTICIPANT": "مشارك",
-      "ACCELERATOR": "مسرع أعمال"
+      "ACCELERATOR": "رائد أعمال"
     }
     
     return roleMap[role] || role
@@ -253,6 +253,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">الملف الشخصي</h1>
         <Button 
           onClick={isEditing ? handleSave : handleEdit}
           className="flex items-center gap-2"
@@ -269,7 +270,7 @@ export default function ProfilePage() {
             </>
           )}
         </Button>
-        <h1 className="text-3xl font-bold">الملف الشخصي</h1>
+        
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -317,6 +318,7 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <Label htmlFor="position">المنصب</Label>
                     <Input 
+                      className="text-end"
                       id="position" 
                       value={profileData.personal.position} 
                       onChange={(e) => handleChange('personal', 'position', e.target.value)}
@@ -370,6 +372,7 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <Label htmlFor="bio">نبذة شخصية</Label>
                   <Textarea 
+                    className="text-end"
                     id="bio" 
                     rows={4} 
                     value={profileData.personal.bio} 

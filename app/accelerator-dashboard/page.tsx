@@ -162,7 +162,7 @@ export default function AcceleratorDashboard() {
                         </p>
                         <p className="text-xs text-muted-foreground">{event.date} • {event.time}</p>
                       </div>
-                      <div className="p-2 rounded-full mr-2" style={{ backgroundColor: "#e0f2fe" }}>
+                      <div className="p-2 rounded-full mr-2 ml-2" style={{ backgroundColor: "#e0f2fe" }}>
                         {event.type === "ورشة عمل" && <Wrench className="h-4 w-4" style={{ color: "#799dd7" }} />}
                         {event.type === "جلسة تعريفية" && <Megaphone className="h-4 w-4" style={{ color: "#799dd7" }} />}
                         {event.type === "شبكات" && <Handshake className="h-4 w-4" style={{ color: "#799dd7" }} />}

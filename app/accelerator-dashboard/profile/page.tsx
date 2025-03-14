@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Building, Mail, Phone, MapPin, Globe, Upload, Save, Edit } from "lucide-react"
+import { User, Building, Mail, Phone, MapPin, Globe, Upload, Save, Edit, BookOpen } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
 export default function ProfilePage() {
@@ -23,7 +23,8 @@ export default function ProfilePage() {
       phone: "+966 50 123 4567",
       position: "مدير البرامج",
       bio: "خبرة أكثر من 10 سنوات في مجال ريادة الأعمال وتطوير الشركات الناشئة. عملت مع أكثر من 50 شركة ناشئة في مجالات مختلفة.",
-      avatar: "/placeholder-avatar.jpg"
+      avatar: "/placeholder-avatar.jpg",
+      specialization: "إدارة الأعمال"
     },
     company: {
       name: "مسرع الأعمال التقني",
@@ -139,6 +140,19 @@ export default function ProfilePage() {
                         value={profileData.personal.phone} 
                         onChange={(e) => handleChange('personal', 'phone', e.target.value)}
                         disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="specialization">التخصص</Label>
+                    <div className="flex items-center">
+                      <BookOpen className="h-4 w-4 ml-2 text-muted-foreground" />
+                      <Input 
+                        id="specialization" 
+                        value={profileData.personal.specialization} 
+                        onChange={(e) => handleChange('personal', 'specialization', e.target.value)}
+                        disabled={!isEditing}
+                        className="text-right"
                       />
                     </div>
                   </div>

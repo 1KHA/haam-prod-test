@@ -16,6 +16,7 @@ model User {
   password      String
   name          String
   role          UserRole
+  specialization String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   profile       Profile?

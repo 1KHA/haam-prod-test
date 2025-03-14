@@ -357,7 +357,7 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <Label htmlFor="specialization">التخصص</Label>
                     <div className="flex items-center">
-                      <BookOpen className="h-4 w-4 ml-2 text-muted-foreground" />
+                      
                       <Input 
                         id="specialization" 
                         value={profileData.personal.specialization} 

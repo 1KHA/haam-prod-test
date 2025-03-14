@@ -11,6 +11,9 @@ interface User {
   name: string;
   role: UserRole;
   specialization?: string;
+  profile?: {
+    phone?: string;
+  };
 }
 
 interface AuthContextType {
@@ -30,6 +33,7 @@ interface SignUpData {
   name: string;
   role: UserRole;
   specialization?: string;
+  phone?: string; // Add phone field
   organizationName?: string;
   // Add other role-specific fields as needed
 }
@@ -99,6 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setError(null);
 
+      console.log("Auth context signUp with data:", userData);
+
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -112,6 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to sign up');
       }
+
+      console.log("Signup response:", data);
 
       // Save user and token to state and localStorage
       setUser(data.user);

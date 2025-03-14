@@ -55,23 +55,28 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user with specialization
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
         role: role as any, // Type assertion to bypass type checking
+        specialization, // Add specialization directly
       },
     });
+
+    console.log('User created with specialization:', specialization);
 
     // Create basic profile with phone
     await prisma.profile.create({
       data: {
         userId: user.id,
-        phone: phone || null, // Add phone field
+        phone, // Add phone field directly
       },
     });
+
+    console.log('Profile created with phone:', phone);
 
     // Create role-specific profile
     switch (role) {
@@ -135,6 +140,16 @@ export async function POST(request: NextRequest) {
         break;
     }
 
+    // Fetch the complete user data with profile
+    const completeUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        profile: true,
+      },
+    });
+
+    console.log('Complete user data:', completeUser);
+
     // Generate token
     const token = generateToken({
       userId: user.id,
@@ -148,7 +163,8 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       role: user.role,
-      specialization: specialization || null,
+      specialization: user.specialization,
+      profile: completeUser?.profile,
     };
 
     return NextResponse.json({

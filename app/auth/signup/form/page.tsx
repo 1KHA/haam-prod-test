@@ -95,6 +95,7 @@ export default function SignUpForm() {
   }
   
   const handleSelectChange = (value: string) => {
+    console.log("Specialization selected:", value)
     setFormData(prev => ({ ...prev, specialization: value }))
   }
   
@@ -162,8 +163,11 @@ export default function SignUpForm() {
       password: formData.password,
       role: userRole,
       specialization: formData.specialization,
+      phone: formData.phone, // Add phone to userData
       organizationName: userRole === UserRole.ACCELERATOR ? "My Accelerator" : undefined,
     };
+    
+    console.log("Submitting user data:", userData);
     
     // Sign up user
     await signUp(userData);
@@ -256,6 +260,7 @@ export default function SignUpForm() {
           <Select
             value={formData.specialization}
             onValueChange={handleSelectChange}
+            required
           >
             <SelectTrigger id="specialization" className="text-right justify-end">
               <SelectValue placeholder="اختر تخصصك" />

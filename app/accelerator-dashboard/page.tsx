@@ -111,7 +111,7 @@ export default function AcceleratorDashboard() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardHeader>
                     <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                     {stat.icon}
                   </CardHeader>

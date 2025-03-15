@@ -16,7 +16,8 @@ import {
   Target, 
   HelpCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Briefcase
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/button"
 const navItems = [
   { name: "لوحة التحكم", href: "/accelerator-dashboard", icon: Home },
   { name: "الملف الشخصي", href: "/accelerator-dashboard/profile", icon: User },
+  { name: "الشركات الناشئة", href: "/accelerator-dashboard/startups", icon: Briefcase },
   { name: "فريق العمل", href: "/accelerator-dashboard/team", icon: Users },
   { name: "التقديم للبرامج", href: "/accelerator-dashboard/apply", icon: Rocket },
   { name: "الموجهون", href: "/accelerator-dashboard/mentors", icon: BookOpen },
@@ -60,7 +62,7 @@ export default function Sidebar() {
                   href={item.href}
                   className={cn(
                     "flex items-center justify-start p-2 mx-2 rounded-lg",
-                    pathname === item.href
+                    pathname === item.href || pathname.startsWith(`${item.href}/`)
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
                   )}

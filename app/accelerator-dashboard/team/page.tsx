@@ -371,15 +371,11 @@ export default function TeamPage() {
               <p>جاري تحميل البيانات...</p>
             </div>
           ) : (
-            <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", "rtl-grid")}>
+            <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-start", "rtl-grid")}>
               {filteredMembers.map((member) => (
-                <Card key={member.id} className={editingMemberId === member.id ? "border-primary" : ""}>
-                  <CardHeader className="pb-2 justfy-start">
-                    <div className="flex justify-between items-start">
-                      <div className="flex flex-col items-start">
-                        <CardTitle className="text-lg">{member.name}</CardTitle>
-                        <CardDescription>{member.position}</CardDescription>
-                      </div>
+                <Card key={member.id} className={cn(editingMemberId === member.id ? "border-primary" : "", "w-full")}>
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-row-reverse justify-between items-start">
                       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                         <img 
                           src={member.avatar} 
@@ -390,6 +386,10 @@ export default function TeamPage() {
                             target.src = "https://via.placeholder.com/150";
                           }}
                         />
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <CardTitle className="text-lg">{member.name}</CardTitle>
+                        <CardDescription>{member.position}</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -459,29 +459,21 @@ export default function TeamPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="space-y-2 text-left">
+                        <div className="space-y-2 text-right rtl-info">
                           <div className="flex items-center justify-start">
-                            <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <Mail className="h-4 w-4 ml-2 text-muted-foreground" />
                             <span className="text-sm">{member.email}</span>
                           </div>
                           <div className="flex items-center justify-start">
-                            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <Phone className="h-4 w-4 ml-2 text-muted-foreground" />
                             <span className="text-sm">{member.phone}</span>
                           </div>
                           <div className="flex items-center justify-start">
-                            <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <User className="h-4 w-4 ml-2 text-muted-foreground" />
                             <span className="text-sm">{member.department}</span>
                           </div>
                         </div>
-                        <div className="flex justify-start mt-4 gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditMember(member)}
-                            disabled={saveStatus === "saving" || editingMemberId !== null}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                        <div className="flex justify-end mt-4 gap-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -490,6 +482,14 @@ export default function TeamPage() {
                             disabled={saveStatus === "saving"}
                           >
                             <Trash className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditMember(member)}
+                            disabled={saveStatus === "saving" || editingMemberId !== null}
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </>
@@ -510,6 +510,9 @@ export default function TeamPage() {
 
       <style jsx global>{`
         .rtl-grid {
+          direction: rtl;
+        }
+        .rtl-info {
           direction: rtl;
         }
       `}</style>

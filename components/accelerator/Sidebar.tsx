@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/accelerator-dashboard", icon: Home },
+  { name: "لوحة التحكم", href: "/accelerator-dashboard", icon: Home, exact: true },
   { name: "الملف الشخصي", href: "/accelerator-dashboard/profile", icon: User },
   { name: "الشركات الناشئة", href: "/accelerator-dashboard/startups", icon: Briefcase },
   { name: "فريق العمل", href: "/accelerator-dashboard/team", icon: Users },
@@ -39,6 +39,14 @@ const navItems = [
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+
+  // Function to check if a nav item is active
+  const isActive = (item: { href: string, exact?: boolean }) => {
+    if (item.exact) {
+      return pathname === item.href
+    }
+    return pathname === item.href || pathname.startsWith(`${item.href}/`)
+  }
 
   return (
     <motion.aside
@@ -62,7 +70,7 @@ export default function Sidebar() {
                   href={item.href}
                   className={cn(
                     "flex items-center justify-start p-2 mx-2 rounded-lg",
-                    pathname === item.href || pathname.startsWith(`${item.href}/`)
+                    isActive(item)
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
                   )}

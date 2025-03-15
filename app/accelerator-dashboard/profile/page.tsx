@@ -291,7 +291,7 @@ export default function ProfilePage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="justify-end">
-          <TabsTrigger value="company">معلومات المسرع</TabsTrigger>
+          <TabsTrigger value="company">معلومات الشركة</TabsTrigger>
           <TabsTrigger value="personal">المعلومات الشخصية</TabsTrigger>
         </TabsList>
 
@@ -436,7 +436,7 @@ export default function ProfilePage() {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle>معلومات المسرع</CardTitle>
-                <CardDescription>معلومات عن مسرع الأعمال الخاص بك</CardDescription>
+                
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -544,14 +544,14 @@ export default function ProfilePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>شعار المسرع</CardTitle>
-                <CardDescription>شعار مسرع الأعمال الخاص بك</CardDescription>
+                <CardTitle>شعار الشركة</CardTitle>
+                
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <div className="w-32 h-32 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                   <img 
                     src={profileData.company.logo} 
-                    alt="شعار المسرع" 
+                    alt="شعار الشركة" 
                     className="w-full h-full object-contain"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;

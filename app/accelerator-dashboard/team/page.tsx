@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { cn } from "@/lib/utils"
 
 interface TeamMember {
   id: string
@@ -370,12 +371,12 @@ export default function TeamPage() {
               <p>جاري تحميل البيانات...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", "rtl-grid")}>
               {filteredMembers.map((member) => (
                 <Card key={member.id} className={editingMemberId === member.id ? "border-primary" : ""}>
-                  <CardHeader className="pb-2">
+                  <CardHeader className="pb-2 justfy-start">
                     <div className="flex justify-between items-start">
-                      <div className="flex flex-col items-end">
+                      <div className="flex flex-col items-start">
                         <CardTitle className="text-lg">{member.name}</CardTitle>
                         <CardDescription>{member.position}</CardDescription>
                       </div>
@@ -458,21 +459,29 @@ export default function TeamPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="space-y-2 text-right">
-                          <div className="flex items-center justify-end">
+                        <div className="space-y-2 text-left">
+                          <div className="flex items-center justify-start">
+                            <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                             <span className="text-sm">{member.email}</span>
-                            <Mail className="h-4 w-4 ml-2 text-muted-foreground" />
                           </div>
-                          <div className="flex items-center justify-end">
+                          <div className="flex items-center justify-start">
+                            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                             <span className="text-sm">{member.phone}</span>
-                            <Phone className="h-4 w-4 ml-2 text-muted-foreground" />
                           </div>
-                          <div className="flex items-center justify-end">
+                          <div className="flex items-center justify-start">
+                            <User className="h-4 w-4 mr-2 text-muted-foreground" />
                             <span className="text-sm">{member.department}</span>
-                            <User className="h-4 w-4 ml-2 text-muted-foreground" />
                           </div>
                         </div>
-                        <div className="flex justify-end mt-4 gap-2">
+                        <div className="flex justify-start mt-4 gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditMember(member)}
+                            disabled={saveStatus === "saving" || editingMemberId !== null}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -481,14 +490,6 @@ export default function TeamPage() {
                             disabled={saveStatus === "saving"}
                           >
                             <Trash className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditMember(member)}
-                            disabled={saveStatus === "saving" || editingMemberId !== null}
-                          >
-                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </>
@@ -506,6 +507,12 @@ export default function TeamPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      <style jsx global>{`
+        .rtl-grid {
+          direction: rtl;
+        }
+      `}</style>
     </div>
   )
 }

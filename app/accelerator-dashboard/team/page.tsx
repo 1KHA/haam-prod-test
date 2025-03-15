@@ -374,8 +374,8 @@ export default function TeamPage() {
             <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-start", "rtl-grid")}>
               {filteredMembers.map((member) => (
                 <Card key={member.id} className={cn(editingMemberId === member.id ? "border-primary" : "", "w-full")}>
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-row-reverse justify-between items-start">
+                  <CardHeader className="pb-2 justify-start">
+                    <div className="flex flex-row justify-between items-start">
                       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                         <img 
                           src={member.avatar} 
@@ -387,7 +387,7 @@ export default function TeamPage() {
                           }}
                         />
                       </div>
-                      <div className="flex flex-col items-end">
+                      <div className="flex flex-col items-start pr-4">
                         <CardTitle className="text-lg">{member.name}</CardTitle>
                         <CardDescription>{member.position}</CardDescription>
                       </div>

@@ -291,7 +291,7 @@ export default function ProfilePage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="justify-end">
-          <TabsTrigger value="company">معلومات الشركة</TabsTrigger>
+          {/* Company tab is hidden/disabled */}
           <TabsTrigger value="personal">المعلومات الشخصية</TabsTrigger>
         </TabsList>
 
@@ -431,7 +431,8 @@ export default function ProfilePage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="company">
+        {/* Company tab content is still defined but not accessible through the UI */}
+        <TabsContent value="company" className="hidden">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="md:col-span-2">
               <CardHeader>
@@ -448,7 +449,7 @@ export default function ProfilePage() {
                         id="company-name" 
                         value={profileData.company.name} 
                         onChange={(e) => handleChange('company', 'name', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -461,7 +462,7 @@ export default function ProfilePage() {
                         type="email" 
                         value={profileData.company.email} 
                         onChange={(e) => handleChange('company', 'email', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -473,7 +474,7 @@ export default function ProfilePage() {
                         id="company-phone" 
                         value={profileData.company.phone} 
                         onChange={(e) => handleChange('company', 'phone', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -485,7 +486,7 @@ export default function ProfilePage() {
                         id="company-website" 
                         value={profileData.company.website} 
                         onChange={(e) => handleChange('company', 'website', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -497,7 +498,7 @@ export default function ProfilePage() {
                         id="company-address" 
                         value={profileData.company.address} 
                         onChange={(e) => handleChange('company', 'address', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={true}
                       />
                     </div>
                   </div>
@@ -507,7 +508,7 @@ export default function ProfilePage() {
                       id="company-founded" 
                       value={profileData.company.founded} 
                       onChange={(e) => handleChange('company', 'founded', e.target.value)}
-                      disabled={!isEditing}
+                      disabled={true}
                     />
                   </div>
                   <div className="space-y-2">
@@ -516,7 +517,7 @@ export default function ProfilePage() {
                       id="company-size" 
                       value={profileData.company.size} 
                       onChange={(e) => handleChange('company', 'size', e.target.value)}
-                      disabled={!isEditing}
+                      disabled={true}
                     />
                   </div>
                   <div className="space-y-2">
@@ -525,7 +526,7 @@ export default function ProfilePage() {
                       id="company-industry" 
                       value={profileData.company.industry} 
                       onChange={(e) => handleChange('company', 'industry', e.target.value)}
-                      disabled={!isEditing}
+                      disabled={true}
                     />
                   </div>
                 </div>
@@ -536,7 +537,7 @@ export default function ProfilePage() {
                     rows={4} 
                     value={profileData.company.description} 
                     onChange={(e) => handleChange('company', 'description', e.target.value)}
-                    disabled={!isEditing}
+                    disabled={true}
                   />
                 </div>
               </CardContent>
@@ -559,12 +560,6 @@ export default function ProfilePage() {
                     }}
                   />
                 </div>
-                {isEditing && (
-                  <Button variant="outline" className="w-full">
-                    <Upload className="h-4 w-4 ml-2" />
-                    تغيير الشعار
-                  </Button>
-                )}
               </CardContent>
             </Card>
           </div>

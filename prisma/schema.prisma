@@ -28,6 +28,7 @@ model User {
   adminProfile AdminProfile?
   programManagerProfile ProgramManagerProfile?
   acceleratorProfile AcceleratorProfile?
+  startups      Startup[] // Added relation to startups
 }
 
 model Profile {
@@ -137,6 +138,28 @@ model AcceleratorProfile {
   description   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// New model for startups
+model Startup {
+  id                  String    @id @default(uuid())
+  name                String
+  industry            String
+  stage               String
+  description         String
+  problem             String
+  solution            String
+  targetMarket        String?
+  businessModel       String?
+  competitiveAdvantage String?
+  teamSize            Int       @default(1)
+  fundingNeeds        String?
+  pitchDeckUrl        String?
+  status              String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  creatorId           String
+  creator             User      @relation(fields: [creatorId], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 model Hackathon {

@@ -12,15 +12,22 @@ import { useEffect } from "react"
 export function Toaster() {
   const { toasts, dismiss } = useToast()
 
-  // Auto-dismiss toasts after 5 seconds
+  // Auto-dismiss toasts after 3 seconds (changed from 5 seconds)
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+    
     toasts.forEach((toast) => {
       const timer = setTimeout(() => {
         dismiss(toast.id)
-      }, 5000)
-
-      return () => clearTimeout(timer)
+      }, 3000) // Changed from 5000 to 3000 ms
+      
+      timers.push(timer)
     })
+    
+    // Clean up timers on unmount or when toasts change
+    return () => {
+      timers.forEach(timer => clearTimeout(timer))
+    }
   }, [toasts, dismiss])
 
   return (

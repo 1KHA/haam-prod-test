@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { UserPlus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import UsersTable from "./users-table"
-import { Toaster } from "@/components/ui/toaster"
 
 export default function UsersManagement() {
   const router = useRouter()
@@ -34,8 +33,6 @@ export default function UsersManagement() {
           <UsersTable />
         </CardContent>
       </Card>
-      
-      <Toaster />
     </div>
   )
 }

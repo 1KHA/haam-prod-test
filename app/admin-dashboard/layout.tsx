@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import Sidebar from "@/components/admin/Sidebar"
 import Header from "@/components/admin/Header"
 import TopBar from "@/components/admin/TopBar"
+import { AdminToaster } from "@/components/admin/admin-toaster"
 
 export default function AdminDashboardLayout({
   children,
@@ -31,6 +32,7 @@ export default function AdminDashboardLayout({
         </main>
         <Sidebar />
       </div>
+      <AdminToaster />
     </div>
   )
 }

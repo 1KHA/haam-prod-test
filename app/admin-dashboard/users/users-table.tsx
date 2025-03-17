@@ -53,7 +53,7 @@ import {
   Mail,
   RefreshCw
 } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { showAdminToast } from "@/components/admin/admin-toaster"
 
 interface User {
   id: string
@@ -82,7 +82,6 @@ export default function UsersTable() {
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true)
   
   const router = useRouter()
-  const { toast } = useToast()
   
   // Set up SSE connection for real-time updates
   useEffect(() => {
@@ -166,17 +165,17 @@ export default function UsersTable() {
         setTotalUsers(data.pagination.total)
       } else {
         console.error('Failed to fetch users:', data.error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch users",
+        showAdminToast({
+          title: "خطأ",
+          description: "فشل في جلب المستخدمين",
           variant: "destructive"
         })
       }
     } catch (error) {
       console.error('Error fetching users:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch users",
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في جلب المستخدمين",
         variant: "destructive"
       })
     } finally {
@@ -237,9 +236,9 @@ export default function UsersTable() {
       const data = await response.json()
       
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: `Updated ${data.count} user roles to ${selectedRole}`,
+        showAdminToast({
+          title: "تم بنجاح",
+          description: `تم تحديث ${data.count} أدوار المستخدمين إلى ${selectedRole}`,
         })
         setSelectedUsers([])
         setIsRoleDialogOpen(false)
@@ -249,17 +248,17 @@ export default function UsersTable() {
           fetchUsers()
         }
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to update user roles",
+        showAdminToast({
+          title: "خطأ",
+          description: data.error || "فشل في تحديث أدوار المستخدمين",
           variant: "destructive"
         })
       }
     } catch (error) {
       console.error('Error updating user roles:', error)
-      toast({
-        title: "Error",
-        description: "Failed to update user roles",
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في تحديث أدوار المستخدمين",
         variant: "destructive"
       })
     }
@@ -284,9 +283,9 @@ export default function UsersTable() {
       const data = await response.json()
       
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: `Deleted ${data.count} users`,
+        showAdminToast({
+          title: "تم بنجاح",
+          description: `تم حذف ${data.count} مستخدمين`,
         })
         setSelectedUsers([])
         setIsDeleteDialogOpen(false)
@@ -296,17 +295,17 @@ export default function UsersTable() {
           fetchUsers()
         }
       } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to delete users",
+        showAdminToast({
+          title: "خطأ",
+          description: data.error || "فشل في حذف المستخدمين",
           variant: "destructive"
         })
       }
     } catch (error) {
       console.error('Error deleting users:', error)
-      toast({
-        title: "Error",
-        description: "Failed to delete users",
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في حذف المستخدمين",
         variant: "destructive"
       })
     }
@@ -353,7 +352,7 @@ export default function UsersTable() {
       fetchUsers()
     }
     
-    toast({
+    showAdminToast({
       title: isRealTimeEnabled ? "تم إيقاف التحديثات المباشرة" : "تم تفعيل التحديثات المباشرة",
       description: isRealTimeEnabled 
         ? "ستحتاج إلى تحديث البيانات يدويًا" 

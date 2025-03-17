@@ -78,11 +78,72 @@ export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalUsers, setTotalUsers] = useState(0)
+  const [eventSource, setEventSource] = useState<EventSource | null>(null)
+  const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true)
   
   const router = useRouter()
   const { toast } = useToast()
   
-  // Fetch users
+  // Set up SSE connection for real-time updates
+  useEffect(() => {
+    if (!isRealTimeEnabled) return
+    
+    // Close any existing connection
+    if (eventSource) {
+      eventSource.close()
+    }
+    
+    // Create a new EventSource connection
+    const newEventSource = new EventSource('/api/admin/users/sse')
+    setEventSource(newEventSource)
+    
+    // Handle incoming events
+    newEventSource.addEventListener('users', (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        
+        // Apply filters to the received data
+        let filteredUsers = data.users
+        
+        if (searchQuery) {
+          filteredUsers = filteredUsers.filter((user: User) => 
+            user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            user.email.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        }
+        
+        if (activeTab !== "all") {
+          filteredUsers = filteredUsers.filter((user: User) => 
+            user.role.toLowerCase() === activeTab.toLowerCase()
+          )
+        }
+        
+        // Update state with the filtered data
+        setUsers(filteredUsers)
+        setTotalUsers(data.pagination.total)
+        setTotalPages(data.pagination.totalPages)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error parsing SSE data:', error)
+      }
+    })
+    
+    newEventSource.addEventListener('error', () => {
+      console.error('SSE connection error')
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        newEventSource.close()
+        setEventSource(null)
+      }, 5000)
+    })
+    
+    // Clean up on unmount
+    return () => {
+      newEventSource.close()
+    }
+  }, [isRealTimeEnabled, activeTab, searchQuery])
+  
+  // Fetch users (for initial load and manual refresh)
   const fetchUsers = async () => {
     setLoading(true)
     try {
@@ -123,15 +184,19 @@ export default function UsersTable() {
     }
   }
   
-  // Initial fetch
+  // Initial fetch (only if real-time is disabled)
   useEffect(() => {
-    fetchUsers()
-  }, [currentPage, activeTab])
+    if (!isRealTimeEnabled) {
+      fetchUsers()
+    }
+  }, [currentPage, activeTab, isRealTimeEnabled])
   
   // Handle search
   const handleSearch = () => {
     setCurrentPage(1)
-    fetchUsers()
+    if (!isRealTimeEnabled) {
+      fetchUsers()
+    }
   }
   
   // Toggle user selection
@@ -178,7 +243,11 @@ export default function UsersTable() {
         })
         setSelectedUsers([])
         setIsRoleDialogOpen(false)
-        fetchUsers()
+        
+        // If real-time is disabled, manually refresh the data
+        if (!isRealTimeEnabled) {
+          fetchUsers()
+        }
       } else {
         toast({
           title: "Error",
@@ -221,7 +290,11 @@ export default function UsersTable() {
         })
         setSelectedUsers([])
         setIsDeleteDialogOpen(false)
-        fetchUsers()
+        
+        // If real-time is disabled, manually refresh the data
+        if (!isRealTimeEnabled) {
+          fetchUsers()
+        }
       } else {
         toast({
           title: "Error",
@@ -265,6 +338,29 @@ export default function UsersTable() {
     return roleMap[role] || role
   }
   
+  // Toggle real-time updates
+  const toggleRealTimeUpdates = () => {
+    setIsRealTimeEnabled(!isRealTimeEnabled)
+    
+    if (isRealTimeEnabled) {
+      // If disabling real-time, close the connection
+      if (eventSource) {
+        eventSource.close()
+        setEventSource(null)
+      }
+      
+      // Fetch data manually
+      fetchUsers()
+    }
+    
+    toast({
+      title: isRealTimeEnabled ? "تم إيقاف التحديثات المباشرة" : "تم تفعيل التحديثات المباشرة",
+      description: isRealTimeEnabled 
+        ? "ستحتاج إلى تحديث البيانات يدويًا" 
+        : "سيتم تحديث البيانات تلقائيًا عند إضافة مستخدمين جدد"
+    })
+  }
+  
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -282,12 +378,25 @@ export default function UsersTable() {
           <Button variant="outline" size="icon" onClick={handleSearch}>
             <Filter className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={fetchUsers}>
-            <RefreshCw className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={isRealTimeEnabled ? toggleRealTimeUpdates : fetchUsers}
+            title={isRealTimeEnabled ? "إيقاف التحديثات المباشرة" : "تحديث البيانات"}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRealTimeEnabled ? 'text-green-500' : ''}`} />
           </Button>
         </div>
         
         <div className="flex gap-2">
+          <Button 
+            variant={isRealTimeEnabled ? "default" : "outline"} 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={toggleRealTimeUpdates}
+          >
+            <span>{isRealTimeEnabled ? "التحديثات المباشرة مفعلة" : "تفعيل التحديثات المباشرة"}</span>
+          </Button>
           <Button variant="outline" size="sm" className="flex items-center gap-1">
             <Download className="h-4 w-4" />
             <span>تصدير</span>

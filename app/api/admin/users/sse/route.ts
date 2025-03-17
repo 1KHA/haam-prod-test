@@ -9,6 +9,10 @@ export async function GET(request: NextRequest) {
       // Send initial heartbeat
       controller.enqueue(encoder.encode('event: ping\ndata: heartbeat\n\n'));
       
+      // Track the last known user count to detect changes
+      let lastUserCount = 0;
+      let lastUserUpdateTime = new Date();
+      
       // Function to fetch and send users
       const sendUsers = async () => {
         try {
@@ -52,39 +56,56 @@ export async function GET(request: NextRequest) {
             orderBy: { createdAt: 'desc' }
           });
           
-          // Transform the users to include a virtual status field
-          const transformedUsers = users.map(user => {
-            // Determine if the user has completed their profile
-            const hasProfile = user.startupProfile || user.mentorProfile || 
-                              user.investorProfile || user.acceleratorProfile;
-            
-            return {
-              ...user,
-              // Virtual status field
-              status: hasProfile ? 'ACTIVE' : 'PENDING',
-              // Add a program field based on profile data
-              program: user.startupProfile?.companyName || 
-                      user.acceleratorProfile?.organizationName || 
-                      user.mentorProfile?.expertise || 
-                      user.investorProfile?.companyName || '-'
-            };
-          });
-          
           // Get total count
           const total = await prisma.user.count();
           
-          // Send the data as a server-sent event
-          const data = {
-            users: transformedUsers,
-            pagination: {
-              total,
-              page: 1,
-              limit: users.length,
-              totalPages: Math.ceil(total / users.length)
-            }
-          };
+          // Check if there are any changes
+          const hasNewUsers = total !== lastUserCount;
           
-          controller.enqueue(encoder.encode(`event: users\ndata: ${JSON.stringify(data)}\n\n`));
+          // Check if any users were updated recently
+          const mostRecentUpdate = users.reduce((latest, user) => {
+            return user.updatedAt > latest ? user.updatedAt : latest;
+          }, new Date(0));
+          
+          const hasUpdatedUsers = mostRecentUpdate > lastUserUpdateTime;
+          
+          // Only send updates if there are changes
+          if (hasNewUsers || hasUpdatedUsers || lastUserCount === 0) {
+            // Update tracking variables
+            lastUserCount = total;
+            lastUserUpdateTime = mostRecentUpdate;
+            
+            // Transform the users to include a virtual status field
+            const transformedUsers = users.map(user => {
+              // Determine if the user has completed their profile
+              const hasProfile = user.startupProfile || user.mentorProfile || 
+                                user.investorProfile || user.acceleratorProfile;
+              
+              return {
+                ...user,
+                // Virtual status field
+                status: hasProfile ? 'ACTIVE' : 'PENDING',
+                // Add a program field based on profile data
+                program: user.startupProfile?.companyName || 
+                        user.acceleratorProfile?.organizationName || 
+                        user.mentorProfile?.expertise || 
+                        user.investorProfile?.companyName || '-'
+              };
+            });
+            
+            // Send the data as a server-sent event
+            const data = {
+              users: transformedUsers,
+              pagination: {
+                total,
+                page: 1,
+                limit: users.length,
+                totalPages: Math.ceil(total / users.length)
+              }
+            };
+            
+            controller.enqueue(encoder.encode(`event: users\ndata: ${JSON.stringify(data)}\n\n`));
+          }
         } catch (error) {
           console.error('Error fetching users for SSE:', error);
           controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: 'Failed to fetch users' })}\n\n`));
@@ -95,6 +116,8 @@ export async function GET(request: NextRequest) {
       await sendUsers();
       
       // Set up interval to send heartbeats and check for new users
+      // Using a 5-second interval as requested
+      // The smart change detection ensures updates are only sent when needed
       const intervalId = setInterval(async () => {
         // Send heartbeat
         controller.enqueue(encoder.encode('event: ping\ndata: heartbeat\n\n'));

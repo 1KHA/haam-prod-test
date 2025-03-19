@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -21,164 +21,341 @@ import {
   DollarSign,
   TrendingUp,
   Award,
-  Tag
+  Tag,
+  Loader2
 } from "lucide-react"
+import { showAdminToast } from "@/components/admin/admin-toaster"
+import { useRouter } from "next/navigation"
+
+interface Startup {
+  id: string
+  name: string
+  industry: string
+  stage: string
+  description: string
+  status: string
+  teamSize: number
+  fundingNeeds: string | null
+  createdAt: string
+  creator: {
+    id: string
+    name: string
+    email: string
+    accelerator: {
+      name: string
+      industry: string | null
+      focusAreas: string | null
+    } | null
+  }
+}
+
+interface Statistics {
+  total: number
+  active: number
+  pending: number
+  rejected: number
+  industries: { name: string; count: number }[]
+  stages: { name: string; count: number }[]
+  funding: {
+    total: number
+    average: number
+  }
+}
 
 export default function StartupsManagement() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedStartups, setSelectedStartups] = useState<string[]>([])
+  const [startups, setStartups] = useState<Startup[]>([])
+  const [statistics, setStatistics] = useState<Statistics | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
 
-  // Sample startup data
-  const startups = [
-    { 
-      id: "1", 
-      name: "تك سمارت", 
-      sector: "التكنولوجيا المالية", 
-      stage: "جولة أولى", 
-      status: "نشط", 
-      program: "مسرع التقنية المالية",
-      team: 5,
-      funding: "5,000,000 ريال",
-      valuation: "50,000,000 ريال",
-      joinDate: "15 يناير 2025",
-      location: "الرياض",
-      growth: "+40%",
-      mentor: "أحمد محمد"
-    },
-    { 
-      id: "2", 
-      name: "هيلث تك", 
-      sector: "التكنولوجيا الصحية", 
-      stage: "تمويل أولي", 
-      status: "نشط", 
-      program: "مسرع التقنيات الصحية",
-      team: 3,
-      funding: "3,000,000 ريال",
-      valuation: "30,000,000 ريال",
-      joinDate: "10 فبراير 2025",
-      location: "جدة",
-      growth: "+30%",
-      mentor: "سارة العتيبي"
-    },
-    { 
-      id: "3", 
-      name: "إيكو سمارت", 
-      sector: "التكنولوجيا الخضراء", 
-      stage: "جولة ثانية", 
-      status: "نشط", 
-      program: "حاضنة التقنيات الناشئة",
-      team: 8,
-      funding: "10,000,000 ريال",
-      valuation: "100,000,000 ريال",
-      joinDate: "5 مارس 2025",
-      location: "الدمام",
-      growth: "+50%",
-      mentor: "محمد القحطاني"
-    },
-    { 
-      id: "4", 
-      name: "فود تك", 
-      sector: "تكنولوجيا الأغذية", 
-      stage: "تمويل أولي", 
-      status: "معلق", 
-      program: "مسرع الذكاء الاصطناعي",
-      team: 4,
-      funding: "2,500,000 ريال",
-      valuation: "25,000,000 ريال",
-      joinDate: "20 فبراير 2025",
-      location: "الرياض",
-      growth: "+20%",
-      mentor: "نورة السعيد"
-    },
-    { 
-      id: "5", 
-      name: "إيدو تك", 
-      sector: "تكنولوجيا التعليم", 
-      stage: "جولة أولى", 
-      status: "معلق", 
-      program: "حاضنة التقنيات الناشئة",
-      team: 6,
-      funding: "4,000,000 ريال",
-      valuation: "40,000,000 ريال",
-      joinDate: "1 مارس 2025",
-      location: "جدة",
-      growth: "+35%",
-      mentor: "خالد العمري"
-    },
-    { 
-      id: "6", 
-      name: "سمارت هوم", 
-      sector: "إنترنت الأشياء", 
-      stage: "تمويل أولي", 
-      status: "متخرج", 
-      program: "مسرع التقنية المالية",
-      team: 7,
-      funding: "6,000,000 ريال",
-      valuation: "60,000,000 ريال",
-      joinDate: "10 يناير 2024",
-      graduationDate: "10 يناير 2025",
-      location: "الرياض",
-      growth: "+60%",
-      mentor: "فاطمة الزهراء"
-    },
-    { 
-      id: "7", 
-      name: "فينتك", 
-      sector: "التكنولوجيا المالية", 
-      stage: "جولة أولى", 
-      status: "متوقف", 
-      program: "مسرع التقنية المالية",
-      team: 4,
-      funding: "3,000,000 ريال",
-      valuation: "0 ريال",
-      joinDate: "5 فبراير 2024",
-      exitDate: "5 ديسمبر 2024",
-      location: "جدة",
-      growth: "-100%",
-      mentor: "عبدالله الغامدي"
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
     }
-  ]
+  }, []);
 
-  // Filter startups based on active tab and search query
-  const filteredStartups = startups.filter(startup => {
-    // Filter by tab
-    if (activeTab === "active" && startup.status !== "نشط") return false
-    if (activeTab === "pending" && startup.status !== "معلق") return false
-    if (activeTab === "graduated" && startup.status !== "متخرج") return false
-    if (activeTab === "failed" && startup.status !== "متوقف") return false
-    if (activeTab === "fintech" && startup.sector !== "التكنولوجيا المالية") return false
-    if (activeTab === "healthtech" && startup.sector !== "التكنولوجيا الصحية") return false
-    if (activeTab === "greentech" && startup.sector !== "التكنولوجيا الخضراء") return false
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        startup.name.toLowerCase().includes(query) ||
-        startup.sector.toLowerCase().includes(query) ||
-        startup.program.toLowerCase().includes(query) ||
-        startup.location.toLowerCase().includes(query)
-      )
+  // Fetch startups from API
+  const fetchStartups = async () => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
     }
 
-    return true
-  })
+    setLoading(true);
+    setError(null);
 
+    try {
+      // Build query parameters
+      let queryParams = new URLSearchParams();
+      
+      if (searchQuery) {
+        queryParams.append('search', searchQuery);
+      }
+      
+      // Map tab to status filter
+      if (activeTab === "active") {
+        queryParams.append('status', 'APPROVED');
+      } else if (activeTab === "pending") {
+        queryParams.append('status', 'PENDING');
+      } else if (activeTab === "rejected") {
+        queryParams.append('status', 'REJECTED');
+      }
+      
+      // Map tab to industry filter
+      if (activeTab === "fintech") {
+        queryParams.append('industry', 'التكنولوجيا المالية');
+      } else if (activeTab === "healthtech") {
+        queryParams.append('industry', 'التكنولوجيا الصحية');
+      } else if (activeTab === "greentech") {
+        queryParams.append('industry', 'التكنولوجيا الخضراء');
+      }
+      
+      const response = await fetch(`/api/admin/startups?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch startups');
+      }
+      
+      const data = await response.json();
+      setStartups(data.startups);
+      setStatistics(data.statistics);
+      
+      // Clear selected startups when fetching new data
+      setSelectedStartups([]);
+    } catch (err) {
+      console.error('Error fetching startups:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في جلب بيانات الشركات الناشئة",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    if (token) {
+      fetchStartups();
+    }
+  }, [token, activeTab]);
+
+  // Handle search
+  const handleSearch = () => {
+    fetchStartups();
+  };
+
+  // Toggle startup selection
   const toggleStartupSelection = (startupId: string) => {
     if (selectedStartups.includes(startupId)) {
-      setSelectedStartups(selectedStartups.filter(id => id !== startupId))
+      setSelectedStartups(selectedStartups.filter(id => id !== startupId));
     } else {
-      setSelectedStartups([...selectedStartups, startupId])
+      setSelectedStartups([...selectedStartups, startupId]);
     }
-  }
+  };
 
+  // Select all startups
   const selectAllStartups = () => {
-    if (selectedStartups.length === filteredStartups.length) {
-      setSelectedStartups([])
+    if (selectedStartups.length === startups.length) {
+      setSelectedStartups([]);
     } else {
-      setSelectedStartups(filteredStartups.map(startup => startup.id))
+      setSelectedStartups(startups.map(startup => startup.id));
     }
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: string, data?: any) => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedStartups.length === 0) {
+      showAdminToast({
+        title: "تنبيه",
+        description: "يرجى اختيار شركة ناشئة واحدة على الأقل",
+        variant: "default"
+      });
+      return;
+    }
+
+    setBulkActionLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/startups', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          startupIds: selectedStartups,
+          action,
+          data
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to perform bulk action');
+      }
+
+      const result = await response.json();
+      
+      showAdminToast({
+        title: "تم بنجاح",
+        description: `تم تنفيذ العملية على ${result.count} شركة ناشئة`
+      });
+      
+      // Refresh startups
+      fetchStartups();
+    } catch (err) {
+      console.error('Error performing bulk action:', err);
+      showAdminToast({
+        title: "خطأ",
+        description: err instanceof Error ? err.message : 'حدث خطأ أثناء تنفيذ العملية',
+        variant: "destructive"
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Handle delete startup
+  const handleDeleteStartup = async (startupId: string) => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!confirm('هل أنت متأكد من حذف هذه الشركة الناشئة؟')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/startups/${startupId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete startup');
+      }
+
+      showAdminToast({
+        title: "تم بنجاح",
+        description: "تم حذف الشركة الناشئة بنجاح"
+      });
+      
+      // Refresh startups
+      fetchStartups();
+    } catch (err) {
+      console.error('Error deleting startup:', err);
+      showAdminToast({
+        title: "خطأ",
+        description: err instanceof Error ? err.message : 'حدث خطأ أثناء حذف الشركة الناشئة',
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle view startup
+  const handleViewStartup = (startupId: string) => {
+    router.push(`/admin-dashboard/startups/${startupId}`);
+  };
+
+  // Handle edit startup
+  const handleEditStartup = (startupId: string) => {
+    router.push(`/admin-dashboard/startups/${startupId}/edit`);
+  };
+
+  // Handle add startup
+  const handleAddStartup = () => {
+    router.push('/admin-dashboard/startups/new');
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('ar-SA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(date);
+  };
+
+  // Format funding
+  const formatFunding = (funding: string | null) => {
+    if (!funding) return 'غير محدد';
+    return funding;
+  };
+
+  // Get status badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'APPROVED':
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            نشط
+          </span>
+        );
+      case 'PENDING':
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+            معلق
+          </span>
+        );
+      case 'REJECTED':
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            مرفوض
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            {status}
+          </span>
+        );
+    }
+  };
+
+  if (!token) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <p>يجب تسجيل الدخول أولاً</p>
+      </div>
+    );
   }
 
   return (
@@ -189,7 +366,12 @@ export default function StartupsManagement() {
             <Download className="h-4 w-4" />
             <span>تصدير</span>
           </Button>
-          <Button variant="default" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleAddStartup}
+          >
             <Plus className="h-4 w-4" />
             <span>إضافة شركة ناشئة</span>
           </Button>
@@ -206,10 +388,11 @@ export default function StartupsManagement() {
               className="pl-3 pr-10 w-full" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
+          <Button variant="outline" size="icon" onClick={handleSearch}>
+            <Search className="h-4 w-4" />
           </Button>
         </div>
         
@@ -218,8 +401,8 @@ export default function StartupsManagement() {
             <TabsTrigger value="greentech">التقنية الخضراء</TabsTrigger>
             <TabsTrigger value="healthtech">التقنية الصحية</TabsTrigger>
             <TabsTrigger value="fintech">التقنية المالية</TabsTrigger>
-            <TabsTrigger value="failed">متوقفة</TabsTrigger>
-            <TabsTrigger value="graduated">متخرجة</TabsTrigger>
+            <TabsTrigger value="rejected">مرفوضة</TabsTrigger>
+            <TabsTrigger value="active">نشطة</TabsTrigger>
             <TabsTrigger value="pending">معلقة</TabsTrigger>
             <TabsTrigger value="all">الكل</TabsTrigger>
           </TabsList>
@@ -232,127 +415,184 @@ export default function StartupsManagement() {
             <div className="flex gap-2">
               {selectedStartups.length > 0 && (
                 <>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    disabled={bulkActionLoading}
+                  >
                     <Award className="h-4 w-4" />
                     <span>تعيين موجه</span>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    disabled={bulkActionLoading}
+                  >
                     <Building className="h-4 w-4" />
                     <span>تغيير البرنامج</span>
                   </Button>
-                  <Button variant="destructive" size="sm" className="flex items-center gap-1">
-                    <Trash2 className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => handleBulkAction('updateStatus', { status: 'APPROVED' })}
+                    disabled={bulkActionLoading}
+                  >
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>قبول</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => handleBulkAction('updateStatus', { status: 'REJECTED' })}
+                    disabled={bulkActionLoading}
+                  >
+                    <XCircle className="h-4 w-4 text-red-500" />
+                    <span>رفض</span>
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => handleBulkAction('delete')}
+                    disabled={bulkActionLoading}
+                  >
+                    {bulkActionLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                     <span>حذف</span>
                   </Button>
                 </>
               )}
             </div>
-            <CardTitle>قائمة الشركات الناشئة ({filteredStartups.length})</CardTitle>
+            <CardTitle>قائمة الشركات الناشئة ({startups.length})</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md">
-            <div className="grid grid-cols-9 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
-              <div className="col-span-1 flex items-center">
-                <input 
-                  type="checkbox" 
-                  className="ml-2"
-                  checked={selectedStartups.length === filteredStartups.length && filteredStartups.length > 0}
-                  onChange={selectAllStartups}
-                />
-                <span>الإجراءات</span>
-              </div>
-              <div className="col-span-1">الحالة</div>
-              <div className="col-span-1">المرحلة</div>
-              <div className="col-span-1">القطاع</div>
-              <div className="col-span-1">البرنامج</div>
-              <div className="col-span-1">التمويل</div>
-              <div className="col-span-1">الموقع</div>
-              <div className="col-span-1">تاريخ الانضمام</div>
-              <div className="col-span-1">الاسم</div>
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-            
-            {filteredStartups.length > 0 ? (
-              filteredStartups.map((startup) => (
-                <div key={startup.id} className="grid grid-cols-9 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
-                  <div className="col-span-1 flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedStartups.includes(startup.id)}
-                      onChange={() => toggleStartupSelection(startup.id)}
-                    />
-                    <div className="flex gap-1">
-                      <button className="text-blue-500 hover:text-blue-700">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="text-amber-500 hover:text-amber-700">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="text-red-500 hover:text-red-700">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="col-span-1">
-                    {startup.status === "نشط" ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        نشط
-                      </span>
-                    ) : startup.status === "معلق" ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        معلق
-                      </span>
-                    ) : startup.status === "متخرج" ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        متخرج
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        متوقف
-                      </span>
-                    )}
-                  </div>
-                  <div className="col-span-1">{startup.stage}</div>
-                  <div className="col-span-1">{startup.sector}</div>
-                  <div className="col-span-1">{startup.program}</div>
-                  <div className="col-span-1">{startup.funding}</div>
-                  <div className="col-span-1">{startup.location}</div>
-                  <div className="col-span-1">{startup.joinDate}</div>
-                  <div className="col-span-1">{startup.name}</div>
+          ) : error ? (
+            <div className="p-8 text-center text-red-500">
+              {error}
+            </div>
+          ) : (
+            <div className="border rounded-md">
+              <div className="grid grid-cols-9 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
+                <div className="col-span-1 flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="ml-2"
+                    checked={selectedStartups.length === startups.length && startups.length > 0}
+                    onChange={selectAllStartups}
+                  />
+                  <span>الإجراءات</span>
                 </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                لا توجد نتائج مطابقة لبحثك
+                <div className="col-span-1">الحالة</div>
+                <div className="col-span-1">المرحلة</div>
+                <div className="col-span-1">القطاع</div>
+                <div className="col-span-1">البرنامج</div>
+                <div className="col-span-1">التمويل</div>
+                <div className="col-span-1">حجم الفريق</div>
+                <div className="col-span-1">تاريخ الإنشاء</div>
+                <div className="col-span-1">الاسم</div>
               </div>
-            )}
-          </div>
+              
+              {startups.length > 0 ? (
+                startups.map((startup) => (
+                  <div key={startup.id} className="grid grid-cols-9 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
+                    <div className="col-span-1 flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStartups.includes(startup.id)}
+                        onChange={() => toggleStartupSelection(startup.id)}
+                      />
+                      <div className="flex gap-1">
+                        <button 
+                          className="text-blue-500 hover:text-blue-700"
+                          onClick={() => handleViewStartup(startup.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button 
+                          className="text-amber-500 hover:text-amber-700"
+                          onClick={() => handleEditStartup(startup.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button 
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteStartup(startup.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      {getStatusBadge(startup.status)}
+                    </div>
+                    <div className="col-span-1">{startup.stage}</div>
+                    <div className="col-span-1">{startup.industry}</div>
+                    <div className="col-span-1">
+                      {startup.creator.accelerator?.name || 'غير محدد'}
+                    </div>
+                    <div className="col-span-1">{formatFunding(startup.fundingNeeds)}</div>
+                    <div className="col-span-1">{startup.teamSize}</div>
+                    <div className="col-span-1">{formatDate(startup.createdAt)}</div>
+                    <div className="col-span-1">{startup.name}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-muted-foreground">
+                  لا توجد نتائج مطابقة لبحثك
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {activeTab === "pending" && filteredStartups.length > 0 && (
+      {activeTab === "pending" && startups.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>طلبات الانضمام المعلقة</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {filteredStartups.map((startup) => (
+              {startups.map((startup) => (
                 <div key={startup.id} className="flex items-center justify-between p-4 border rounded-md">
                   <div className="flex gap-4">
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => handleBulkAction('updateStatus', { status: 'REJECTED' })}
+                      disabled={bulkActionLoading}
+                    >
                       <XCircle className="h-4 w-4 text-red-500" />
                       <span>رفض</span>
                     </Button>
-                    <Button variant="default" size="sm" className="flex items-center gap-1">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => handleBulkAction('updateStatus', { status: 'APPROVED' })}
+                      disabled={bulkActionLoading}
+                    >
                       <CheckCircle className="h-4 w-4" />
                       <span>قبول</span>
                     </Button>
                   </div>
                   <div className="flex flex-col items-end">
                     <div className="font-medium">{startup.name}</div>
-                    <div className="text-sm text-muted-foreground">{startup.sector} • {startup.location}</div>
-                    <div className="text-xs text-muted-foreground">تاريخ الطلب: {startup.joinDate}</div>
+                    <div className="text-sm text-muted-foreground">{startup.industry} • {startup.creator.accelerator?.name || 'غير محدد'}</div>
+                    <div className="text-xs text-muted-foreground">تاريخ الطلب: {formatDate(startup.createdAt)}</div>
                   </div>
                 </div>
               ))}
@@ -370,24 +610,30 @@ export default function StartupsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{startups.length}</span>
-                <span className="text-muted-foreground">إجمالي الشركات الناشئة</span>
+            {statistics ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-bold">{statistics.total}</span>
+                  <span className="text-muted-foreground">إجمالي الشركات الناشئة</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-bold">{statistics.active}</span>
+                  <span className="text-muted-foreground">الشركات النشطة</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-bold">{statistics.pending}</span>
+                  <span className="text-muted-foreground">الشركات المعلقة</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-bold">{statistics.rejected}</span>
+                  <span className="text-muted-foreground">الشركات المرفوضة</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{startups.filter(s => s.status === "نشط").length}</span>
-                <span className="text-muted-foreground">الشركات النشطة</span>
+            ) : (
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{startups.filter(s => s.status === "متخرج").length}</span>
-                <span className="text-muted-foreground">الشركات المتخرجة</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{startups.filter(s => s.status === "متوقف").length}</span>
-                <span className="text-muted-foreground">الشركات المتوقفة</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -399,24 +645,25 @@ export default function StartupsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{startups.filter(s => s.sector === "التكنولوجيا المالية").length}</span>
-                <span className="text-muted-foreground">التكنولوجيا المالية</span>
+            {statistics ? (
+              <div className="space-y-4">
+                {statistics.industries.map((industry) => (
+                  <div key={industry.name} className="flex justify-between items-center">
+                    <span className="text-lg font-bold">{industry.count}</span>
+                    <span className="text-muted-foreground">{industry.name}</span>
+                  </div>
+                ))}
+                {statistics.industries.length === 0 && (
+                  <div className="text-center text-muted-foreground">
+                    لا توجد بيانات
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{startups.filter(s => s.sector === "التكنولوجيا الصحية").length}</span>
-                <span className="text-muted-foreground">التكنولوجيا الصحية</span>
+            ) : (
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{startups.filter(s => s.sector === "التكنولوجيا الخضراء").length}</span>
-                <span className="text-muted-foreground">التكنولوجيا الخضراء</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{startups.filter(s => !["التكنولوجيا المالية", "التكنولوجيا الصحية", "التكنولوجيا الخضراء"].includes(s.sector)).length}</span>
-                <span className="text-muted-foreground">قطاعات أخرى</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -428,24 +675,26 @@ export default function StartupsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">33,500,000 ريال</span>
-                <span className="text-muted-foreground">إجمالي التمويل</span>
+            {statistics ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">{statistics.funding.total.toLocaleString()} ريال</span>
+                  <span className="text-muted-foreground">إجمالي التمويل</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">{Math.round(statistics.funding.average).toLocaleString()} ريال</span>
+                  <span className="text-muted-foreground">متوسط التمويل</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">{statistics.stages.length}</span>
+                  <span className="text-muted-foreground">عدد المراحل</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">4,785,714 ريال</span>
-                <span className="text-muted-foreground">متوسط التمويل</span>
+            ) : (
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">305,000,000 ريال</span>
-                <span className="text-muted-foreground">إجمالي التقييم</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">+35%</span>
-                <span className="text-muted-foreground">متوسط النمو</span>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

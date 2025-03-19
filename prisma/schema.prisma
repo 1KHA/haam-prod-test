@@ -30,6 +30,7 @@ model User {
   acceleratorProfile AcceleratorProfile?
   startups      Startup[] // Added relation to startups
   teamMembers   TeamMember[] // Added relation to team members
+  rolePermissions RolePermission[] // Added relation to role permissions
 }
 
 model Profile {
@@ -234,6 +235,41 @@ model TimelineEvent {
   hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// New models for roles and permissions
+model Role {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  permissions   RolePermission[]
+}
+
+model Permission {
+  id            String    @id @default(uuid())
+  category      String    // e.g., dashboard, users, programs, etc.
+  action        String    // e.g., view, edit, add, delete
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  roles         RolePermission[]
+
+  @@unique([category, action])
+}
+
+model RolePermission {
+  id            String    @id @default(uuid())
+  roleId        String
+  role          Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId  String
+  permission    Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  userId        String?   // Optional: for user-specific permissions
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([roleId, permissionId, userId])
 }
 
 enum UserRole {

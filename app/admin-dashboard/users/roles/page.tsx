@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,30 @@ import {
   Check,
   X
 } from "lucide-react"
+import { showAdminToast } from "@/components/admin/admin-toaster"
+
+interface Permission {
+  id: string
+  category: string
+  action: string
+}
+
+interface RolePermission {
+  id: string
+  roleId: string
+  permissionId: string
+  permission: Permission
+}
+
+interface Role {
+  id: string
+  name: string
+  description: string | null
+  usersCount: number
+  permissions: Record<string, Record<string, boolean>>
+  createdAt: string
+  updatedAt: string
+}
 
 export default function RolesPermissions() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -25,118 +49,11 @@ export default function RolesPermissions() {
   const [showAddRole, setShowAddRole] = useState(false)
   const [newRoleName, setNewRoleName] = useState("")
   const [newRoleDescription, setNewRoleDescription] = useState("")
-
-  // Sample roles data
-  const roles = [
-    {
-      id: "1",
-      name: "مدير النظام",
-      description: "وصول كامل إلى جميع ميزات النظام وإعداداته",
-      usersCount: 3,
-      permissions: {
-        dashboard: { view: true, edit: true },
-        users: { view: true, edit: true, delete: true, add: true },
-        programs: { view: true, edit: true, delete: true, add: true },
-        startups: { view: true, edit: true, delete: true, add: true },
-        funding: { view: true, edit: true, delete: true, add: true },
-        payments: { view: true, edit: true, delete: true, add: true },
-        reports: { view: true, edit: true, delete: true, add: true },
-        settings: { view: true, edit: true }
-      }
-    },
-    {
-      id: "2",
-      name: "مدير برنامج",
-      description: "إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة",
-      usersCount: 12,
-      permissions: {
-        dashboard: { view: true, edit: false },
-        users: { view: true, edit: false, delete: false, add: false },
-        programs: { view: true, edit: true, delete: false, add: false },
-        startups: { view: true, edit: true, delete: false, add: true },
-        funding: { view: true, edit: false, delete: false, add: false },
-        payments: { view: false, edit: false, delete: false, add: false },
-        reports: { view: true, edit: false, delete: false, add: false },
-        settings: { view: false, edit: false }
-      }
-    },
-    {
-      id: "3",
-      name: "مستثمر",
-      description: "عرض الشركات الناشئة وتقديم التمويل",
-      usersCount: 49,
-      permissions: {
-        dashboard: { view: true, edit: false },
-        users: { view: false, edit: false, delete: false, add: false },
-        programs: { view: true, edit: false, delete: false, add: false },
-        startups: { view: true, edit: false, delete: false, add: false },
-        funding: { view: true, edit: true, delete: false, add: true },
-        payments: { view: true, edit: false, delete: false, add: false },
-        reports: { view: true, edit: false, delete: false, add: false },
-        settings: { view: false, edit: false }
-      }
-    },
-    {
-      id: "4",
-      name: "موجه",
-      description: "تقديم الإرشاد والتوجيه للشركات الناشئة",
-      usersCount: 215,
-      permissions: {
-        dashboard: { view: true, edit: false },
-        users: { view: false, edit: false, delete: false, add: false },
-        programs: { view: true, edit: false, delete: false, add: false },
-        startups: { view: true, edit: false, delete: false, add: false },
-        funding: { view: false, edit: false, delete: false, add: false },
-        payments: { view: false, edit: false, delete: false, add: false },
-        reports: { view: true, edit: false, delete: false, add: false },
-        settings: { view: false, edit: false }
-      }
-    },
-    {
-      id: "5",
-      name: "مؤسس شركة ناشئة",
-      description: "إدارة الشركة الناشئة والوصول إلى الموارد والتمويل",
-      usersCount: 850,
-      permissions: {
-        dashboard: { view: true, edit: false },
-        users: { view: false, edit: false, delete: false, add: false },
-        programs: { view: true, edit: false, delete: false, add: false },
-        startups: { view: false, edit: false, delete: false, add: false },
-        funding: { view: true, edit: false, delete: false, add: true },
-        payments: { view: true, edit: false, delete: false, add: false },
-        reports: { view: true, edit: false, delete: false, add: false },
-        settings: { view: false, edit: false }
-      }
-    },
-    {
-      id: "6",
-      name: "محكم",
-      description: "تقييم الشركات الناشئة في الهاكاثونات والمسابقات",
-      usersCount: 105,
-      permissions: {
-        dashboard: { view: true, edit: false },
-        users: { view: false, edit: false, delete: false, add: false },
-        programs: { view: false, edit: false, delete: false, add: false },
-        startups: { view: true, edit: false, delete: false, add: false },
-        funding: { view: false, edit: false, delete: false, add: false },
-        payments: { view: false, edit: false, delete: false, add: false },
-        reports: { view: true, edit: false, delete: false, add: false },
-        settings: { view: false, edit: false }
-      }
-    }
-  ]
-
-  // Filter roles based on search query
-  const filteredRoles = roles.filter(role => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        role.name.toLowerCase().includes(query) ||
-        role.description.toLowerCase().includes(query)
-      )
-    }
-    return true
-  })
+  const [roles, setRoles] = useState<Role[]>([])
+  const [loading, setLoading] = useState(true)
+  const [newRolePermissions, setNewRolePermissions] = useState<Record<string, Record<string, boolean>>>({})
+  const [editedPermissions, setEditedPermissions] = useState<Record<string, Record<string, boolean>>>({})
+  const [token, setToken] = useState<string | null>(null)
 
   // Permission categories and actions
   const permissionCategories = [
@@ -156,6 +73,357 @@ export default function RolesPermissions() {
     { id: "add", name: "إضافة", icon: Plus },
     { id: "delete", name: "حذف", icon: Trash2 }
   ]
+
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
+
+  // Initialize new role permissions
+  useEffect(() => {
+    const initialPermissions: Record<string, Record<string, boolean>> = {};
+    
+    permissionCategories.forEach(category => {
+      initialPermissions[category.id] = {};
+      
+      permissionActions.forEach(action => {
+        initialPermissions[category.id][action.id] = false;
+      });
+    });
+    
+    setNewRolePermissions(initialPermissions);
+  }, []);
+
+  // Fetch roles from API
+  const fetchRoles = async () => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let url = '/api/admin/roles';
+      
+      if (searchQuery) {
+        url += `?search=${encodeURIComponent(searchQuery)}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data);
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to fetch roles:', errorData.error);
+        showAdminToast({
+          title: "خطأ",
+          description: "فشل في جلب الأدوار",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في جلب الأدوار",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    if (token) {
+      fetchRoles();
+    }
+  }, [token]);
+
+  // Handle search
+  const handleSearch = () => {
+    fetchRoles();
+  };
+
+  // Handle add role
+  const handleAddRole = async () => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!newRoleName) {
+      showAdminToast({
+        title: "خطأ",
+        description: "اسم الدور مطلوب",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/admin/roles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newRoleName,
+          description: newRoleDescription,
+          permissions: newRolePermissions
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        showAdminToast({
+          title: "تم بنجاح",
+          description: "تم إضافة الدور بنجاح"
+        });
+        
+        setShowAddRole(false);
+        setNewRoleName("");
+        setNewRoleDescription("");
+        
+        // Reset permissions
+        const resetPermissions: Record<string, Record<string, boolean>> = {};
+        
+        permissionCategories.forEach(category => {
+          resetPermissions[category.id] = {};
+          
+          permissionActions.forEach(action => {
+            resetPermissions[category.id][action.id] = false;
+          });
+        });
+        
+        setNewRolePermissions(resetPermissions);
+        
+        // Refresh roles
+        fetchRoles();
+      } else {
+        const errorData = await response.json();
+        showAdminToast({
+          title: "خطأ",
+          description: errorData.error || "فشل في إضافة الدور",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error adding role:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في إضافة الدور",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle delete role
+  const handleDeleteRole = async (roleId: string) => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/roles/${roleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        showAdminToast({
+          title: "تم بنجاح",
+          description: "تم حذف الدور بنجاح"
+        });
+        
+        // Refresh roles
+        fetchRoles();
+      } else {
+        const errorData = await response.json();
+        showAdminToast({
+          title: "خطأ",
+          description: errorData.error || "فشل في حذف الدور",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في حذف الدور",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Start editing role
+  const startEditingRole = (roleId: string) => {
+    const role = roles.find(r => r.id === roleId);
+    if (role) {
+      setEditedPermissions({...role.permissions});
+      setEditingRole(roleId);
+    }
+  };
+
+  // Save edited role
+  const saveEditedRole = async (roleId: string) => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    try {
+      const response = await fetch(`/api/admin/roles/${roleId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: role.name,
+          description: role.description,
+          permissions: editedPermissions
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        showAdminToast({
+          title: "تم بنجاح",
+          description: "تم تحديث الدور بنجاح"
+        });
+        
+        setEditingRole(null);
+        
+        // Refresh roles
+        fetchRoles();
+      } else {
+        const errorData = await response.json();
+        showAdminToast({
+          title: "خطأ",
+          description: errorData.error || "فشل في تحديث الدور",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في تحديث الدور",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Toggle permission for new role
+  const toggleNewRolePermission = (category: string, action: string) => {
+    setNewRolePermissions(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [action]: !prev[category][action]
+      }
+    }));
+  };
+
+  // Toggle permission for edited role
+  const toggleEditedPermission = (category: string, action: string) => {
+    setEditedPermissions(prev => ({
+      ...prev,
+      [category]: {
+        ...(prev[category] || {}),
+        [action]: !(prev[category] && prev[category][action])
+      }
+    }));
+  };
+
+  // Grant all permissions for a category
+  const grantAllPermissions = (category: string) => {
+    setEditedPermissions(prev => {
+      const newPermissions = {...prev};
+      
+      if (!newPermissions[category]) {
+        newPermissions[category] = {};
+      }
+      
+      permissionActions.forEach(action => {
+        newPermissions[category][action.id] = true;
+      });
+      
+      return newPermissions;
+    });
+  };
+
+  // Revoke all permissions for a category
+  const revokeAllPermissions = (category: string) => {
+    setEditedPermissions(prev => {
+      const newPermissions = {...prev};
+      
+      if (!newPermissions[category]) {
+        newPermissions[category] = {};
+      }
+      
+      permissionActions.forEach(action => {
+        newPermissions[category][action.id] = false;
+      });
+      
+      return newPermissions;
+    });
+  };
+
+  // Filter roles based on search query
+  const filteredRoles = roles.filter(role => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        role.name.toLowerCase().includes(query) ||
+        (role.description && role.description.toLowerCase().includes(query))
+      );
+    }
+    return true;
+  });
+
+  if (!token) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <p>يجب تسجيل الدخول أولاً</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-right">
@@ -181,8 +449,12 @@ export default function RolesPermissions() {
               className="pl-3 pr-10 w-full" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
           </div>
+          <Button variant="outline" size="icon" onClick={handleSearch}>
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -222,9 +494,13 @@ export default function RolesPermissions() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {permissionActions.map(action => (
                           <div key={action.id} className="flex items-center space-x-2 space-x-reverse">
-                            <Checkbox id={`${category.id}-${action.id}`} />
+                            <Checkbox 
+                              id={`new-${category.id}-${action.id}`} 
+                              checked={newRolePermissions[category.id]?.[action.id] || false}
+                              onCheckedChange={() => toggleNewRolePermission(category.id, action.id)}
+                            />
                             <label 
-                              htmlFor={`${category.id}-${action.id}`}
+                              htmlFor={`new-${category.id}-${action.id}`}
                               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
                             >
                               <action.icon className="h-3 w-3" />
@@ -242,7 +518,7 @@ export default function RolesPermissions() {
                 <Button variant="outline" onClick={() => setShowAddRole(false)}>
                   إلغاء
                 </Button>
-                <Button>
+                <Button onClick={handleAddRole}>
                   إضافة الدور
                 </Button>
               </div>
@@ -251,106 +527,126 @@ export default function RolesPermissions() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredRoles.map(role => (
-          <Card key={role.id} className={editingRole === role.id ? "border-primary" : ""}>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2">
-                  {editingRole === role.id ? (
-                    <>
-                      <Button variant="ghost" size="sm" onClick={() => setEditingRole(null)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                      <Button variant="default" size="sm">
-                        <Save className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="ghost" size="sm" onClick={() => setEditingRole(role.id)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-                <div className="text-right">
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    {role.name}
-                  </CardTitle>
-                  <CardDescription>{role.description}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 flex justify-end">
-                <span className="text-sm text-muted-foreground">
-                  {role.usersCount} مستخدم بهذا الدور
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                {permissionCategories.map(category => (
-                  <div key={category.id} className="border-b pb-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex gap-2">
-                        {editingRole === role.id && (
-                          <>
-                            <Button variant="outline" size="sm" className="h-6 text-xs">
-                              منح الكل
-                            </Button>
-                            <Button variant="outline" size="sm" className="h-6 text-xs">
-                              إلغاء الكل
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                      <h4 className="font-medium">{category.name}</h4>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {permissionActions.map(action => {
-                        // Skip if the permission doesn't exist for this category
-                        if (!role.permissions[category.id] || 
-                            role.permissions[category.id][action.id] === undefined) {
-                          return null
-                        }
-                        
-                        return (
-                          <div key={action.id} className="flex items-center justify-end gap-2">
-                            {editingRole === role.id ? (
-                              <Checkbox 
-                                id={`${role.id}-${category.id}-${action.id}`} 
-                                checked={role.permissions[category.id][action.id]}
-                              />
-                            ) : (
-                              role.permissions[category.id][action.id] ? (
-                                <Check className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <X className="h-4 w-4 text-red-500" />
-                              )
-                            )}
-                            <label 
-                              htmlFor={`${role.id}-${category.id}-${action.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
-                            >
-                              <action.icon className="h-3 w-3" />
-                              {action.name}
-                            </label>
-                          </div>
-                        )
-                      })}
-                    </div>
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <p>جاري التحميل...</p>
+        </div>
+      ) : filteredRoles.length === 0 ? (
+        <div className="flex justify-center items-center py-8">
+          <p>لا توجد أدوار مطابقة للبحث</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredRoles.map(role => (
+            <Card key={role.id} className={editingRole === role.id ? "border-primary" : ""}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div className="flex gap-2">
+                    {editingRole === role.id ? (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingRole(null)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                        <Button variant="default" size="sm" onClick={() => saveEditedRole(role.id)}>
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => startEditingRole(role.id)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteRole(role.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </>
+                    )}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <div className="text-right">
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      {role.name}
+                    </CardTitle>
+                    <CardDescription>{role.description}</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex justify-start">
+                  <span className="text-sm text-muted-foreground">
+                    {role.usersCount} مستخدم بهذا الدور
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {permissionCategories.map(category => (
+                    <div key={category.id} className="border-b pb-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex gap-2">
+                          {editingRole === role.id && (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-6 text-xs"
+                                onClick={() => grantAllPermissions(category.id)}
+                              >
+                                منح الكل
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-6 text-xs"
+                                onClick={() => revokeAllPermissions(category.id)}
+                              >
+                                إلغاء الكل
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                        <h4 className="font-medium">{category.name}</h4>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {permissionActions.map(action => {
+                          // Get permission value
+                          const hasPermission = editingRole === role.id
+                            ? editedPermissions[category.id]?.[action.id] || false
+                            : role.permissions[category.id]?.[action.id] || false;
+                          
+                          return (
+                            <div key={action.id} className="flex items-center justify-start gap-2">
+                              {editingRole === role.id ? (
+                                <Checkbox 
+                                  id={`${role.id}-${category.id}-${action.id}`} 
+                                  checked={hasPermission}
+                                  onCheckedChange={() => toggleEditedPermission(category.id, action.id)}
+                                />
+                              ) : (
+                                hasPermission ? (
+                                  <Check className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <X className="h-4 w-4 text-red-500" />
+                                )
+                              )}
+                              <label 
+                                htmlFor={`${role.id}-${category.id}-${action.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                              >
+                                <action.icon className="h-3 w-3" />
+                                {action.name}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

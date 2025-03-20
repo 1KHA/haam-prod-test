@@ -293,6 +293,13 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
           <div className="flex flex-col gap-3">
             <Button 
               className="w-full"
+              onClick={() => router.push(`/program-manager-dashboard/cohorts/${params.id}/applications`)}
+            >
+              طلبات الانضمام
+            </Button>
+            
+            <Button 
+              className="w-full"
               onClick={() => router.push(`/program-manager-dashboard/cohorts/${params.id}/members`)}
             >
               إدارة الشركات

@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       data: {
         cohortId,
         startupId,
-        status: 'ACTIVE',
+        status: 'PENDING', // Set status to PENDING for review
         joinDate: new Date()
       }
     });

@@ -1,669 +1,552 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  Calendar, 
-  Clock, 
-  FileText, 
-  Upload, 
-  Check, 
-  X, 
-  AlertCircle,
-  Clock as ClockIcon,
-  CheckCircle,
-  XCircle,
-  Search,
-  Filter
-} from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Calendar, Clock, Users, Building, ArrowRight, Plus, Trash2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
 
-type ApplicationStatus = "pending" | "accepted" | "rejected"
-
-interface Program {
+interface Cohort {
   id: string
   name: string
-  description: string
-  deadline: string
-  duration: string
-  requirements: string[]
-  benefits: string[]
-  status: "open" | "closed"
+  description: string | null
+  startDate: string
+  endDate: string
+  capacity: number | null
+  program: {
+    id: string
+    name: string
+    type: string
+    description: string | null
+    requirements: string | null
+    benefits: string | null
+  }
+  stats: {
+    membersCount: number
+    mentorsCount: number
+  }
 }
 
-interface Application {
+interface Startup {
   id: string
-  programId: string
-  programName: string
-  submissionDate: string
-  status: ApplicationStatus
-  feedback?: string
+  name: string
+  industry: string
+  stage: string
+  description: string
+}
+
+interface TeamMember {
+  name: string
+  position: string
+  email: string
+  phone: string
+  department: string
 }
 
 export default function ApplyPage() {
-  const [activeTab, setActiveTab] = useState("available")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
-  const [isApplying, setIsApplying] = useState(false)
-  const [applicationData, setApplicationData] = useState({
-    companyDescription: "",
-    teamSize: "",
-    foundingDate: "",
-    currentStage: "",
-    fundingRaised: "",
-    problemStatement: "",
-    solution: "",
-    targetMarket: "",
-    businessModel: "",
-    competitiveAdvantage: "",
-    goals: ""
+  const router = useRouter()
+  const { toast } = useToast()
+  const [cohorts, setCohorts] = useState<Cohort[]>([])
+  const [startups, setStartups] = useState<Startup[]>([])
+  const [loading, setLoading] = useState(true)
+  const [applying, setApplying] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null)
+  const [selectedStartup, setSelectedStartup] = useState<string>("")
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [newTeamMember, setNewTeamMember] = useState<TeamMember>({
+    name: "",
+    position: "",
+    email: "",
+    phone: "",
+    department: "Engineering"
   })
+  const [dialogOpen, setDialogOpen] = useState(false)
   
-  // Mock data for programs
-  const [programs, setPrograms] = useState<Program[]>([
-    {
-      id: "1",
-      name: "برنامج مسرع الأعمال التقني 2025",
-      description: "برنامج مكثف لمدة 3 أشهر للشركات الناشئة في مجال التكنولوجيا. يوفر البرنامج التمويل والإرشاد والتوجيه والوصول إلى شبكة من المستثمرين والخبراء.",
-      deadline: "15 أبريل 2025",
-      duration: "3 أشهر",
-      requirements: [
-        "شركة ناشئة في مجال التكنولوجيا",
-        "فريق عمل متكامل",
-        "نموذج أولي للمنتج",
-        "خطة عمل واضحة"
-      ],
-      benefits: [
-        "تمويل أولي بقيمة 50,000 ريال",
-        "مساحة عمل مشتركة",
-        "إرشاد وتوجيه من خبراء في المجال",
-        "الوصول إلى شبكة من المستثمرين",
-        "فرصة للمشاركة في يوم العرض"
-      ],
-      status: "open"
-    },
-    {
-      id: "2",
-      name: "برنامج التقنية المالية",
-      description: "برنامج متخصص للشركات الناشئة في مجال التكنولوجيا المالية. يهدف البرنامج إلى دعم الشركات الناشئة في تطوير حلول مبتكرة في مجال الخدمات المالية.",
-      deadline: "30 مارس 2025",
-      duration: "6 أشهر",
-      requirements: [
-        "شركة ناشئة في مجال التكنولوجيا المالية",
-        "فريق عمل متكامل",
-        "نموذج أولي للمنتج",
-        "خطة عمل واضحة"
-      ],
-      benefits: [
-        "تمويل أولي بقيمة 100,000 ريال",
-        "مساحة عمل مشتركة",
-        "إرشاد وتوجيه من خبراء في المجال",
-        "الوصول إلى شبكة من المستثمرين",
-        "فرصة للمشاركة في يوم العرض"
-      ],
-      status: "open"
-    },
-    {
-      id: "3",
-      name: "برنامج ابتكار الرعاية الصحية",
-      description: "برنامج متخصص للشركات الناشئة في مجال الرعاية الصحية. يهدف البرنامج إلى دعم الشركات الناشئة في تطوير حلول مبتكرة في مجال الرعاية الصحية.",
-      deadline: "10 مايو 2025",
-      duration: "4 أشهر",
-      requirements: [
-        "شركة ناشئة في مجال الرعاية الصحية",
-        "فريق عمل متكامل",
-        "نموذج أولي للمنتج",
-        "خطة عمل واضحة"
-      ],
-      benefits: [
-        "تمويل أولي بقيمة 75,000 ريال",
-        "مساحة عمل مشتركة",
-        "إرشاد وتوجيه من خبراء في المجال",
-        "الوصول إلى شبكة من المستثمرين",
-        "فرصة للمشاركة في يوم العرض"
-      ],
-      status: "open"
-    },
-    {
-      id: "4",
-      name: "برنامج الاستدامة والطاقة المتجددة",
-      description: "برنامج متخصص للشركات الناشئة في مجال الاستدامة والطاقة المتجددة. يهدف البرنامج إلى دعم الشركات الناشئة في تطوير حلول مبتكرة في مجال الاستدامة والطاقة المتجددة.",
-      deadline: "20 يونيو 2025",
-      duration: "5 أشهر",
-      requirements: [
-        "شركة ناشئة في مجال الاستدامة والطاقة المتجددة",
-        "فريق عمل متكامل",
-        "نموذج أولي للمنتج",
-        "خطة عمل واضحة"
-      ],
-      benefits: [
-        "تمويل أولي بقيمة 80,000 ريال",
-        "مساحة عمل مشتركة",
-        "إرشاد وتوجيه من خبراء في المجال",
-        "الوصول إلى شبكة من المستثمرين",
-        "فرصة للمشاركة في يوم العرض"
-      ],
-      status: "closed"
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
     }
-  ])
-
-  // Mock data for applications
-  const [applications, setApplications] = useState<Application[]>([
-    {
-      id: "1",
-      programId: "2",
-      programName: "برنامج التقنية المالية",
-      submissionDate: "15 فبراير 2025",
-      status: "accepted",
-      feedback: "تم قبول طلبك للمشاركة في البرنامج. سيتم التواصل معك قريباً لإكمال إجراءات الانضمام."
-    },
-    {
-      id: "2",
-      programId: "3",
-      programName: "برنامج ابتكار الرعاية الصحية",
-      submissionDate: "20 فبراير 2025",
-      status: "pending"
-    }
-  ])
-
-  const filteredPrograms = programs.filter(program => {
-    const matchesSearch = program.name.includes(searchQuery) || 
-                          program.description.includes(searchQuery)
+  }, []);
+  
+  // Fetch active cohorts
+  useEffect(() => {
+    if (!token) return;
     
-    if (activeTab === "available") return matchesSearch && program.status === "open"
-    return matchesSearch
-  })
-
-  const handleApplyClick = (program: Program) => {
-    setSelectedProgram(program)
-    setIsApplying(true)
-  }
-
-  const handleSubmitApplication = () => {
-    if (!selectedProgram) return
-
-    const newApplication: Application = {
-      id: Math.random().toString(36).substring(2, 9),
-      programId: selectedProgram.id,
-      programName: selectedProgram.name,
-      submissionDate: new Date().toLocaleDateString('ar-SA'),
-      status: "pending"
+    const fetchCohorts = async () => {
+      setLoading(true);
+      
+      try {
+        const response = await fetch('/api/cohorts/active', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch active cohorts');
+        }
+        
+        const data = await response.json();
+        setCohorts(data.cohorts || []);
+      } catch (error) {
+        console.error('Error fetching cohorts:', error);
+        toast({
+          title: "خطأ",
+          description: "فشل في جلب الدفعات النشطة",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCohorts();
+  }, [token, toast]);
+  
+  // Fetch user's startups
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchStartups = async () => {
+      try {
+        const response = await fetch('/api/startups', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch startups');
+        }
+        
+        const data = await response.json();
+        setStartups(data.startups || []);
+        
+        // Set the first startup as selected by default if available
+        if (data.startups && data.startups.length > 0) {
+          setSelectedStartup(data.startups[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching startups:', error);
+        toast({
+          title: "خطأ",
+          description: "فشل في جلب الشركات الناشئة",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    fetchStartups();
+  }, [token, toast]);
+  
+  // Handle adding a team member
+  const handleAddTeamMember = () => {
+    // Validate required fields
+    if (!newTeamMember.name || !newTeamMember.position || !newTeamMember.email) {
+      toast({
+        title: "خطأ",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive"
+      });
+      return;
     }
-
-    setApplications([...applications, newApplication])
-    setIsApplying(false)
-    setSelectedProgram(null)
-    setApplicationData({
-      companyDescription: "",
-      teamSize: "",
-      foundingDate: "",
-      currentStage: "",
-      fundingRaised: "",
-      problemStatement: "",
-      solution: "",
-      targetMarket: "",
-      businessModel: "",
-      competitiveAdvantage: "",
-      goals: ""
-    })
-
-    alert("تم تقديم طلبك بنجاح")
-  }
-
-  const handleCancelApplication = () => {
-    setIsApplying(false)
-    setSelectedProgram(null)
-  }
-
-  const getStatusIcon = (status: ApplicationStatus) => {
-    switch (status) {
-      case "pending":
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />
-      case "accepted":
-        return <CheckCircle className="h-5 w-5 text-green-500" />
-      case "rejected":
-        return <XCircle className="h-5 w-5 text-red-500" />
+    
+    setTeamMembers([...teamMembers, newTeamMember]);
+    setNewTeamMember({
+      name: "",
+      position: "",
+      email: "",
+      phone: "",
+      department: "Engineering"
+    });
+  };
+  
+  // Handle removing a team member
+  const handleRemoveTeamMember = (index: number) => {
+    const updatedTeamMembers = [...teamMembers];
+    updatedTeamMembers.splice(index, 1);
+    setTeamMembers(updatedTeamMembers);
+  };
+  
+  // Handle applying to a cohort
+  const handleApply = async () => {
+    if (!selectedCohort || !selectedStartup) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار دفعة وشركة ناشئة",
+        variant: "destructive"
+      });
+      return;
     }
-  }
-
-  const getStatusText = (status: ApplicationStatus) => {
-    switch (status) {
-      case "pending":
-        return "قيد المراجعة"
-      case "accepted":
-        return "تم القبول"
-      case "rejected":
-        return "تم الرفض"
+    
+    setApplying(true);
+    
+    try {
+      const response = await fetch('/api/cohorts/apply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          cohortId: selectedCohort.id,
+          startupId: selectedStartup,
+          teamMembers
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to apply to cohort');
+      }
+      
+      toast({
+        title: "تم بنجاح",
+        description: "تم التقديم للدفعة بنجاح"
+      });
+      
+      setDialogOpen(false);
+      
+      // Redirect to dashboard
+      router.push('/accelerator-dashboard');
+    } catch (error) {
+      console.error('Error applying to cohort:', error);
+      toast({
+        title: "خطأ",
+        description: error instanceof Error ? error.message : "فشل في التقديم للدفعة",
+        variant: "destructive"
+      });
+    } finally {
+      setApplying(false);
     }
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div></div>
-        <h1 className="text-3xl font-bold">التقديم للبرامج</h1>
+  };
+  
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ar-SA');
+  };
+  
+  // Calculate duration in days
+  const calculateDuration = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+  
+  if (!token) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <p>يجب تسجيل الدخول أولاً</p>
       </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="justify-end">
-          <TabsTrigger value="applications">طلباتي</TabsTrigger>
-          <TabsTrigger value="all">جميع البرامج</TabsTrigger>
-          <TabsTrigger value="available">البرامج المتاحة</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="available" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="relative w-64">
-              <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="بحث..." 
-                className="pr-8" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              البرامج المتاحة: {programs.filter(p => p.status === "open").length}
-            </div>
-          </div>
-
-          {isApplying && selectedProgram ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>التقديم لبرنامج: {selectedProgram.name}</CardTitle>
-                <CardDescription>يرجى تعبئة النموذج التالي للتقديم للبرنامج</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="company-description">وصف الشركة الناشئة</Label>
-                  <Textarea 
-                    id="company-description" 
-                    rows={3} 
-                    placeholder="قدم وصفاً مختصراً لشركتك الناشئة"
-                    value={applicationData.companyDescription}
-                    onChange={(e) => setApplicationData({...applicationData, companyDescription: e.target.value})}
-                  />
+    );
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <p>جاري التحميل...</p>
+      </div>
+    );
+  }
+  
+  if (cohorts.length === 0) {
+    return (
+      <div className="space-y-6 text-right">
+        <h1 className="text-3xl font-bold">التقديم للدفعات</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground mb-4">لا توجد دفعات نشطة حالياً</p>
+            <Button onClick={() => router.push('/accelerator-dashboard')}>
+              العودة للوحة التحكم
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (startups.length === 0) {
+    return (
+      <div className="space-y-6 text-right">
+        <h1 className="text-3xl font-bold">التقديم للدفعات</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground mb-4">يجب إنشاء شركة ناشئة أولاً للتقديم للدفعات</p>
+            <Button onClick={() => router.push('/accelerator-dashboard/startup/new')}>
+              إنشاء شركة ناشئة
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-6 text-right">
+      <h1 className="text-3xl font-bold">التقديم للدفعات النشطة</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {cohorts.map(cohort => (
+          <Card key={cohort.id} className="flex flex-col">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <Badge>نشط</Badge>
+                <CardTitle className="text-xl">{cohort.name}</CardTitle>
+              </div>
+              <CardDescription>
+                {cohort.program.name} - {cohort.program.type}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {cohort.description || 'لا يوجد وصف'}
+                  </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="team-size">حجم الفريق</Label>
-                    <Input 
-                      id="team-size" 
-                      placeholder="عدد أعضاء الفريق"
-                      value={applicationData.teamSize}
-                      onChange={(e) => setApplicationData({...applicationData, teamSize: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="founding-date">تاريخ التأسيس</Label>
-                    <Input 
-                      id="founding-date" 
-                      placeholder="تاريخ تأسيس الشركة"
-                      value={applicationData.foundingDate}
-                      onChange={(e) => setApplicationData({...applicationData, foundingDate: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="current-stage">المرحلة الحالية</Label>
-                    <Input 
-                      id="current-stage" 
-                      placeholder="مرحلة الشركة الناشئة الحالية"
-                      value={applicationData.currentStage}
-                      onChange={(e) => setApplicationData({...applicationData, currentStage: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="funding-raised">التمويل المحصل</Label>
-                    <Input 
-                      id="funding-raised" 
-                      placeholder="مقدار التمويل الذي تم الحصول عليه"
-                      value={applicationData.fundingRaised}
-                      onChange={(e) => setApplicationData({...applicationData, fundingRaised: e.target.value})}
-                    />
-                  </div>
+                
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {formatDate(cohort.startDate)} - {formatDate(cohort.endDate)}
+                  </span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="problem-statement">المشكلة التي تحلها</Label>
-                  <Textarea 
-                    id="problem-statement" 
-                    rows={3} 
-                    placeholder="ما هي المشكلة التي تحاول حلها؟"
-                    value={applicationData.problemStatement}
-                    onChange={(e) => setApplicationData({...applicationData, problemStatement: e.target.value})}
-                  />
+                
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {calculateDuration(cohort.startDate, cohort.endDate)} يوم
+                  </span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="solution">الحل المقترح</Label>
-                  <Textarea 
-                    id="solution" 
-                    rows={3} 
-                    placeholder="كيف يحل منتجك أو خدمتك هذه المشكلة؟"
-                    value={applicationData.solution}
-                    onChange={(e) => setApplicationData({...applicationData, solution: e.target.value})}
-                  />
+                
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {cohort.stats.membersCount} شركة ناشئة
+                    {cohort.capacity && ` من أصل ${cohort.capacity}`}
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="target-market">السوق المستهدف</Label>
-                    <Textarea 
-                      id="target-market" 
-                      rows={3} 
-                      placeholder="من هم عملاؤك المستهدفون؟"
-                      value={applicationData.targetMarket}
-                      onChange={(e) => setApplicationData({...applicationData, targetMarket: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="business-model">نموذج العمل</Label>
-                    <Textarea 
-                      id="business-model" 
-                      rows={3} 
-                      placeholder="كيف ستحقق الإيرادات؟"
-                      value={applicationData.businessModel}
-                      onChange={(e) => setApplicationData({...applicationData, businessModel: e.target.value})}
-                    />
-                  </div>
+                
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {cohort.stats.mentorsCount} مرشد
+                  </span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="competitive-advantage">الميزة التنافسية</Label>
-                  <Textarea 
-                    id="competitive-advantage" 
-                    rows={3} 
-                    placeholder="ما الذي يميزك عن المنافسين؟"
-                    value={applicationData.competitiveAdvantage}
-                    onChange={(e) => setApplicationData({...applicationData, competitiveAdvantage: e.target.value})}
-                  />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full"
+                onClick={() => {
+                  setSelectedCohort(cohort);
+                  setDialogOpen(true);
+                }}
+              >
+                <span>التقديم للدفعة</span>
+                <ArrowRight className="h-4 w-4 mr-2" />
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      
+      {/* Application Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-3xl text-right">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              التقديم لدفعة: {selectedCohort?.name}
+            </DialogTitle>
+            <DialogDescription>
+              برنامج: {selectedCohort?.program.name} ({selectedCohort?.program.type})
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Program Details */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">تفاصيل البرنامج</h3>
+              
+              {selectedCohort?.program.description && (
+                <div>
+                  <h4 className="text-sm font-medium">الوصف</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCohort.program.description}
+                  </p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="goals">أهدافك من البرنامج</Label>
-                  <Textarea 
-                    id="goals" 
-                    rows={3} 
-                    placeholder="ما الذي تأمل في تحقيقه من خلال المشاركة في هذا البرنامج؟"
-                    value={applicationData.goals}
-                    onChange={(e) => setApplicationData({...applicationData, goals: e.target.value})}
-                  />
+              )}
+              
+              {selectedCohort?.program.requirements && (
+                <div>
+                  <h4 className="text-sm font-medium">المتطلبات</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCohort.program.requirements}
+                  </p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>المستندات المطلوبة</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border rounded-md p-4 flex flex-col items-center justify-center gap-2">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-sm font-medium">خطة العمل</p>
-                      <Button variant="outline" className="w-full">
-                        <Upload className="h-4 w-4 ml-2" />
-                        رفع الملف
-                      </Button>
-                    </div>
-                    <div className="border rounded-md p-4 flex flex-col items-center justify-center gap-2">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-sm font-medium">العرض التقديمي</p>
-                      <Button variant="outline" className="w-full">
-                        <Upload className="h-4 w-4 ml-2" />
-                        رفع الملف
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCancelApplication}>
-                  <X className="h-4 w-4 ml-2" />
-                  إلغاء
-                </Button>
-                <Button onClick={handleSubmitApplication}>
-                  <Check className="h-4 w-4 ml-2" />
-                  تقديم الطلب
-                </Button>
-              </CardFooter>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {filteredPrograms.map((program) => (
-                <Card key={program.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
-                        {program.status === "open" ? (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">متاح</span>
-                        ) : (
-                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">مغلق</span>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <CardTitle>{program.name}</CardTitle>
-                        <CardDescription className="mt-1">{program.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="text-right">
-                            <p className="text-sm font-medium">الموعد النهائي للتقديم</p>
-                            <p className="text-sm text-muted-foreground">{program.deadline}</p>
-                          </div>
-                          <Calendar className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="text-right">
-                            <p className="text-sm font-medium">مدة البرنامج</p>
-                            <p className="text-sm text-muted-foreground">{program.duration}</p>
-                          </div>
-                          <Clock className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="text-right">
-                          <p className="text-sm font-medium mb-2">المتطلبات</p>
-                          <ul className="text-sm text-muted-foreground space-y-1">
-                            {program.requirements.map((req, index) => (
-                              <li key={index} className="flex items-center justify-end gap-2">
-                                <span>{req}</span>
-                                <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-6">
-                      <p className="text-sm font-medium mb-2 text-right">المميزات</p>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {program.benefits.map((benefit, index) => (
-                          <li key={index} className="flex items-center justify-end gap-2">
-                            <span>{benefit}</span>
-                            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-end">
-                    <Button 
-                      onClick={() => handleApplyClick(program)}
-                      disabled={program.status === "closed" || applications.some(app => app.programId === program.id)}
-                    >
-                      {applications.some(app => app.programId === program.id) ? "تم التقديم" : "تقديم طلب"}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-
-              {filteredPrograms.length === 0 && (
-                <div className="text-center py-10">
-                  <p className="text-muted-foreground">لا توجد برامج متاحة حالياً</p>
+              )}
+              
+              {selectedCohort?.program.benefits && (
+                <div>
+                  <h4 className="text-sm font-medium">الفوائد</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCohort.program.benefits}
+                  </p>
                 </div>
               )}
             </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="all" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="relative w-64">
-              <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="بحث..." 
-                className="pr-8" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              إجمالي البرامج: {programs.length}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            {filteredPrograms.map((program) => (
-              <Card key={program.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      {program.status === "open" ? (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">متاح</span>
-                      ) : (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">مغلق</span>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <CardTitle>{program.name}</CardTitle>
-                      <CardDescription className="mt-1">{program.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">الموعد النهائي للتقديم</p>
-                          <p className="text-sm text-muted-foreground">{program.deadline}</p>
-                        </div>
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">مدة البرنامج</p>
-                          <p className="text-sm text-muted-foreground">{program.duration}</p>
-                        </div>
-                        <Clock className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="text-right">
-                        <p className="text-sm font-medium mb-2">المتطلبات</p>
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          {program.requirements.map((req, index) => (
-                            <li key={index} className="flex items-center justify-end gap-2">
-                              <span>{req}</span>
-                              <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-6">
-                    <p className="text-sm font-medium mb-2 text-right">المميزات</p>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      {program.benefits.map((benefit, index) => (
-                        <li key={index} className="flex items-center justify-end gap-2">
-                          <span>{benefit}</span>
-                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-end">
-                  <Button 
-                    onClick={() => handleApplyClick(program)}
-                    disabled={program.status === "closed" || applications.some(app => app.programId === program.id)}
+            
+            {/* Startup Selection */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">اختر الشركة الناشئة</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {startups.map(startup => (
+                  <Card 
+                    key={startup.id} 
+                    className={`cursor-pointer ${selectedStartup === startup.id ? 'border-primary' : ''}`}
+                    onClick={() => setSelectedStartup(startup.id)}
                   >
-                    {applications.some(app => app.programId === program.id) ? "تم التقديم" : "تقديم طلب"}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-
-            {filteredPrograms.length === 0 && (
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">لا توجد برامج متطابقة مع البحث</p>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <Badge variant={selectedStartup === startup.id ? "default" : "outline"}>
+                          {selectedStartup === startup.id ? 'مختار' : 'اختر'}
+                        </Badge>
+                        <h4 className="font-medium">{startup.name}</h4>
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        <p>{startup.industry} - {startup.stage}</p>
+                        <p className="mt-1">{startup.description.substring(0, 100)}...</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="applications" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div></div>
-            <div className="text-sm text-muted-foreground">
-              إجمالي الطلبات: {applications.length}
+            </div>
+            
+            {/* Team Members */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">أعضاء الفريق</h3>
+              
+              {/* Existing Team Members */}
+              {teamMembers.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">الأعضاء المضافين</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {teamMembers.map((member, index) => (
+                      <div key={index} className="flex justify-between items-center p-2 border rounded-md">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleRemoveTeamMember(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                        <div className="text-right">
+                          <p className="font-medium">{member.name}</p>
+                          <p className="text-sm text-muted-foreground">{member.position} - {member.email}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Add New Team Member */}
+              <div className="space-y-2 border rounded-md p-4">
+                <h4 className="text-sm font-medium">إضافة عضو جديد</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="name">الاسم *</Label>
+                    <Input 
+                      id="name" 
+                      value={newTeamMember.name} 
+                      onChange={(e) => setNewTeamMember({...newTeamMember, name: e.target.value})} 
+                      placeholder="أدخل الاسم"
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="position">المنصب *</Label>
+                    <Input 
+                      id="position" 
+                      value={newTeamMember.position} 
+                      onChange={(e) => setNewTeamMember({...newTeamMember, position: e.target.value})} 
+                      placeholder="أدخل المنصب"
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="email">البريد الإلكتروني *</Label>
+                    <Input 
+                      id="email" 
+                      type="email"
+                      value={newTeamMember.email} 
+                      onChange={(e) => setNewTeamMember({...newTeamMember, email: e.target.value})} 
+                      placeholder="أدخل البريد الإلكتروني"
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="phone">رقم الهاتف</Label>
+                    <Input 
+                      id="phone" 
+                      value={newTeamMember.phone} 
+                      onChange={(e) => setNewTeamMember({...newTeamMember, phone: e.target.value})} 
+                      placeholder="أدخل رقم الهاتف"
+                    />
+                  </div>
+                  
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="department">القسم</Label>
+                    <Input 
+                      id="department" 
+                      value={newTeamMember.department} 
+                      onChange={(e) => setNewTeamMember({...newTeamMember, department: e.target.value})} 
+                      placeholder="أدخل القسم"
+                    />
+                  </div>
+                </div>
+                
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="mt-2"
+                  onClick={handleAddTeamMember}
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  <span>إضافة عضو</span>
+                </Button>
+              </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            {applications.map((application) => (
-              <Card key={application.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(application.status)}
-                      <span className={`text-sm font-medium ${
-                        application.status === "accepted" ? "text-green-600" : 
-                        application.status === "rejected" ? "text-red-600" : 
-                        "text-yellow-600"
-                      }`}>
-                        {getStatusText(application.status)}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <CardTitle>{application.programName}</CardTitle>
-                      <CardDescription className="mt-1">تاريخ التقديم: {application.submissionDate}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                {application.feedback && (
-                  <CardContent>
-                    <div className="bg-muted p-4 rounded-md">
-                      <div className="flex items-center justify-end gap-2 mb-2">
-                        <p className="text-sm font-medium">ملاحظات</p>
-                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-right">{application.feedback}</p>
-                    </div>
-                  </CardContent>
-                )}
-                <CardFooter className="flex justify-end">
-                  <Button variant="outline">
-                    عرض التفاصيل
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-
-            {applications.length === 0 && (
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">لا توجد طلبات مقدمة</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+          
+          <DialogFooter className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setDialogOpen(false)}
+            >
+              إلغاء
+            </Button>
+            <Button 
+              onClick={handleApply}
+              disabled={applying}
+            >
+              {applying ? 'جاري التقديم...' : 'تقديم الطلب'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

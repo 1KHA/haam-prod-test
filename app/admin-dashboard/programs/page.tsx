@@ -1,445 +1,526 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
-  Search, 
+  BarChart3, 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight, 
+  Download, 
   Filter, 
   Plus, 
-  Download, 
+  Search, 
   Trash2, 
-  Edit, 
-  Eye, 
-  CheckCircle, 
-  XCircle,
-  Calendar,
-  Users,
-  Building,
-  Rocket,
-  Briefcase,
-  Clock,
-  BarChart,
-  FileText
+  Users
 } from "lucide-react"
+import { showAdminToast } from "@/components/admin/admin-toaster"
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export default function ProgramsManagement() {
-  const [activeTab, setActiveTab] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([])
-
-  // Sample program data
-  const programs = [
-    { 
-      id: "1", 
-      name: "مسرع التقنية المالية", 
-      type: "مسرع", 
-      status: "نشط", 
-      startDate: "15 يناير 2025",
-      endDate: "15 يوليو 2025",
-      duration: "6 أشهر",
-      startups: 12,
-      mentors: 8,
-      manager: "أحمد محمد",
-      location: "الرياض",
-      budget: "5,000,000 ريال",
-      description: "برنامج مسرع للشركات الناشئة في مجال التقنية المالية"
-    },
-    { 
-      id: "2", 
-      name: "حاضنة التقنيات الناشئة", 
-      type: "حاضنة", 
-      status: "نشط", 
-      startDate: "1 فبراير 2025",
-      endDate: "1 فبراير 2026",
-      duration: "12 شهر",
-      startups: 20,
-      mentors: 15,
-      manager: "سارة العتيبي",
-      location: "جدة",
-      budget: "8,000,000 ريال",
-      description: "برنامج حاضنة للشركات الناشئة في مختلف المجالات التقنية"
-    },
-    { 
-      id: "3", 
-      name: "مسرع التقنيات الصحية", 
-      type: "مسرع", 
-      status: "نشط", 
-      startDate: "10 مارس 2025",
-      endDate: "10 سبتمبر 2025",
-      duration: "6 أشهر",
-      startups: 8,
-      mentors: 10,
-      manager: "محمد القحطاني",
-      location: "الرياض",
-      budget: "6,000,000 ريال",
-      description: "برنامج مسرع للشركات الناشئة في مجال التقنيات الصحية"
-    },
-    { 
-      id: "4", 
-      name: "مسرع الذكاء الاصطناعي", 
-      type: "مسرع", 
-      status: "قادم", 
-      startDate: "1 يونيو 2025",
-      endDate: "1 ديسمبر 2025",
-      duration: "6 أشهر",
-      startups: 0,
-      mentors: 12,
-      manager: "نورة السعيد",
-      location: "الرياض",
-      budget: "7,000,000 ريال",
-      description: "برنامج مسرع للشركات الناشئة في مجال الذكاء الاصطناعي"
-    },
-    { 
-      id: "5", 
-      name: "حاضنة التجارة الإلكترونية", 
-      type: "حاضنة", 
-      status: "قادم", 
-      startDate: "15 يوليو 2025",
-      endDate: "15 يوليو 2026",
-      duration: "12 شهر",
-      startups: 0,
-      mentors: 8,
-      manager: "خالد العمري",
-      location: "جدة",
-      budget: "5,500,000 ريال",
-      description: "برنامج حاضنة للشركات الناشئة في مجال التجارة الإلكترونية"
-    },
-    { 
-      id: "6", 
-      name: "مسرع التقنيات الزراعية", 
-      type: "مسرع", 
-      status: "مكتمل", 
-      startDate: "1 يناير 2024",
-      endDate: "1 يوليو 2024",
-      duration: "6 أشهر",
-      startups: 10,
-      mentors: 6,
-      manager: "فاطمة الزهراء",
-      location: "الرياض",
-      budget: "4,000,000 ريال",
-      description: "برنامج مسرع للشركات الناشئة في مجال التقنيات الزراعية"
-    },
-    { 
-      id: "7", 
-      name: "حاضنة تقنيات الطاقة", 
-      type: "حاضنة", 
-      status: "مكتمل", 
-      startDate: "15 فبراير 2024",
-      endDate: "15 فبراير 2025",
-      duration: "12 شهر",
-      startups: 15,
-      mentors: 10,
-      manager: "عبدالله الغامدي",
-      location: "الدمام",
-      budget: "7,500,000 ريال",
-      description: "برنامج حاضنة للشركات الناشئة في مجال تقنيات الطاقة"
-    }
-  ]
-
-  // Filter programs based on active tab and search query
-  const filteredPrograms = programs.filter(program => {
-    // Filter by tab
-    if (activeTab === "active" && program.status !== "نشط") return false
-    if (activeTab === "upcoming" && program.status !== "قادم") return false
-    if (activeTab === "completed" && program.status !== "مكتمل") return false
-    if (activeTab === "accelerators" && program.type !== "مسرع") return false
-    if (activeTab === "incubators" && program.type !== "حاضنة") return false
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        program.name.toLowerCase().includes(query) ||
-        program.type.toLowerCase().includes(query) ||
-        program.manager.toLowerCase().includes(query) ||
-        program.location.toLowerCase().includes(query)
-      )
-    }
-
-    return true
-  })
-
-  const toggleProgramSelection = (programId: string) => {
-    if (selectedPrograms.includes(programId)) {
-      setSelectedPrograms(selectedPrograms.filter(id => id !== programId))
-    } else {
-      setSelectedPrograms([...selectedPrograms, programId])
-    }
+interface Program {
+  id: string
+  name: string
+  type: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+  capacity: number | null
+  stats: {
+    cohortsCount: number
+    activeCohortsCount: number
+    totalStartups: number
   }
+  creator: {
+    name: string
+    email: string
+  }
+  createdAt: string
+}
 
-  const selectAllPrograms = () => {
-    if (selectedPrograms.length === filteredPrograms.length) {
-      setSelectedPrograms([])
-    } else {
-      setSelectedPrograms(filteredPrograms.map(program => program.id))
+interface ProgramsStatistics {
+  total: number
+  draft: number
+  active: number
+  completed: number
+  cancelled: number
+  types: { name: string; count: number }[]
+  cohorts: {
+    total: number
+    active: number
+  }
+  startups: number
+}
+
+export default function ProgramsPage() {
+  const router = useRouter()
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [statistics, setStatistics] = useState<ProgramsStatistics | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("")
+  const [typeFilter, setTypeFilter] = useState<string>("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [token, setToken] = useState<string | null>(null)
+
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
     }
+  }, []);
+
+  // Fetch programs
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchPrograms = async () => {
+      setLoading(true);
+      
+      try {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: '10'
+        });
+        
+        if (searchQuery) {
+          queryParams.append('search', searchQuery);
+        }
+        
+        if (statusFilter) {
+          queryParams.append('status', statusFilter);
+        }
+        
+        if (typeFilter) {
+          queryParams.append('type', typeFilter);
+        }
+        
+        const response = await fetch(`/api/admin/programs?${queryParams.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch programs');
+        }
+        
+        const data = await response.json();
+        setPrograms(data.programs);
+        setStatistics(data.statistics);
+        setTotalPages(data.pagination.totalPages);
+      } catch (error) {
+        console.error('Error fetching programs:', error);
+        showAdminToast({
+          title: "خطأ",
+          description: "فشل في جلب البرامج",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPrograms();
+  }, [token, page, searchQuery, statusFilter, typeFilter]);
+
+  // Handle search
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1); // Reset to first page on new search
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: string) => {
+    if (selectedPrograms.length === 0) {
+      showAdminToast({
+        title: "تنبيه",
+        description: "الرجاء اختيار برنامج واحد على الأقل",
+        variant: "default"
+      });
+      return;
+    }
+    
+    try {
+      let endpoint = '/api/admin/programs';
+      let method = 'PUT';
+      let body: any = {
+        programIds: selectedPrograms,
+        action: ''
+      };
+      
+      if (action === 'delete') {
+        body.action = 'delete';
+      } else if (action === 'activate') {
+        body.action = 'updateStatus';
+        body.data = { status: 'ACTIVE' };
+      } else if (action === 'complete') {
+        body.action = 'updateStatus';
+        body.data = { status: 'COMPLETED' };
+      } else if (action === 'cancel') {
+        body.action = 'updateStatus';
+        body.data = { status: 'CANCELLED' };
+      }
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to perform bulk action');
+      }
+      
+      // Refresh the programs list
+      setPage(1);
+      setSelectedPrograms([]);
+      
+      showAdminToast({
+        title: "تم بنجاح",
+        description: "تم تنفيذ الإجراء بنجاح"
+      });
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في تنفيذ الإجراء",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Table columns
+  const columns: ColumnDef<Program>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: "اسم البرنامج",
+      cell: ({ row }) => (
+        <div className="font-medium cursor-pointer" onClick={() => router.push(`/admin-dashboard/programs/${row.original.id}`)}>
+          {row.original.name}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "type",
+      header: "النوع",
+      cell: ({ row }) => <div>{row.original.type}</div>,
+    },
+    {
+      accessorKey: "status",
+      header: "الحالة",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        let variant: "default" | "outline" | "secondary" | "destructive" = "default";
+        let label = "مسودة";
+        
+        if (status === "ACTIVE") {
+          variant = "default";
+          label = "نشط";
+        } else if (status === "COMPLETED") {
+          variant = "secondary";
+          label = "مكتمل";
+        } else if (status === "CANCELLED") {
+          variant = "destructive";
+          label = "ملغي";
+        } else if (status === "DRAFT") {
+          variant = "outline";
+          label = "مسودة";
+        }
+        
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      accessorKey: "startDate",
+      header: "تاريخ البدء",
+      cell: ({ row }) => {
+        const startDate = row.original.startDate;
+        if (!startDate) return <div>-</div>;
+        return <div>{new Date(startDate).toLocaleDateString('ar-SA')}</div>;
+      },
+    },
+    {
+      accessorKey: "stats.cohortsCount",
+      header: "عدد الدفعات",
+      cell: ({ row }) => <div>{row.original.stats.cohortsCount}</div>,
+    },
+    {
+      accessorKey: "stats.totalStartups",
+      header: "عدد الشركات الناشئة",
+      cell: ({ row }) => <div>{row.original.stats.totalStartups}</div>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">فتح القائمة</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => router.push(`/admin-dashboard/programs/${row.original.id}`)}>
+                عرض التفاصيل
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/admin-dashboard/programs/${row.original.id}/edit`)}>
+                تعديل
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
+                حذف
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  if (!token) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <p>يجب تسجيل الدخول أولاً</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <Download className="h-4 w-4" />
-            <span>تصدير</span>
-          </Button>
-          <Button variant="default" size="sm" className="flex items-center gap-1">
-            <Plus className="h-4 w-4" />
-            <span>إضافة برنامج</span>
-          </Button>
-        </div>
+        <Button 
+          variant="default" 
+          className="flex items-center gap-1"
+          onClick={() => router.push('/admin-dashboard/programs/new')}
+        >
+          <Plus className="h-4 w-4" />
+          <span>إضافة برنامج</span>
+        </Button>
         <h1 className="text-3xl font-bold">إدارة البرامج</h1>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 justify-between">
-        <div className="flex gap-2 w-full md:w-1/2">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-            <Input 
-              placeholder="البحث عن برنامج..." 
-              className="pl-3 pr-10 w-full" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-          <TabsList className="grid grid-cols-3 md:grid-cols-5">
-            <TabsTrigger value="incubators">الحاضنات</TabsTrigger>
-            <TabsTrigger value="accelerators">المسرعات</TabsTrigger>
-            <TabsTrigger value="completed">المكتملة</TabsTrigger>
-            <TabsTrigger value="upcoming">القادمة</TabsTrigger>
-            <TabsTrigger value="all">الكل</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredPrograms.map((program) => (
-          <Card key={program.id} className="overflow-hidden">
+      {/* Statistics Cards */}
+      {statistics && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <CardTitle>{program.name}</CardTitle>
-                    {program.type === "مسرع" ? (
-                      <Rocket className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Building className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                  <CardDescription>{program.description}</CardDescription>
-                </div>
-              </div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                إجمالي البرامج
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-end mb-4">
-                {program.status === "نشط" ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    نشط
-                  </span>
-                ) : program.status === "قادم" ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    قادم
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    مكتمل
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-right">
-                    <div className="font-medium">{program.manager}</div>
-                    <div className="text-xs text-muted-foreground">مدير البرنامج</div>
-                  </div>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  <span className="text-green-500 font-medium">{statistics.active}</span> نشط
                 </div>
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-right">
-                    <div className="font-medium">{program.location}</div>
-                    <div className="text-xs text-muted-foreground">الموقع</div>
-                  </div>
-                  <Building className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-right">
-                    <div className="font-medium">{program.startDate}</div>
-                    <div className="text-xs text-muted-foreground">تاريخ البدء</div>
-                  </div>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-right">
-                    <div className="font-medium">{program.duration}</div>
-                    <div className="text-xs text-muted-foreground">المدة</div>
-                  </div>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-right">
-                    <div className="font-medium">{program.startups}</div>
-                    <div className="text-xs text-muted-foreground">الشركات الناشئة</div>
-                  </div>
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-right">
-                    <div className="font-medium">{program.mentors}</div>
-                    <div className="text-xs text-muted-foreground">الموجهون</div>
-                  </div>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-between">
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <BarChart className="h-4 w-4" />
-                  <span>التقارير</span>
-                </Button>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
-                  <span>التفاصيل</span>
-                </Button>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {activeTab === "upcoming" && filteredPrograms.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>جدول البرامج القادمة</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border rounded-md">
-              <div className="grid grid-cols-5 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
-                <div className="col-span-1">المدير</div>
-                <div className="col-span-1">الميزانية</div>
-                <div className="col-span-1">المدة</div>
-                <div className="col-span-1">تاريخ البدء</div>
-                <div className="col-span-1">اسم البرنامج</div>
-              </div>
-              
-              {filteredPrograms.map((program) => (
-                <div key={program.id} className="grid grid-cols-5 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
-                  <div className="col-span-1">{program.manager}</div>
-                  <div className="col-span-1">{program.budget}</div>
-                  <div className="col-span-1">{program.duration}</div>
-                  <div className="col-span-1">{program.startDate}</div>
-                  <div className="col-span-1">{program.name}</div>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                الدفعات
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.cohorts.total}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  <span className="text-green-500 font-medium">{statistics.cohorts.active}</span> نشط
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                الشركات الناشئة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.startups}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  في جميع البرامج
+                </div>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                أنواع البرامج
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.types.length}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  {statistics.types.slice(0, 2).map(type => type.name).join(', ')}
+                  {statistics.types.length > 2 && '...'}
+                </div>
+                <Filter className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-end gap-2">
-              <span>إحصائيات البرامج</span>
-              <BarChart className="h-5 w-5 text-primary" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{programs.length}</span>
-                <span className="text-muted-foreground">إجمالي البرامج</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{programs.filter(p => p.status === "نشط").length}</span>
-                <span className="text-muted-foreground">البرامج النشطة</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{programs.filter(p => p.status === "قادم").length}</span>
-                <span className="text-muted-foreground">البرامج القادمة</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold">{programs.filter(p => p.status === "مكتمل").length}</span>
-                <span className="text-muted-foreground">البرامج المكتملة</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+          <Input
+            placeholder="بحث عن برنامج..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" variant="outline">
+            <Search className="h-4 w-4" />
+          </Button>
+        </form>
+        
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="الحالة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">جميع الحالات</SelectItem>
+              <SelectItem value="DRAFT">مسودة</SelectItem>
+              <SelectItem value="ACTIVE">نشط</SelectItem>
+              <SelectItem value="COMPLETED">مكتمل</SelectItem>
+              <SelectItem value="CANCELLED">ملغي</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="النوع" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">جميع الأنواع</SelectItem>
+              {statistics?.types.map(type => (
+                <SelectItem key={type.name} value={type.name}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 ml-2" />
+                <span>الإجراءات</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleBulkAction('activate')}>
+                تنشيط المحدد
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkAction('complete')}>
+                إكمال المحدد
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkAction('cancel')}>
+                إلغاء المحدد
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
+                <Trash2 className="h-4 w-4 ml-2 text-destructive" />
+                <span className="text-destructive">حذف المحدد</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button variant="outline">
+            <Download className="h-4 w-4 ml-2" />
+            <span>تصدير</span>
+          </Button>
+        </div>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-end gap-2">
-              <span>التوزيع حسب النوع</span>
-              <Rocket className="h-5 w-5 text-primary" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{programs.filter(p => p.type === "مسرع").length}</span>
-                <span className="text-muted-foreground">المسرعات</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">{programs.filter(p => p.type === "حاضنة").length}</span>
-                <span className="text-muted-foreground">الحاضنات</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">65</span>
-                <span className="text-muted-foreground">إجمالي الشركات الناشئة</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">69</span>
-                <span className="text-muted-foreground">إجمالي الموجهين</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Programs Table */}
+      <DataTable
+        columns={columns}
+        data={programs}
+        loading={loading}
+        onRowSelectionChange={(rows) => {
+          setSelectedPrograms(rows);
+        }}
+      />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-end gap-2">
-              <span>الميزانية والتمويل</span>
-              <Briefcase className="h-5 w-5 text-primary" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">43,000,000 ريال</span>
-                <span className="text-muted-foreground">إجمالي الميزانية</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">6,142,857 ريال</span>
-                <span className="text-muted-foreground">متوسط ميزانية البرنامج</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">26,000,000 ريال</span>
-                <span className="text-muted-foreground">ميزانية البرامج النشطة</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold">12,500,000 ريال</span>
-                <span className="text-muted-foreground">ميزانية البرامج القادمة</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          عرض {programs.length} من أصل {statistics?.total || 0} برنامج
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page > 1 ? page - 1 : 1)}
+            disabled={page <= 1}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <div className="text-sm">
+            صفحة {page} من {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page < totalPages ? page + 1 : totalPages)}
+            disabled={page >= totalPages}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   )

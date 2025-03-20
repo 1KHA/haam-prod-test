@@ -31,6 +31,9 @@ model User {
   startups      Startup[] // Added relation to startups
   teamMembers   TeamMember[] // Added relation to team members
   rolePermissions RolePermission[] // Added relation to role permissions
+  programs      Program[] // Added relation to programs
+  managedCohorts Cohort[] // Added relation to cohorts as manager
+  cohortMentorships CohortMentor[] // Added relation to cohort mentorships
 }
 
 model Profile {
@@ -159,7 +162,7 @@ model TeamMember {
 
 // New model for startups
 model Startup {
-  id                  String    @id @default(uuid())
+  id                  String         @id @default(uuid())
   name                String
   industry            String
   stage               String
@@ -169,14 +172,15 @@ model Startup {
   targetMarket        String?
   businessModel       String?
   competitiveAdvantage String?
-  teamSize            Int       @default(1)
+  teamSize            Int            @default(1)
   fundingNeeds        String?
   pitchDeckUrl        String?
-  status              String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  status              String         @default("PENDING") // PENDING, APPROVED, REJECTED
   creatorId           String
-  creator             User      @relation(fields: [creatorId], references: [id])
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  creator             User           @relation(fields: [creatorId], references: [id])
+  cohortMemberships   CohortMember[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 }
 
 model Hackathon {
@@ -288,4 +292,70 @@ enum HackathonStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+}
+
+// Models for programs and cohorts
+model Program {
+  id                  String    @id @default(uuid())
+  name                String
+  description         String?
+  startDate           DateTime?
+  endDate             DateTime?
+  location            String?
+  type                String    // e.g., Accelerator, Incubator, Workshop
+  status              String    @default("DRAFT") // DRAFT, ACTIVE, COMPLETED, CANCELLED
+  capacity            Int?
+  applicationDeadline DateTime?
+  requirements        String?
+  benefits            String?
+  creatorId           String
+  creator             User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  cohorts             Cohort[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Cohort {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String         @default("UPCOMING") // UPCOMING, ACTIVE, COMPLETED
+  capacity    Int?
+  programId   String
+  program     Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  managerId   String
+  manager     User           @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  members     CohortMember[]
+  mentors     CohortMentor[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model CohortMember {
+  id        String   @id @default(uuid())
+  cohortId  String
+  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  startupId String
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE") // ACTIVE, GRADUATED, DROPPED
+  joinDate  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cohortId, startupId])
+}
+
+model CohortMentor {
+  id        String   @id @default(uuid())
+  cohortId  String
+  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String?  // e.g., Lead Mentor, Technical Mentor, Business Mentor
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cohortId, userId])
 }

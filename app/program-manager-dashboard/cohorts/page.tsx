@@ -1,243 +1,525 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Plus, Calendar, Users, BarChart4, CheckCircle } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { 
+  BarChart3, 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight, 
+  Download, 
+  Filter, 
+  Plus, 
+  Search, 
+  Trash2, 
+  Users
+} from "lucide-react"
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+interface Cohort {
+  id: string
+  name: string
+  status: string
+  startDate: string
+  endDate: string
+  capacity: number | null
+  program: {
+    id: string
+    name: string
+    type: string
+  }
+  stats: {
+    membersCount: number
+    mentorsCount: number
+  }
+  createdAt: string
+}
+
+interface Program {
+  id: string
+  name: string
+  type: string
+  cohortsCount: number
+}
+
+interface CohortStatistics {
+  total: number
+  upcoming: number
+  active: number
+  completed: number
+  startups: number
+  mentors: number
+  programs: Program[]
+}
 
 export default function CohortsPage() {
+  const router = useRouter()
+  const [cohorts, setCohorts] = useState<Cohort[]>([])
+  const [statistics, setStatistics] = useState<CohortStatistics | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedCohorts, setSelectedCohorts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("active")
+  const [statusFilter, setStatusFilter] = useState<string>("")
+  const [programFilter, setProgramFilter] = useState<string>("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [token, setToken] = useState<string | null>(null)
 
-  const cohorts = [
-    {
-      id: 1,
-      name: "دفعة الابتكار 2025",
-      startDate: "2025/01/15",
-      endDate: "2025/06/15",
-      status: "active",
-      startupCount: 12,
-      mentorCount: 8,
-      completionRate: 45,
-      description: "برنامج مكثف لمدة 6 أشهر للشركات الناشئة في مجال التكنولوجيا المالية والصحية"
-    },
-    {
-      id: 2,
-      name: "دفعة التقنية المالية 2024",
-      startDate: "2024/07/01",
-      endDate: "2024/12/31",
-      status: "active",
-      startupCount: 10,
-      mentorCount: 6,
-      completionRate: 80,
-      description: "برنامج متخصص للشركات الناشئة في مجال التقنية المالية"
-    },
-    {
-      id: 3,
-      name: "دفعة التقنيات الصحية 2024",
-      startDate: "2024/03/01",
-      endDate: "2024/08/31",
-      status: "completed",
-      startupCount: 8,
-      mentorCount: 5,
-      completionRate: 100,
-      description: "برنامج متخصص للشركات الناشئة في مجال التقنيات الصحية"
-    },
-    {
-      id: 4,
-      name: "دفعة الذكاء الاصطناعي 2023",
-      startDate: "2023/09/01",
-      endDate: "2024/02/28",
-      status: "completed",
-      startupCount: 15,
-      mentorCount: 10,
-      completionRate: 100,
-      description: "برنامج متخصص للشركات الناشئة في مجال الذكاء الاصطناعي وتعلم الآلة"
-    },
-    {
-      id: 5,
-      name: "دفعة التجارة الإلكترونية 2025",
-      startDate: "2025/03/01",
-      endDate: "2025/08/31",
-      status: "upcoming",
-      startupCount: 0,
-      mentorCount: 0,
-      completionRate: 0,
-      description: "برنامج متخصص للشركات الناشئة في مجال التجارة الإلكترونية والتسويق الرقمي"
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
     }
-  ]
+  }, []);
 
-  const filteredCohorts = cohorts.filter(cohort => {
-    const matchesSearch = cohort.name.includes(searchQuery) || 
-                          cohort.description.includes(searchQuery)
+  // Fetch cohorts
+  useEffect(() => {
+    if (!token) return;
     
-    if (activeTab === "all") return matchesSearch
-    if (activeTab === "active") return matchesSearch && cohort.status === "active"
-    if (activeTab === "completed") return matchesSearch && cohort.status === "completed"
-    if (activeTab === "upcoming") return matchesSearch && cohort.status === "upcoming"
+    const fetchCohorts = async () => {
+      setLoading(true);
+      
+      try {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: '10'
+        });
+        
+        if (searchQuery) {
+          queryParams.append('search', searchQuery);
+        }
+        
+        if (statusFilter) {
+          queryParams.append('status', statusFilter);
+        }
+        
+        if (programFilter) {
+          queryParams.append('programId', programFilter);
+        }
+        
+        const response = await fetch(`/api/program-manager/cohorts?${queryParams.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch cohorts');
+        }
+        
+        const data = await response.json();
+        setCohorts(data.cohorts);
+        setStatistics(data.statistics);
+        setTotalPages(data.pagination.totalPages);
+      } catch (error) {
+        console.error('Error fetching cohorts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    return matchesSearch
-  })
+    fetchCohorts();
+  }, [token, page, searchQuery, statusFilter, programFilter]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "bg-green-100 text-green-800"
-      case "completed": return "bg-blue-100 text-blue-800"
-      case "upcoming": return "bg-amber-100 text-amber-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
-  }
+  // Handle search
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1); // Reset to first page on new search
+  };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "active": return "نشطة"
-      case "completed": return "مكتملة"
-      case "upcoming": return "قادمة"
-      default: return "غير معروف"
+  // Handle bulk actions
+  const handleBulkAction = async (action: string) => {
+    if (selectedCohorts.length === 0) {
+      return;
     }
+    
+    try {
+      let endpoint = '/api/program-manager/cohorts';
+      let method = 'PUT';
+      let body: any = {
+        cohortIds: selectedCohorts,
+        action: ''
+      };
+      
+      if (action === 'delete') {
+        // For delete, we need to delete each cohort individually
+        for (const cohortId of selectedCohorts) {
+          await fetch(`/api/program-manager/cohorts/${cohortId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        }
+      } else if (action === 'activate') {
+        body.action = 'updateStatus';
+        body.data = { status: 'ACTIVE' };
+        
+        await fetch(endpoint, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(body)
+        });
+      } else if (action === 'complete') {
+        body.action = 'updateStatus';
+        body.data = { status: 'COMPLETED' };
+        
+        await fetch(endpoint, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(body)
+        });
+      }
+      
+      // Refresh the cohorts list
+      setPage(1);
+      setSelectedCohorts([]);
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+    }
+  };
+
+  // Table columns
+  const columns: ColumnDef<Cohort>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: "اسم الدفعة",
+      cell: ({ row }) => (
+        <div className="font-medium cursor-pointer" onClick={() => router.push(`/program-manager-dashboard/cohorts/${row.original.id}`)}>
+          {row.original.name}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "program.name",
+      header: "البرنامج",
+      cell: ({ row }) => <div>{row.original.program.name}</div>,
+    },
+    {
+      accessorKey: "status",
+      header: "الحالة",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        let variant: "default" | "outline" | "secondary" | "destructive" = "default";
+        let label = "قادم";
+        
+        if (status === "ACTIVE") {
+          variant = "default";
+          label = "نشط";
+        } else if (status === "COMPLETED") {
+          variant = "secondary";
+          label = "مكتمل";
+        } else if (status === "UPCOMING") {
+          variant = "outline";
+          label = "قادم";
+        }
+        
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      accessorKey: "startDate",
+      header: "تاريخ البدء",
+      cell: ({ row }) => {
+        const startDate = row.original.startDate;
+        return <div>{new Date(startDate).toLocaleDateString('ar-SA')}</div>;
+      },
+    },
+    {
+      accessorKey: "endDate",
+      header: "تاريخ الانتهاء",
+      cell: ({ row }) => {
+        const endDate = row.original.endDate;
+        return <div>{new Date(endDate).toLocaleDateString('ar-SA')}</div>;
+      },
+    },
+    {
+      accessorKey: "stats.membersCount",
+      header: "عدد الشركات",
+      cell: ({ row }) => <div>{row.original.stats.membersCount}</div>,
+    },
+    {
+      accessorKey: "stats.mentorsCount",
+      header: "عدد المرشدين",
+      cell: ({ row }) => <div>{row.original.stats.mentorsCount}</div>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">فتح القائمة</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => router.push(`/program-manager-dashboard/cohorts/${row.original.id}`)}>
+                عرض التفاصيل
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/program-manager-dashboard/cohorts/${row.original.id}/edit`)}>
+                تعديل
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push(`/program-manager-dashboard/cohorts/${row.original.id}/members`)}>
+                إدارة الشركات
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/program-manager-dashboard/cohorts/${row.original.id}/mentors`)}>
+                إدارة المرشدين
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
+                حذف
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  if (!token) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <p>يجب تسجيل الدخول أولاً</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
-        <Button className="flex items-center gap-2">
+        <Button 
+          variant="default" 
+          className="flex items-center gap-1"
+          onClick={() => router.push('/program-manager-dashboard/cohorts/new')}
+        >
           <Plus className="h-4 w-4" />
-          <span>إنشاء دفعة جديدة</span>
+          <span>إضافة دفعة</span>
         </Button>
         <h1 className="text-3xl font-bold">إدارة الدفعات</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Users className="h-8 w-8 text-blue-500 mb-2" />
-            <div className="text-2xl font-bold">{cohorts.filter(cohort => cohort.status === "active").length}</div>
-            <p className="text-muted-foreground">دفعات نشطة</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
-            <div className="text-2xl font-bold">{cohorts.filter(cohort => cohort.status === "completed").length}</div>
-            <p className="text-muted-foreground">دفعات مكتملة</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Calendar className="h-8 w-8 text-amber-500 mb-2" />
-            <div className="text-2xl font-bold">{cohorts.filter(cohort => cohort.status === "upcoming").length}</div>
-            <p className="text-muted-foreground">دفعات قادمة</p>
-          </CardContent>
-        </Card>
+      {/* Statistics Cards */}
+      {statistics && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                إجمالي الدفعات
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  <span className="text-green-500 font-medium">{statistics.active}</span> نشط
+                </div>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                البرامج
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.programs.length}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  {statistics.programs.slice(0, 2).map(p => p.name).join(', ')}
+                  {statistics.programs.length > 2 && '...'}
+                </div>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                الشركات الناشئة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.startups}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  في جميع الدفعات
+                </div>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                المرشدين
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.mentors}</div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-muted-foreground">
+                  في جميع الدفعات
+                </div>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+          <Input
+            placeholder="بحث عن دفعة..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" variant="outline">
+            <Search className="h-4 w-4" />
+          </Button>
+        </form>
+        
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="الحالة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">جميع الحالات</SelectItem>
+              <SelectItem value="UPCOMING">قادم</SelectItem>
+              <SelectItem value="ACTIVE">نشط</SelectItem>
+              <SelectItem value="COMPLETED">مكتمل</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={programFilter} onValueChange={setProgramFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="البرنامج" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">جميع البرامج</SelectItem>
+              {statistics?.programs.map(program => (
+                <SelectItem key={program.id} value={program.id}>
+                  {program.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 ml-2" />
+                <span>الإجراءات</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleBulkAction('activate')}>
+                تنشيط المحدد
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkAction('complete')}>
+                إكمال المحدد
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
+                <Trash2 className="h-4 w-4 ml-2 text-destructive" />
+                <span className="text-destructive">حذف المحدد</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button variant="outline">
+            <Download className="h-4 w-4 ml-2" />
+            <span>تصدير</span>
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            <CardTitle>الدفعات</CardTitle>
+      {/* Cohorts Table */}
+      <DataTable
+        columns={columns}
+        data={cohorts}
+        loading={loading}
+        onRowSelectionChange={(rows) => {
+          setSelectedCohorts(rows);
+        }}
+      />
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          عرض {cohorts.length} من أصل {statistics?.total || 0} دفعة
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page > 1 ? page - 1 : 1)}
+            disabled={page <= 1}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <div className="text-sm">
+            صفحة {page} من {totalPages}
           </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
-              <TabsTrigger value="upcoming">قادمة</TabsTrigger>
-              <TabsTrigger value="completed">مكتملة</TabsTrigger>
-              <TabsTrigger value="active">نشطة</TabsTrigger>
-              <TabsTrigger value="all">الكل</TabsTrigger>
-            </TabsList>
-            
-            {filteredCohorts.map((cohort) => (
-              <div key={cohort.id} className="border rounded-lg overflow-hidden mt-4">
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className={`px-3 py-1 rounded-full text-xs ${getStatusColor(cohort.status)}`}>
-                      {getStatusText(cohort.status)}
-                    </div>
-                    <div className="flex items-center">
-                      <h3 className="font-bold text-lg">{cohort.name}</h3>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="mb-4">
-                    <p className="text-muted-foreground">{cohort.description}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground">تاريخ البداية</div>
-                      <div className="font-medium">{cohort.startDate}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">تاريخ النهاية</div>
-                      <div className="font-medium">{cohort.endDate}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">عدد الشركات الناشئة</div>
-                      <div className="font-medium">{cohort.startupCount}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">عدد الموجهين</div>
-                      <div className="font-medium">{cohort.mentorCount}</div>
-                    </div>
-                  </div>
-                  
-                  {cohort.status !== "upcoming" && (
-                    <div className="mb-4">
-                      <div className="text-sm text-muted-foreground mb-1">نسبة الإكمال</div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className="bg-blue-600 h-2.5 rounded-full" 
-                          style={{ width: `${cohort.completionRate}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-right mt-1">{cohort.completionRate}%</div>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between mt-4">
-                    <Button variant="outline" size="sm">عرض التفاصيل</Button>
-                    
-                    {cohort.status === "active" && (
-                      <div className="flex gap-2">
-                        <Button variant="default" size="sm">إدارة الشركات</Button>
-                        <Button variant="default" size="sm">إدارة الموجهين</Button>
-                      </div>
-                    )}
-                    
-                    {cohort.status === "upcoming" && (
-                      <div className="flex gap-2">
-                        <Button variant="default" size="sm">تعديل</Button>
-                        <Button variant="destructive" size="sm">حذف</Button>
-                      </div>
-                    )}
-                    
-                    {cohort.status === "completed" && (
-                      <Button variant="default" size="sm">تصدير التقرير</Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </Tabs>
-        </CardContent>
-      </Card>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page < totalPages ? page + 1 : totalPages)}
+            disabled={page >= totalPages}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

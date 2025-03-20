@@ -243,7 +243,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <span>عدد الشركات</span>
                   </div>
-                  <span className="font-bold">{cohort.stats.membersCount}</span>
+                  <span className="font-bold">{cohort.stats?.membersCount || 0}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -251,7 +251,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
                     <Users className="h-5 w-5 text-blue-500" />
                     <span>عدد المرشدين</span>
                   </div>
-                  <span className="font-bold">{cohort.stats.mentorsCount}</span>
+                  <span className="font-bold">{cohort.stats?.mentorsCount || 0}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">

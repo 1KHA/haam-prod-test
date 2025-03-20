@@ -40,29 +40,25 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updater) => {
+      // Handle both function updater and direct value
+      const newSelection = typeof updater === 'function' 
+        ? updater(rowSelection) 
+        : updater;
+      
+      setRowSelection(newSelection);
+      
+      if (onRowSelectionChange) {
+        const selectedRowIds = Object.keys(newSelection)
+          .filter(index => newSelection[index])
+          .map(index => (data[parseInt(index)] as any).id);
+        onRowSelectionChange(selectedRowIds);
+      }
+    },
     state: {
       rowSelection,
     },
   })
-
-  // When row selection changes, call the callback with the selected row IDs
-  const handleRowSelectionChange = (newRowSelection: RowSelectionState) => {
-    setRowSelection(newRowSelection)
-    
-    if (onRowSelectionChange) {
-      const selectedRowIds = Object.keys(newRowSelection).map(
-        (index) => (data[parseInt(index)] as any).id
-      )
-      onRowSelectionChange(selectedRowIds)
-    }
-  }
-
-  // Update the table's row selection state handler
-  table.setOptions((prev) => ({
-    ...prev,
-    onRowSelectionChange: handleRowSelectionChange,
-  }))
 
   return (
     <div className="rounded-md border">

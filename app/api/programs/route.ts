@@ -24,9 +24,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || undefined;
     
     // Build the where clause for filtering
-    const where: any = {
-      status: 'ACTIVE' // Only show active programs
-    };
+    const where: any = {};
     
     if (search) {
       where.OR = [

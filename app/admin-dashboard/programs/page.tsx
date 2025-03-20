@@ -172,6 +172,8 @@ export default function ProgramsPage() {
         body.data = { status: 'CANCELLED' };
       }
       
+      console.log('Sending bulk action request:', body);
+      
       const response = await fetch(endpoint, {
         method,
         headers: {

@@ -8,11 +8,11 @@ export async function POST(request: NextRequest) {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
     
-    // Check if user is authenticated and is a startup
+    // Check if user is authenticated and has appropriate role
     const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.STARTUP) {
+    if (!user || (user.role !== UserRole.STARTUP && user.role !== UserRole.ACCELERATOR)) {
       return NextResponse.json(
-        { error: 'Unauthorized. Only startups can apply to cohorts.' },
+        { error: 'Unauthorized. Only startups or accelerators can apply to cohorts.' },
         { status: 401 }
       );
     }

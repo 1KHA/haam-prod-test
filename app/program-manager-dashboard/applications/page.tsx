@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -15,113 +15,190 @@ import {
   Star,
   UserCheck,
   Calendar,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react"
+import { showAdminToast } from "@/components/admin/admin-toaster"
+
+interface Application {
+  id: string
+  companyName: string
+  industry: string
+  program: string
+  submissionDate: string
+  status: string
+  score: number
+  teamSize: number
+  stage: string
+  reviewers: string[]
+  cohortId: string | null
+  founder: {
+    name: string
+    email: string
+  }
+}
+
+interface ApplicationStats {
+  pendingCount: number
+  inReviewCount: number
+  activeCount: number
+  rejectedCount: number
+  totalCount: number
+}
 
 export default function ApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("pending")
-
-  const applications = [
-    {
-      id: 1,
-      companyName: "تك إنوفيشن",
-      industry: "تقنية مالية",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/01",
-      status: "pending",
-      score: 0,
-      teamSize: 5,
-      stage: "بذرة",
-      reviewers: []
-    },
-    {
-      id: 2,
-      companyName: "هيلث بلس",
-      industry: "تقنيات صحية",
-      program: "مسرع التقنيات الصحية",
-      submissionDate: "2025/03/02",
-      status: "in-review",
-      score: 3.5,
-      teamSize: 4,
-      stage: "بذرة",
-      reviewers: ["أحمد محمد", "سارة الأحمد"]
-    },
-    {
-      id: 3,
-      companyName: "سمارت إديو",
-      industry: "تقنيات تعليمية",
-      program: "حاضنة التقنيات الناشئة",
-      submissionDate: "2025/03/03",
-      status: "approved",
-      score: 4.2,
-      teamSize: 3,
-      stage: "بذرة",
-      reviewers: ["محمد السالم", "خالد العمري", "نورة الغامدي"]
-    },
-    {
-      id: 4,
-      companyName: "إي-كوميرس بلس",
-      industry: "تجارة إلكترونية",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/04",
-      status: "rejected",
-      score: 2.1,
-      teamSize: 4,
-      stage: "بذرة",
-      reviewers: ["فهد العتيبي", "سارة الأحمد"]
-    },
-    {
-      id: 5,
-      companyName: "فود تك",
-      industry: "تقنيات غذائية",
-      program: "حاضنة التقنيات الناشئة",
-      submissionDate: "2025/03/05",
-      status: "pending",
-      score: 0,
-      teamSize: 3,
-      stage: "فكرة",
-      reviewers: []
-    },
-    {
-      id: 6,
-      companyName: "سيكيور تك",
-      industry: "أمن سيبراني",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/06",
-      status: "in-review",
-      score: 3.8,
-      teamSize: 6,
-      stage: "بذرة",
-      reviewers: ["خالد العمري", "نورة الغامدي"]
-    },
-    {
-      id: 7,
-      companyName: "إنرجي سوليوشنز",
-      industry: "تقنيات الطاقة",
-      program: "حاضنة التقنيات الناشئة",
-      submissionDate: "2025/03/07",
-      status: "approved",
-      score: 4.5,
-      teamSize: 5,
-      stage: "بذرة",
-      reviewers: ["محمد السالم", "سارة الأحمد", "فهد العتيبي"]
-    },
-    {
-      id: 8,
-      companyName: "سمارت هوم",
-      industry: "إنترنت الأشياء",
-      program: "مسرع التقنيات الصحية",
-      submissionDate: "2025/03/08",
-      status: "rejected",
-      score: 1.8,
-      teamSize: 4,
-      stage: "فكرة",
-      reviewers: ["أحمد محمد", "خالد العمري"]
+  const [applications, setApplications] = useState<Application[]>([])
+  const [stats, setStats] = useState<ApplicationStats>({
+    pendingCount: 0,
+    inReviewCount: 0,
+    activeCount: 0,
+    rejectedCount: 0,
+    totalCount: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const [token, setToken] = useState<string | null>(null)
+  
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
     }
-  ]
+  }, []);
+  
+  // Fetch applications
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchApplications = async () => {
+      setLoading(true);
+      
+      try {
+        const response = await fetch(`/api/program-manager/applications`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch applications');
+        }
+        
+        const data = await response.json();
+        
+        // Map the API response to our application interface
+        const mappedApplications = data.applications.map((app: any) => ({
+          id: app.id,
+          companyName: app.companyName,
+          industry: app.industry,
+          program: app.program,
+          submissionDate: new Date(app.submissionDate).toLocaleDateString('ar-SA'),
+          status: app.status === "PENDING" ? "pending" : 
+                 app.status === "IN_REVIEW" ? "in-review" : 
+                 app.status === "ACTIVE" ? "approved" : 
+                 app.status === "REJECTED" ? "rejected" : "pending",
+          score: app.score || 0,
+          teamSize: app.teamSize || 0,
+          stage: app.stage || "بذرة",
+          reviewers: app.reviewers || [],
+          cohortId: app.cohortId,
+          founder: app.founder
+        }));
+        
+        setApplications(mappedApplications);
+        setStats({
+          pendingCount: data.stats.pendingCount,
+          inReviewCount: data.stats.inReviewCount,
+          activeCount: data.stats.activeCount,
+          rejectedCount: data.stats.rejectedCount,
+          totalCount: data.stats.totalCount
+        });
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        showAdminToast({
+          title: "خطأ",
+          description: "فشل في جلب بيانات الطلبات",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchApplications();
+  }, [token]);
+  
+  // Handle status update
+  const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
+    if (!token) return;
+    
+    try {
+      // Map UI status to API status
+      const apiStatus = newStatus === "in-review" ? "IN_REVIEW" : 
+                        newStatus === "approved" ? "ACTIVE" : 
+                        newStatus === "rejected" ? "REJECTED" : "PENDING";
+      
+      const response = await fetch(`/api/program-manager/applications/${applicationId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: apiStatus,
+          cohortId: applications.find(app => app.id === applicationId)?.cohortId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update application status');
+      }
+      
+      // Update the application in the local state
+      setApplications(prevApplications => 
+        prevApplications.map(app => 
+          app.id === applicationId ? { ...app, status: newStatus } : app
+        )
+      );
+      
+      // Update stats
+      if (newStatus === "in-review") {
+        setStats(prev => ({
+          ...prev,
+          pendingCount: prev.pendingCount - 1,
+          inReviewCount: prev.inReviewCount + 1
+        }));
+      } else if (newStatus === "approved") {
+        setStats(prev => ({
+          ...prev,
+          inReviewCount: prev.inReviewCount - 1,
+          activeCount: prev.activeCount + 1
+        }));
+      } else if (newStatus === "rejected") {
+        setStats(prev => ({
+          ...prev,
+          inReviewCount: prev.inReviewCount - 1,
+          rejectedCount: prev.rejectedCount + 1
+        }));
+      }
+      
+      showAdminToast({
+        title: "تم بنجاح",
+        description: "تم تحديث حالة الطلب بنجاح"
+      });
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في تحديث حالة الطلب",
+        variant: "destructive"
+      });
+    }
+  };
 
-  const filteredApplications = applications.filter(app => {
+  const filteredApplications = applications.filter((app: Application) => {
     const matchesSearch = app.companyName.includes(searchQuery) || 
                           app.industry.includes(searchQuery) ||
                           app.program.includes(searchQuery)
@@ -181,36 +258,49 @@ export default function ApplicationsPage() {
         <h1 className="text-3xl font-bold">مراجعة الطلبات</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Clock className="h-8 w-8 text-blue-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "pending").length}</div>
-            <p className="text-muted-foreground">قيد الانتظار</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <FileCheck className="h-8 w-8 text-amber-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "in-review").length}</div>
-            <p className="text-muted-foreground">قيد المراجعة</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "approved").length}</div>
-            <p className="text-muted-foreground">مقبول</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <XCircle className="h-8 w-8 text-red-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "rejected").length}</div>
-            <p className="text-muted-foreground">مرفوض</p>
-          </CardContent>
-        </Card>
-      </div>
+      {!token ? (
+        <div className="flex justify-center items-center py-8">
+          <p>يجب تسجيل الدخول أولاً</p>
+        </div>
+      ) : loading ? (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mr-2">جاري التحميل...</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <Clock className="h-8 w-8 text-blue-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.pendingCount}</div>
+                <p className="text-muted-foreground">قيد الانتظار</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <FileCheck className="h-8 w-8 text-amber-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.inReviewCount}</div>
+                <p className="text-muted-foreground">قيد المراجعة</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.activeCount}</div>
+                <p className="text-muted-foreground">مقبول</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <XCircle className="h-8 w-8 text-red-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.rejectedCount}</div>
+                <p className="text-muted-foreground">مرفوض</p>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
 
       <Card>
         <CardHeader>
@@ -326,16 +416,34 @@ export default function ApplicationsPage() {
                       <div className="flex justify-between mt-4">
                         {application.status === "pending" && (
                           <>
-                            <Button variant="outline" size="sm">تعيين مراجعين</Button>
-                            <Button variant="default" size="sm">بدء المراجعة</Button>
+                        <Button variant="outline" size="sm">تعيين مراجعين</Button>
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleStatusUpdate(application.id, "in-review")}
+                        >
+                          بدء المراجعة
+                        </Button>
                           </>
                         )}
                         {application.status === "in-review" && (
                           <>
-                            <Button variant="outline" size="sm">إضافة ملاحظات</Button>
-                            <div className="flex gap-2">
-                              <Button variant="destructive" size="sm">رفض</Button>
-                              <Button variant="default" size="sm">قبول</Button>
+                        <Button variant="outline" size="sm">إضافة ملاحظات</Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleStatusUpdate(application.id, "rejected")}
+                          >
+                            رفض
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => handleStatusUpdate(application.id, "approved")}
+                          >
+                            قبول
+                          </Button>
                             </div>
                           </>
                         )}

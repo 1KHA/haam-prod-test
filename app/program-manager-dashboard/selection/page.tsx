@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -17,129 +17,184 @@ import {
   FileText,
   Users,
   ArrowUpDown,
-  Mail
+  Mail,
+  Loader2
 } from "lucide-react"
+import { showAdminToast } from "@/components/admin/admin-toaster"
+
+interface Application {
+  id: string
+  companyName: string
+  industry: string
+  program: string
+  submissionDate: string
+  status: string
+  score: number
+  teamSize: number
+  stage: string
+  interviewDate: string
+  interviewTime: string
+  interviewStatus: string
+  cohortId: string | null
+  founder: {
+    name: string
+    email: string
+  }
+}
+
+interface ApplicationStats {
+  shortlistedCount: number
+  selectedCount: number
+  rejectedCount: number
+  totalCount: number
+}
 
 export default function SelectionPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("shortlisted")
-
-  const applications = [
-    {
-      id: 1,
-      companyName: "تك إنوفيشن",
-      industry: "تقنية مالية",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/01",
-      status: "shortlisted",
-      score: 4.2,
-      teamSize: 5,
-      stage: "بذرة",
-      interviewDate: "2025/03/15",
-      interviewTime: "10:00 ص",
-      interviewStatus: "scheduled"
-    },
-    {
-      id: 2,
-      companyName: "هيلث بلس",
-      industry: "تقنيات صحية",
-      program: "مسرع التقنيات الصحية",
-      submissionDate: "2025/03/02",
-      status: "shortlisted",
-      score: 3.8,
-      teamSize: 4,
-      stage: "بذرة",
-      interviewDate: "2025/03/16",
-      interviewTime: "11:30 ص",
-      interviewStatus: "scheduled"
-    },
-    {
-      id: 3,
-      companyName: "سمارت إديو",
-      industry: "تقنيات تعليمية",
-      program: "حاضنة التقنيات الناشئة",
-      submissionDate: "2025/03/03",
-      status: "selected",
-      score: 4.5,
-      teamSize: 3,
-      stage: "بذرة",
-      interviewDate: "2025/03/10",
-      interviewTime: "1:00 م",
-      interviewStatus: "completed"
-    },
-    {
-      id: 4,
-      companyName: "إي-كوميرس بلس",
-      industry: "تجارة إلكترونية",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/04",
-      status: "rejected",
-      score: 2.1,
-      teamSize: 4,
-      stage: "بذرة",
-      interviewDate: "2025/03/12",
-      interviewTime: "3:00 م",
-      interviewStatus: "completed"
-    },
-    {
-      id: 5,
-      companyName: "سيكيور تك",
-      industry: "أمن سيبراني",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/06",
-      status: "shortlisted",
-      score: 3.9,
-      teamSize: 6,
-      stage: "بذرة",
-      interviewDate: "2025/03/18",
-      interviewTime: "9:30 ص",
-      interviewStatus: "scheduled"
-    },
-    {
-      id: 6,
-      companyName: "إنرجي سوليوشنز",
-      industry: "تقنيات الطاقة",
-      program: "حاضنة التقنيات الناشئة",
-      submissionDate: "2025/03/07",
-      status: "selected",
-      score: 4.7,
-      teamSize: 5,
-      stage: "بذرة",
-      interviewDate: "2025/03/11",
-      interviewTime: "2:00 م",
-      interviewStatus: "completed"
-    },
-    {
-      id: 7,
-      companyName: "فينتك",
-      industry: "تقنية مالية",
-      program: "مسرع التقنية المالية",
-      submissionDate: "2025/03/05",
-      status: "selected",
-      score: 4.3,
-      teamSize: 4,
-      stage: "بذرة",
-      interviewDate: "2025/03/09",
-      interviewTime: "11:00 ص",
-      interviewStatus: "completed"
-    },
-    {
-      id: 8,
-      companyName: "ميديكال إيه آي",
-      industry: "تقنيات صحية",
-      program: "مسرع التقنيات الصحية",
-      submissionDate: "2025/03/08",
-      status: "shortlisted",
-      score: 4.0,
-      teamSize: 5,
-      stage: "بذرة",
-      interviewDate: "2025/03/17",
-      interviewTime: "10:30 ص",
-      interviewStatus: "scheduled"
+  const [applications, setApplications] = useState<Application[]>([])
+  const [stats, setStats] = useState<ApplicationStats>({
+    shortlistedCount: 0,
+    selectedCount: 0,
+    rejectedCount: 0,
+    totalCount: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const [token, setToken] = useState<string | null>(null)
+  
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
     }
-  ]
+  }, []);
+  
+  // Fetch applications
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchApplications = async () => {
+      setLoading(true);
+      
+      try {
+        const response = await fetch(`/api/program-manager/selection`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch selection data');
+        }
+        
+        const data = await response.json();
+        
+        // Map the API response to our application interface
+        const mappedApplications = data.applications.map((app: any) => ({
+          id: app.id,
+          companyName: app.companyName,
+          industry: app.industry,
+          program: app.program,
+          submissionDate: new Date(app.submissionDate).toLocaleDateString('ar-SA'),
+          status: app.status === "SHORTLISTED" ? "shortlisted" : 
+                 app.status === "SELECTED" ? "selected" : 
+                 app.status === "REJECTED" ? "rejected" : "shortlisted",
+          score: app.score || 0,
+          teamSize: app.teamSize || 0,
+          stage: app.stage || "بذرة",
+          interviewDate: app.interviewDate || "",
+          interviewTime: app.interviewTime || "",
+          interviewStatus: app.interviewStatus || "scheduled",
+          cohortId: app.cohortId,
+          founder: app.founder
+        }));
+        
+        setApplications(mappedApplications);
+        setStats({
+          shortlistedCount: data.stats.shortlistedCount,
+          selectedCount: data.stats.selectedCount,
+          rejectedCount: data.stats.rejectedCount,
+          totalCount: data.stats.totalCount
+        });
+      } catch (error) {
+        console.error('Error fetching selection data:', error);
+        showAdminToast({
+          title: "خطأ",
+          description: "فشل في جلب بيانات المرشحين",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchApplications();
+  }, [token]);
+  
+  // Handle status update
+  const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
+    if (!token) return;
+    
+    try {
+      // Map UI status to API status
+      const apiStatus = newStatus === "shortlisted" ? "SHORTLISTED" : 
+                        newStatus === "selected" ? "SELECTED" : 
+                        newStatus === "rejected" ? "REJECTED" : "SHORTLISTED";
+      
+      const response = await fetch(`/api/program-manager/selection/${applicationId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: apiStatus,
+          cohortId: applications.find(app => app.id === applicationId)?.cohortId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update selection status');
+      }
+      
+      // Update the application in the local state
+      setApplications(prevApplications => 
+        prevApplications.map(app => 
+          app.id === applicationId ? { ...app, status: newStatus } : app
+        )
+      );
+      
+      // Update stats
+      if (newStatus === "selected" && activeTab === "shortlisted") {
+        setStats(prev => ({
+          ...prev,
+          shortlistedCount: prev.shortlistedCount - 1,
+          selectedCount: prev.selectedCount + 1
+        }));
+      } else if (newStatus === "rejected" && activeTab === "shortlisted") {
+        setStats(prev => ({
+          ...prev,
+          shortlistedCount: prev.shortlistedCount - 1,
+          rejectedCount: prev.rejectedCount + 1
+        }));
+      }
+      
+      showAdminToast({
+        title: "تم بنجاح",
+        description: "تم تحديث حالة المرشح بنجاح"
+      });
+    } catch (error) {
+      console.error('Error updating selection status:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في تحديث حالة المرشح",
+        variant: "destructive"
+      });
+    }
+  };
 
-  const filteredApplications = applications.filter(app => {
+  const filteredApplications = applications.filter((app: Application) => {
     const matchesSearch = app.companyName.includes(searchQuery) || 
                           app.industry.includes(searchQuery) ||
                           app.program.includes(searchQuery)
@@ -204,29 +259,42 @@ export default function SelectionPage() {
         <h1 className="text-3xl font-bold">اختيار المتقدمين</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <UserCheck className="h-8 w-8 text-amber-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "shortlisted").length}</div>
-            <p className="text-muted-foreground">مرشح للمقابلة</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "selected").length}</div>
-            <p className="text-muted-foreground">تم القبول</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <XCircle className="h-8 w-8 text-red-500 mb-2" />
-            <div className="text-2xl font-bold">{applications.filter(app => app.status === "rejected").length}</div>
-            <p className="text-muted-foreground">مرفوض</p>
-          </CardContent>
-        </Card>
-      </div>
+      {!token ? (
+        <div className="flex justify-center items-center py-8">
+          <p>يجب تسجيل الدخول أولاً</p>
+        </div>
+      ) : loading ? (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mr-2">جاري التحميل...</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <UserCheck className="h-8 w-8 text-amber-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.shortlistedCount}</div>
+                <p className="text-muted-foreground">مرشح للمقابلة</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.selectedCount}</div>
+                <p className="text-muted-foreground">تم القبول</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                <XCircle className="h-8 w-8 text-red-500 mb-2" />
+                <div className="text-2xl font-bold">{stats.rejectedCount}</div>
+                <p className="text-muted-foreground">مرفوض</p>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
 
       <Card>
         <CardHeader>
@@ -335,8 +403,20 @@ export default function SelectionPage() {
                           <>
                             <Button variant="outline" size="sm">تعديل المقابلة</Button>
                             <div className="flex gap-2">
-                              <Button variant="destructive" size="sm">رفض</Button>
-                              <Button variant="default" size="sm">قبول</Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleStatusUpdate(application.id, "rejected")}
+                            >
+                              رفض
+                            </Button>
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              onClick={() => handleStatusUpdate(application.id, "selected")}
+                            >
+                              قبول
+                            </Button>
                             </div>
                           </>
                         )}

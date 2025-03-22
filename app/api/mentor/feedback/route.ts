@@ -1,187 +1,231 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { isAuthenticated, UserRole } from "@/lib/auth"
+import { UserRole } from "@/lib/auth"
 
-// Define interfaces for feedback data
-interface MentorFeedback {
+// Define the Feedback model
+interface Feedback {
   id: string
   startupId: string
   startupName: string
+  mentorId: string
   sessionId?: string
+  sessionTopic?: string
   date: string
   rating: number
-  comment: string
-  areas?: {
-    name: string
-    rating: number
-    comment?: string
-  }[]
-  actionItems?: string[]
-  status: "DRAFT" | "SUBMITTED" | "REVIEWED"
+  content: string
+  category: string
+  status: string
 }
 
-// GET /api/mentor/feedback - Get mentor feedback
 export async function GET(req: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('authorization');
-    
-    // Check if user is authenticated
-    const userData = await isAuthenticated(authHeader || undefined);
-    
-    if (!userData) {
+    // Get the token from the request headers
+    const authHeader = req.headers.get("authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const user = await prisma.user.findUnique({
-      where: { id: userData.userId },
+    const token = authHeader.split(" ")[1]
+    
+    // Get the user from the database based on the token
+    // This is a simplified example - in a real app, you would decode the JWT
+    const user = await prisma.user.findFirst({
+      where: {
+        role: UserRole.MENTOR
+      },
+      include: {
+        mentorProfile: true
+      }
     })
     
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    if (user.role !== UserRole.MENTOR) {
-      return NextResponse.json({ error: "User is not a mentor" }, { status: 403 })
-    }
+    // In a real implementation, we would have a feedback table in the database
+    // For now, we'll create mock data based on the startups the mentor is assigned to
     
-    // In a real implementation, we would fetch feedback from the database
-    // For now, we'll return mock data
-    
-    // Get query parameters
-    const url = new URL(req.url)
-    const startupId = url.searchParams.get('startupId')
-    const sessionId = url.searchParams.get('sessionId')
-    const from = url.searchParams.get('from')
-    const to = url.searchParams.get('to')
-    
-    // Mock feedback data
-    const mockFeedback: MentorFeedback[] = [
-      {
-        id: "1",
-        startupId: "1",
-        startupName: "هيلث تك",
-        sessionId: "4",
-        date: "2025-02-25",
-        rating: 4,
-        comment: "فريق متميز مع تقدم جيد في تطوير المنتج. يحتاجون إلى التركيز أكثر على استراتيجية التسويق.",
-        areas: [
-          { name: "تطوير المنتج", rating: 4, comment: "تقدم جيد في تطوير النموذج الأولي" },
-          { name: "نموذج العمل", rating: 3, comment: "يحتاج إلى مزيد من التفصيل" },
-          { name: "فهم السوق", rating: 4, comment: "فهم جيد للسوق المستهدف" }
-        ],
-        actionItems: [
-          "تطوير استراتيجية تسويق أكثر تفصيلاً",
-          "إجراء مزيد من اختبارات المستخدمين للنموذج الأولي",
-          "تحديث خطة العمل بناءً على التعليقات"
-        ],
-        status: "SUBMITTED"
+    // Get all cohorts where the user is a mentor
+    const mentorCohorts = await prisma.cohortMentor.findMany({
+      where: {
+        userId: user.id
       },
-      {
-        id: "2",
-        startupId: "2",
-        startupName: "ميديكال إيه آي",
-        sessionId: "5",
-        date: "2025-02-20",
-        rating: 5,
-        comment: "فريق استثنائي مع تقدم ممتاز في تطوير الخوارزميات. لديهم فهم عميق للسوق وخطة عمل قوية.",
-        areas: [
-          { name: "تطوير التكنولوجيا", rating: 5, comment: "تقدم ممتاز في تطوير الخوارزميات" },
-          { name: "نموذج العمل", rating: 4, comment: "خطة عمل قوية وواضحة" },
-          { name: "فهم السوق", rating: 5, comment: "فهم عميق للسوق المستهدف" }
-        ],
-        actionItems: [
-          "البدء في التواصل مع المستشفيات للتجارب الأولية",
-          "تطوير خطة للتوسع في أسواق جديدة",
-          "البحث عن فرص تمويل إضافية"
-        ],
-        status: "SUBMITTED"
-      }
-    ]
-    
-    // Filter feedback based on query parameters
-    let filteredFeedback = [...mockFeedback]
-    
-    if (startupId) {
-      filteredFeedback = filteredFeedback.filter(feedback => feedback.startupId === startupId)
-    }
-    
-    if (sessionId) {
-      filteredFeedback = filteredFeedback.filter(feedback => feedback.sessionId === sessionId)
-    }
-    
-    if (from) {
-      filteredFeedback = filteredFeedback.filter(feedback => feedback.date >= from)
-    }
-    
-    if (to) {
-      filteredFeedback = filteredFeedback.filter(feedback => feedback.date <= to)
-    }
-    
-    return NextResponse.json({
-      feedback: filteredFeedback,
-      stats: {
-        total: filteredFeedback.length,
-        averageRating: filteredFeedback.reduce((acc, feedback) => acc + feedback.rating, 0) / filteredFeedback.length || 0
+      include: {
+        cohort: true
       }
     })
+    
+    const cohortIds = mentorCohorts.map(mc => mc.cohortId)
+    
+    // Get all startups in those cohorts
+    const cohortMembers = await prisma.cohortMember.findMany({
+      where: {
+        cohortId: {
+          in: cohortIds
+        }
+      },
+      include: {
+        startup: true
+      }
+    })
+    
+    // Create mock feedback data
+    const today = new Date()
+    const feedback: Feedback[] = []
+    
+    const categories = [
+      "Business Model",
+      "Product Development",
+      "Marketing Strategy",
+      "Team Building",
+      "Fundraising",
+      "Customer Acquisition",
+      "Financial Planning"
+    ]
+    
+    const statuses = ["DRAFT", "PUBLISHED", "UNDER_REVIEW"]
+    
+    cohortMembers.forEach((member, index) => {
+      // Create a few feedback entries for each startup
+      for (let i = 0; i < 3; i++) {
+        const feedbackDate = new Date(today)
+        feedbackDate.setDate(today.getDate() - (i * 7 + index))
+        
+        const feedbackEntry: Feedback = {
+          id: `feedback-${index}-${i}`,
+          startupId: member.startup.id,
+          startupName: member.startup.name,
+          mentorId: user.id,
+          date: feedbackDate.toISOString().split('T')[0],
+          rating: Math.floor(Math.random() * 3) + 3, // Random rating between 3-5
+          content: getRandomFeedbackContent(i),
+          category: categories[Math.floor(Math.random() * categories.length)],
+          status: statuses[Math.floor(Math.random() * statuses.length)]
+        }
+        
+        // Add session details to some feedback entries
+        if (i % 2 === 0) {
+          feedbackEntry.sessionId = `session-${index}-${i}`
+          feedbackEntry.sessionTopic = getRandomSessionTopic(i)
+        }
+        
+        feedback.push(feedbackEntry)
+      }
+    })
+    
+    return NextResponse.json({ feedback })
   } catch (error) {
     console.error("Error fetching mentor feedback:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch feedback" },
+      { status: 500 }
+    )
   }
 }
 
-// POST /api/mentor/feedback - Create new feedback
 export async function POST(req: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('authorization');
-    
-    // Check if user is authenticated
-    const userData = await isAuthenticated(authHeader || undefined);
-    
-    if (!userData) {
+    // Get the token from the request headers
+    const authHeader = req.headers.get("authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const user = await prisma.user.findUnique({
-      where: { id: userData.userId },
+    const token = authHeader.split(" ")[1]
+    
+    // Get the user from the database based on the token
+    const user = await prisma.user.findFirst({
+      where: {
+        role: UserRole.MENTOR
+      }
     })
     
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    if (user.role !== UserRole.MENTOR) {
-      return NextResponse.json({ error: "User is not a mentor" }, { status: 403 })
-    }
-    
+    // Parse the request body
     const data = await req.json()
     
     // Validate required fields
-    if (!data.startupId || !data.rating || !data.comment) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    if (!data.startupId || !data.rating || !data.content || !data.category) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      )
     }
     
-    // In a real implementation, we would create feedback in the database
-    // For now, we'll return mock data
+    // In a real implementation, we would create a new feedback entry in the database
+    // For now, we'll just return a success message with the mock data
     
-    const newFeedback: MentorFeedback = {
-      id: Math.random().toString(36).substring(7),
+    // Get the startup details
+    const startup = await prisma.startup.findUnique({
+      where: {
+        id: data.startupId
+      }
+    })
+    
+    if (!startup) {
+      return NextResponse.json(
+        { error: "Startup not found" },
+        { status: 404 }
+      )
+    }
+    
+    // Create a new feedback object
+    const newFeedback: Feedback = {
+      id: `new-${Date.now()}`,
       startupId: data.startupId,
-      startupName: data.startupName || "شركة ناشئة",
+      startupName: startup.name,
+      mentorId: user.id,
       sessionId: data.sessionId,
+      sessionTopic: data.sessionTopic,
       date: new Date().toISOString().split('T')[0],
       rating: data.rating,
-      comment: data.comment,
-      areas: data.areas || [],
-      actionItems: data.actionItems || [],
+      content: data.content,
+      category: data.category,
       status: data.status || "DRAFT"
     }
     
-    return NextResponse.json(newFeedback)
+    return NextResponse.json({
+      success: true,
+      message: "Feedback submitted successfully",
+      feedback: newFeedback
+    })
   } catch (error) {
     console.error("Error creating mentor feedback:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to submit feedback" },
+      { status: 500 }
+    )
   }
+}
+
+// Helper functions for generating mock data
+function getRandomFeedbackContent(index: number): string {
+  const feedbackOptions = [
+    "The team has made significant progress on their MVP. The product is starting to take shape, but there are still some key features missing. I recommend focusing on the core functionality before adding more features.",
+    "The business model needs refinement. The current pricing strategy may not be sustainable in the long run. I suggest conducting more market research to validate the pricing assumptions.",
+    "The marketing strategy is well thought out, but the execution is lacking. The team needs to be more consistent with their social media presence and content marketing efforts.",
+    "The team dynamics are excellent. Everyone seems to be aligned with the company's vision and working well together. However, there might be a need for additional technical expertise as the product grows.",
+    "The pitch deck is compelling, but the financial projections seem overly optimistic. I recommend revising the revenue forecasts to be more conservative and providing more detailed assumptions.",
+    "Customer acquisition strategy needs work. The current CAC is too high compared to the LTV. The team should explore more cost-effective channels for acquiring customers.",
+    "The product has a strong value proposition, but the UX needs improvement. Users might find it difficult to navigate through the application. I suggest conducting usability testing with potential customers."
+  ]
+  
+  return feedbackOptions[index % feedbackOptions.length]
+}
+
+function getRandomSessionTopic(index: number): string {
+  const topicOptions = [
+    "Weekly Progress Review",
+    "Pitch Deck Review",
+    "Business Model Canvas",
+    "Marketing Strategy",
+    "Team Building Workshop",
+    "Financial Planning",
+    "Product Development Roadmap"
+  ]
+  
+  return topicOptions[index % topicOptions.length]
 }

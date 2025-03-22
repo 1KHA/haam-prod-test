@@ -1,557 +1,329 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { 
-  Search, 
-  Filter, 
+  ArrowRight, 
   Calendar, 
-  Clock, 
-  Users, 
-  Video,
-  ExternalLink,
-  Check,
-  X,
-  RefreshCw,
-  Plus,
-  ChevronLeft,
-  ChevronRight
+  Filter, 
+  Plus, 
+  Search,
+  Clock
 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 
-export default function SessionsPage() {
+interface Session {
+  id: string
+  startupId: string
+  startupName: string
+  date: string
+  time: string
+  duration: number
+  topic: string
+  status: string
+  notes?: string
+  location?: string
+  type: "INDIVIDUAL" | "GROUP"
+}
+
+export default function MentorSessionsPage() {
+  const router = useRouter()
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([])
+  const [completedSessions, setCompletedSessions] = useState<Session[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("upcoming")
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [startupFilter, setStartupFilter] = useState<string | null>(null)
+  const [startups, setStartups] = useState<{id: string, name: string}[]>([])
 
-  const sessions = [
-    {
-      id: 1,
-      startupName: "تك سوليوشنز",
-      startupLogo: "https://placehold.co/100x100/4F46E5/FFFFFF?text=TS",
-      date: "2025/03/15",
-      startTime: "10:00",
-      endTime: "11:00",
-      format: "عن بعد",
-      topic: "مراجعة خطة التسويق",
-      status: "confirmed",
-      notes: "التركيز على استراتيجيات التسويق الرقمي واكتساب العملاء",
-      preparation: [
-        "مراجعة خطة التسويق الحالية",
-        "تحضير أسئلة حول استراتيجيات اكتساب العملاء",
-        "تحليل أداء حملات التسويق السابقة"
-      ],
-      team: [
-        { name: "محمد العمري", role: "المؤسس والرئيس التنفيذي" },
-        { name: "سارة الخالدي", role: "مدير المنتج" }
-      ]
-    },
-    {
-      id: 2,
-      startupName: "هيلث تك",
-      startupLogo: "https://placehold.co/100x100/10B981/FFFFFF?text=HT",
-      date: "2025/03/18",
-      startTime: "14:00",
-      endTime: "15:00",
-      format: "حضوري",
-      topic: "استراتيجية جمع التمويل",
-      status: "pending",
-      notes: "مناقشة خطة جمع التمويل وإعداد العرض التقديمي للمستثمرين",
-      preparation: [
-        "مراجعة خطة العمل",
-        "تحضير نموذج مالي محدث",
-        "تحديد المستثمرين المحتملين"
-      ],
-      team: [
-        { name: "خالد السعيد", role: "المؤسس والرئيس التنفيذي" },
-        { name: "نورة العتيبي", role: "مدير التسويق" }
-      ]
-    },
-    {
-      id: 3,
-      startupName: "فينتك",
-      startupLogo: "https://placehold.co/100x100/F59E0B/FFFFFF?text=FT",
-      date: "2025/03/22",
-      startTime: "09:00",
-      endTime: "10:00",
-      format: "عن بعد",
-      topic: "تطوير المنتج",
-      status: "confirmed",
-      notes: "مناقشة خارطة طريق المنتج والميزات القادمة",
-      preparation: [
-        "مراجعة خارطة طريق المنتج الحالية",
-        "تحضير ملاحظات حول تحسينات المنتج",
-        "تحليل ملاحظات المستخدمين"
-      ],
-      team: [
-        { name: "عبدالله المالكي", role: "المؤسس والرئيس التنفيذي" },
-        { name: "سلطان العنزي", role: "مدير التقنية" }
-      ]
-    },
-    {
-      id: 5,
-      startupName: "هيلث تك",
-      startupLogo: "https://placehold.co/100x100/10B981/FFFFFF?text=HT",
-      date: "2025/02/25",
-      startTime: "13:00",
-      endTime: "14:00",
-      format: "حضوري",
-      topic: "تطوير النموذج الأولي",
-      status: "completed",
-      notes: "مراجعة النموذج الأولي وتقديم ملاحظات للتحسين",
-      preparation: [],
-      team: [
-        { name: "خالد السعيد", role: "المؤسس والرئيس التنفيذي" },
-        { name: "فهد الدوسري", role: "مطور تطبيقات" }
-      ]
-    }
-  ]
-
-  const filteredSessions = sessions.filter(session => {
-    const matchesSearch = session.startupName.includes(searchQuery) || 
-                          session.topic.includes(searchQuery) ||
-                          (session.notes && session.notes.includes(searchQuery))
-    
-    const sessionDate = new Date(session.date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    if (activeTab === "upcoming") {
-      return matchesSearch && sessionDate >= today && (session.status === "confirmed" || session.status === "pending")
-    }
-    if (activeTab === "completed") {
-      return matchesSearch && session.status === "completed"
-    }
-    if (activeTab === "pending") {
-      return matchesSearch && session.status === "pending"
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        setIsLoading(true)
+        
+        const response = await fetch("/api/mentor/sessions", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch sessions")
+        }
+        
+        const data = await response.json()
+        
+        setSessions(data.sessions || [])
+        setUpcomingSessions(data.upcomingSessions || [])
+        setCompletedSessions(data.completedSessions || [])
+        
+        // Extract unique startups for filters
+        const uniqueStartups = Array.from(
+          new Set(data.sessions.map((s: Session) => s.startupId))
+        ).map((startupId) => {
+          const session = data.sessions.find((s: Session) => s.startupId === startupId)
+          return {
+            id: startupId as string,
+            name: session?.startupName || "Unknown Startup"
+          }
+        })
+        
+        setStartups(uniqueStartups)
+      } catch (error) {
+        console.error("Error fetching sessions:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
     
-    return matchesSearch
-  })
+    fetchSessions()
+  }, [])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "bg-green-100 text-green-800"
-      case "pending": return "bg-yellow-100 text-yellow-800"
-      case "completed": return "bg-blue-100 text-blue-800"
-      case "cancelled": return "bg-red-100 text-red-800"
-      default: return "bg-gray-100 text-gray-800"
+  // Filter sessions based on search and filters
+  const filterSessions = (sessionsList: Session[]) => {
+    let filtered = [...sessionsList]
+    
+    // Apply search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        session => 
+          session.startupName.toLowerCase().includes(query) || 
+          session.topic.toLowerCase().includes(query)
+      )
     }
-  }
-  
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "confirmed": return "مؤكدة"
-      case "pending": return "بانتظار التأكيد"
-      case "completed": return "مكتملة"
-      case "cancelled": return "ملغية"
-      default: return "غير معروف"
+    
+    // Apply status filter
+    if (statusFilter) {
+      filtered = filtered.filter(session => session.status === statusFilter)
     }
-  }
-  
-  const getFormatIcon = (format: string) => {
-    return format === "عن بعد" ? <Video className="h-4 w-4 text-blue-500" /> : <Users className="h-4 w-4 text-green-500" />
-  }
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
+    
+    // Apply startup filter
+    if (startupFilter) {
+      filtered = filtered.filter(session => session.startupId === startupFilter)
+    }
+    
+    return filtered
   }
 
-  const monthNames = [
-    "يناير", "فبراير", "مارس", "إبريل", "مايو", "يونيو",
-    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
-  ]
-  
-  const upcomingCount = sessions.filter(s => {
-    const sessionDate = new Date(s.date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return sessionDate >= today && (s.status === "confirmed" || s.status === "pending")
-  }).length
-  
-  const pendingCount = sessions.filter(s => s.status === "pending").length
-  const completedCount = sessions.filter(s => s.status === "completed").length
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("")
+    setStatusFilter(null)
+    setStartupFilter(null)
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full">جاري التحميل...</div>
+  }
 
   return (
-    <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          <span>إنشاء جلسة جديدة</span>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">جلسات التوجيه</h1>
+        <Button onClick={() => router.push("/mentor-dashboard/sessions/new")}>
+          <Plus className="ml-2 h-4 w-4" />
+          جلسة جديدة
         </Button>
-        <h1 className="text-3xl font-bold">جلسات الإرشاد</h1>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Calendar className="h-8 w-8 text-blue-500 mb-2" />
-            <div className="text-2xl font-bold">{upcomingCount}</div>
-            <p className="text-muted-foreground">الجلسات القادمة</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Clock className="h-8 w-8 text-yellow-500 mb-2" />
-            <div className="text-2xl font-bold">{pendingCount}</div>
-            <p className="text-muted-foreground">بانتظار التأكيد</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Check className="h-8 w-8 text-green-500 mb-2" />
-            <div className="text-2xl font-bold">{completedCount}</div>
-            <p className="text-muted-foreground">الجلسات المكتملة</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
+      
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            placeholder="البحث عن جلسة..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10"
+          />
+        </div>
+        
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>الشركة الناشئة</span>
               </Button>
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {startups.map((startup) => (
+                <DropdownMenuItem 
+                  key={startup.id}
+                  onClick={() => setStartupFilter(startup.id)}
+                  className={startupFilter === startup.id ? "bg-primary/10" : ""}
+                >
+                  {startup.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>الحالة</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("SCHEDULED")}
+                className={statusFilter === "SCHEDULED" ? "bg-primary/10" : ""}
+              >
+                مجدولة
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("COMPLETED")}
+                className={statusFilter === "COMPLETED" ? "bg-primary/10" : ""}
+              >
+                مكتملة
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setStatusFilter("CANCELLED")}
+                className={statusFilter === "CANCELLED" ? "bg-primary/10" : ""}
+              >
+                ملغاة
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {(searchQuery || statusFilter || startupFilter) && (
+            <Button variant="ghost" onClick={clearFilters}>
+              مسح الفلاتر
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      {/* Sessions Tabs */}
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="upcoming">الجلسات القادمة</TabsTrigger>
+          <TabsTrigger value="completed">الجلسات المكتملة</TabsTrigger>
+          <TabsTrigger value="all">كل الجلسات</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upcoming">
+          {renderSessionsList(filterSessions(upcomingSessions))}
+        </TabsContent>
+        
+        <TabsContent value="completed">
+          {renderSessionsList(filterSessions(completedSessions))}
+        </TabsContent>
+        
+        <TabsContent value="all">
+          {renderSessionsList(filterSessions(sessions))}
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+  
+  function renderSessionsList(sessionsList: Session[]) {
+    if (sessionsList.length === 0) {
+      return (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-lg text-gray-500">لا توجد جلسات مطابقة للفلاتر المحددة</p>
+          {(searchQuery || statusFilter || startupFilter) && (
+            <Button variant="link" onClick={clearFilters}>
+              مسح الفلاتر
+            </Button>
+          )}
+        </div>
+      )
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {sessionsList.map((session) => (
+          <Card key={session.id} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">{session.topic}</CardTitle>
+              <CardDescription className="flex items-center gap-2">
+                <Calendar size={14} />
+                <span>{session.date} - {session.time}</span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="text-sm text-muted-foreground mb-2">
+                  <span className="font-medium">الشركة الناشئة:</span> {session.startupName}
+                </div>
+                <div className="text-sm text-muted-foreground mb-2">
+                  <span className="font-medium">المدة:</span> {session.duration} دقيقة
+                </div>
+                <div className="text-sm text-muted-foreground mb-2">
+                  <span className="font-medium">النوع:</span> {session.type === "INDIVIDUAL" ? "فردية" : "جماعية"}
+                </div>
+                {session.location && (
+                  <div className="text-sm text-muted-foreground mb-2">
+                    <span className="font-medium">المكان:</span> {session.location}
+                  </div>
+                )}
+                <div className="text-sm text-muted-foreground mb-2">
+                  <span className="font-medium">الحالة:</span>{" "}
+                  <span className={
+                    session.status === "SCHEDULED" ? "text-blue-600" :
+                    session.status === "COMPLETED" ? "text-green-600" :
+                    "text-red-600"
+                  }>
+                    {session.status === "SCHEDULED" ? "مجدولة" :
+                     session.status === "COMPLETED" ? "مكتملة" :
+                     "ملغاة"}
+                  </span>
+                </div>
               </div>
-            </div>
-            <CardTitle>جلسات الإرشاد</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
-              <TabsTrigger value="calendar">التقويم</TabsTrigger>
-              <TabsTrigger value="completed">مكتملة</TabsTrigger>
-              <TabsTrigger value="pending">بانتظار التأكيد</TabsTrigger>
-              <TabsTrigger value="upcoming">قادمة</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upcoming">
-              <div className="space-y-4">
-                {filteredSessions.length > 0 ? (
-                  filteredSessions.map((session) => (
-                    <div key={session.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getStatusColor(session.status)}`}>
-                            {getStatusText(session.status)}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <h3 className="font-bold text-lg">{session.startupName}</h3>
-                            <div className="w-10 h-10 rounded-full overflow-hidden">
-                              <img 
-                                src={session.startupLogo} 
-                                alt={`شعار ${session.startupName}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground">التاريخ</div>
-                            <div className="font-medium">{formatDate(session.date)}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">الوقت</div>
-                            <div className="font-medium">{session.startTime} - {session.endTime}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">الموضوع</div>
-                            <div className="font-medium">{session.topic}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">النوع</div>
-                            <div className="flex items-center gap-1">
-                              {getFormatIcon(session.format)}
-                              <span className="font-medium">{session.format}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="text-sm text-muted-foreground">ملاحظات</div>
-                          <p className="text-muted-foreground">{session.notes}</p>
-                        </div>
-                        
-                        {session.preparation && session.preparation.length > 0 && (
-                          <div className="mb-4">
-                            <div className="text-sm text-muted-foreground mb-2">التحضير المطلوب</div>
-                            <ul className="list-disc list-inside space-y-1">
-                              {session.preparation.map((item, index) => (
-                                <li key={index} className="text-sm text-muted-foreground">{item}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        <div className="mb-4">
-                          <div className="text-sm text-muted-foreground mb-2">المشاركون</div>
-                          <div className="space-y-2">
-                            {session.team.map((member, index) => (
-                              <div key={index} className="flex justify-between items-center">
-                                <div className="text-sm text-muted-foreground">{member.role}</div>
-                                <div className="font-medium">{member.name}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between mt-4">
-                          {session.status === "pending" && (
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                                <X className="h-4 w-4" />
-                                <span>رفض</span>
-                              </Button>
-                              <Button variant="default" size="sm" className="flex items-center gap-1">
-                                <Check className="h-4 w-4" />
-                                <span>قبول</span>
-                              </Button>
-                            </div>
-                          )}
-                          
-                          {session.status === "confirmed" && (
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                                <RefreshCw className="h-4 w-4" />
-                                <span>إعادة جدولة</span>
-                              </Button>
-                              <Button variant="default" size="sm" className="flex items-center gap-1">
-                                <Video className="h-4 w-4" />
-                                <span>بدء الجلسة</span>
-                              </Button>
-                            </div>
-                          )}
-                          
-                          {session.status !== "pending" && session.status !== "confirmed" && (
-                            <div></div>
-                          )}
-                          
-                          <Button variant="outline" size="sm" className="flex items-center gap-1">
-                            <ExternalLink className="h-4 w-4" />
-                            <span>عرض التفاصيل</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد جلسات</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على جلسات تطابق معايير البحث</p>
+              
+              <div className="flex justify-between items-center mt-4">
+                <Link 
+                  href={`/mentor-dashboard/sessions/${session.id}`} 
+                  className="text-primary flex items-center text-sm hover:underline"
+                >
+                  عرض التفاصيل
+                  <ArrowRight className="h-4 w-4 mr-1" />
+                </Link>
+                
+                {session.status === "SCHEDULED" && (
+                  <div className="flex gap-2">
                     <Button 
                       variant="outline" 
-                      className="flex items-center gap-2 mx-auto"
-                      onClick={() => {
-                        setSearchQuery("")
-                        setActiveTab("upcoming")
-                      }}
+                      size="sm"
+                      onClick={() => router.push(`/mentor-dashboard/sessions/${session.id}/edit`)}
                     >
-                      <Search className="h-4 w-4" />
-                      <span>عرض جميع الجلسات</span>
+                      تعديل
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push(`/mentor-dashboard/feedback/new?sessionId=${session.id}`)}
+                    >
+                      <Clock className="h-4 w-4 ml-1" />
+                      بدء
                     </Button>
                   </div>
                 )}
               </div>
-            </TabsContent>
-            
-            <TabsContent value="pending">
-              <div className="space-y-4">
-                {filteredSessions.length > 0 ? (
-                  filteredSessions.map((session) => (
-                    <div key={session.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getStatusColor(session.status)}`}>
-                            {getStatusText(session.status)}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <h3 className="font-bold text-lg">{session.startupName}</h3>
-                            <div className="w-10 h-10 rounded-full overflow-hidden">
-                              <img 
-                                src={session.startupLogo} 
-                                alt={`شعار ${session.startupName}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground">التاريخ</div>
-                            <div className="font-medium">{formatDate(session.date)}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">الوقت</div>
-                            <div className="font-medium">{session.startTime} - {session.endTime}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">الموضوع</div>
-                            <div className="font-medium">{session.topic}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">النوع</div>
-                            <div className="flex items-center gap-1">
-                              {getFormatIcon(session.format)}
-                              <span className="font-medium">{session.format}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="text-sm text-muted-foreground">ملاحظات</div>
-                          <p className="text-muted-foreground">{session.notes}</p>
-                        </div>
-                        
-                        <div className="flex justify-between mt-4">
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex items-center gap-1">
-                              <X className="h-4 w-4" />
-                              <span>رفض</span>
-                            </Button>
-                            <Button variant="default" size="sm" className="flex items-center gap-1">
-                              <Check className="h-4 w-4" />
-                              <span>قبول</span>
-                            </Button>
-                          </div>
-                          
-                          <Button variant="outline" size="sm" className="flex items-center gap-1">
-                            <ExternalLink className="h-4 w-4" />
-                            <span>عرض التفاصيل</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد جلسات بانتظار التأكيد</h3>
-                    <p className="text-muted-foreground mb-4">ليس لديك أي طلبات جلسات بانتظار التأكيد</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="completed">
-              <div className="space-y-4">
-                {filteredSessions.length > 0 ? (
-                  filteredSessions.map((session) => (
-                    <div key={session.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
-                          <div className={`px-3 py-1 rounded-full text-xs ${getStatusColor(session.status)}`}>
-                            {getStatusText(session.status)}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <h3 className="font-bold text-lg">{session.startupName}</h3>
-                            <div className="w-10 h-10 rounded-full overflow-hidden">
-                              <img 
-                                src={session.startupLogo} 
-                                alt={`شعار ${session.startupName}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground">التاريخ</div>
-                            <div className="font-medium">{formatDate(session.date)}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">الوقت</div>
-                            <div className="font-medium">{session.startTime} - {session.endTime}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">الموضوع</div>
-                            <div className="font-medium">{session.topic}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">النوع</div>
-                            <div className="flex items-center gap-1">
-                              {getFormatIcon(session.format)}
-                              <span className="font-medium">{session.format}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="text-sm text-muted-foreground">ملاحظات</div>
-                          <p className="text-muted-foreground">{session.notes}</p>
-                        </div>
-                        
-                        <div className="flex justify-end mt-4">
-                          <Button variant="outline" size="sm" className="flex items-center gap-1">
-                            <ExternalLink className="h-4 w-4" />
-                            <span>عرض التفاصيل</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <Check className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد جلسات مكتملة</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على جلسات مكتملة تطابق معايير البحث</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="calendar">
-              <div className="mb-4 flex justify-between items-center">
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={() => {
-                    const prev = new Date(currentMonth);
-                    prev.setMonth(prev.getMonth() - 1);
-                    setCurrentMonth(prev);
-                  }}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => {
-                    const next = new Date(currentMonth);
-                    next.setMonth(next.getMonth() + 1);
-                    setCurrentMonth(next);
-                  }}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h3 className="font-medium text-lg">
-                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                </h3>
-              </div>
-              
-              <div className="text-center p-8 border rounded-lg">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">عرض التقويم</h3>
-                <p className="text-muted-foreground mb-4">يمكنك عرض جلساتك في التقويم</p>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
-  )
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
 }

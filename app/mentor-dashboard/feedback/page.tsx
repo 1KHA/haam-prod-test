@@ -1,309 +1,310 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { 
-  Search, 
+  ArrowRight, 
+  Calendar, 
   Filter, 
-  Star, 
-  Clock, 
-  CheckCircle, 
-  MessageSquare, 
-  FileText,
-  Send,
-  Plus,
-  ChevronDown
+  Plus, 
+  Search,
+  Star,
+  MessageSquare
 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-export default function FeedbackPage() {
+interface Feedback {
+  id: string
+  startupId: string
+  startupName: string
+  sessionId?: string
+  sessionTopic?: string
+  date: string
+  rating: number
+  content: string
+  category: string
+  status: string
+}
+
+export default function MentorFeedbackPage() {
+  const router = useRouter()
+  const [feedback, setFeedback] = useState<Feedback[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("pending")
-  const [expandedFeedback, setExpandedFeedback] = useState<number | null>(null)
+  const [startupFilter, setStartupFilter] = useState<string | null>(null)
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [startups, setStartups] = useState<{id: string, name: string}[]>([])
+  const [categories, setCategories] = useState<string[]>([])
 
-  const feedbacks = [
-    {
-      id: 1,
-      startupName: "تك سوليوشنز",
-      startupLogo: "https://placehold.co/100x100/4F46E5/FFFFFF?text=TS",
-      sessionDate: "2025/03/01",
-      sessionTopic: "مراجعة خطة التسويق",
-      status: "pending",
-      notes: "",
-      rating: 0
-    },
-    {
-      id: 2,
-      startupName: "هيلث تك",
-      startupLogo: "https://placehold.co/100x100/10B981/FFFFFF?text=HT",
-      sessionDate: "2025/02/25",
-      sessionTopic: "استراتيجية جمع التمويل",
-      status: "completed",
-      notes: "فريق متحمس ولديه فهم جيد للسوق المستهدف. يحتاجون إلى تحسين خطة التمويل وتحديد المستثمرين المحتملين بشكل أفضل.",
-      rating: 4
-    },
-    {
-      id: 3,
-      startupName: "فينتك",
-      startupLogo: "https://placehold.co/100x100/F59E0B/FFFFFF?text=FT",
-      sessionDate: "2025/02/20",
-      sessionTopic: "تطوير المنتج",
-      status: "completed",
-      notes: "المنتج يعالج مشكلة حقيقية في السوق، لكن يحتاج إلى تحسين تجربة المستخدم وتبسيط عملية التسجيل.",
-      rating: 3
-    },
-    {
-      id: 4,
-      startupName: "تك سوليوشنز",
-      startupLogo: "https://placehold.co/100x100/4F46E5/FFFFFF?text=TS",
-      sessionDate: "2025/02/15",
-      sessionTopic: "استراتيجية النمو",
-      status: "completed",
-      notes: "استراتيجية النمو واضحة ومدروسة جيداً. يحتاجون إلى التركيز أكثر على اكتساب العملاء وتحسين معدل الاحتفاظ بهم.",
-      rating: 5
-    }
-  ]
-
-  const filteredFeedbacks = feedbacks.filter(feedback => {
-    const matchesSearch = feedback.startupName.includes(searchQuery) || 
-                          feedback.sessionTopic.includes(searchQuery)
-    
-    if (activeTab === "pending") {
-      return matchesSearch && feedback.status === "pending"
-    }
-    if (activeTab === "completed") {
-      return matchesSearch && feedback.status === "completed"
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        setIsLoading(true)
+        
+        const response = await fetch("/api/mentor/feedback", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch feedback")
+        }
+        
+        const data = await response.json()
+        
+        setFeedback(data.feedback || [])
+        
+        // Extract unique startups for filters
+        const uniqueStartups = Array.from(
+          new Set(data.feedback.map((f: Feedback) => f.startupId))
+        ).map((startupId) => {
+          const feedbackItem = data.feedback.find((f: Feedback) => f.startupId === startupId)
+          return {
+            id: startupId as string,
+            name: feedbackItem?.startupName || "Unknown Startup"
+          }
+        })
+        
+        setStartups(uniqueStartups)
+        
+        // Extract unique categories for filters
+        const uniqueCategories = Array.from(
+          new Set(data.feedback.map((f: Feedback) => f.category))
+        )
+        
+        setCategories(uniqueCategories as string[])
+      } catch (error) {
+        console.error("Error fetching feedback:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
     
-    return matchesSearch
-  })
+    fetchFeedback()
+  }, [])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
-  }
-
-  const toggleExpand = (id: number) => {
-    if (expandedFeedback === id) {
-      setExpandedFeedback(null)
-    } else {
-      setExpandedFeedback(id)
+  // Filter feedback based on search and filters
+  const filteredFeedback = () => {
+    let filtered = [...feedback]
+    
+    // Apply search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        item => 
+          item.startupName.toLowerCase().includes(query) || 
+          item.content.toLowerCase().includes(query) ||
+          (item.sessionTopic && item.sessionTopic.toLowerCase().includes(query))
+      )
     }
+    
+    // Apply startup filter
+    if (startupFilter) {
+      filtered = filtered.filter(item => item.startupId === startupFilter)
+    }
+    
+    // Apply category filter
+    if (categoryFilter) {
+      filtered = filtered.filter(item => item.category === categoryFilter)
+    }
+    
+    return filtered
   }
 
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("")
+    setStartupFilter(null)
+    setCategoryFilter(null)
+  }
+
+  // Render star rating
   const renderStars = (rating: number) => {
-    return Array(5).fill(0).map((_, i) => (
-      <Star 
-        key={i} 
-        className={`h-5 w-5 ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`} 
-      />
-    ))
+    return Array(5)
+      .fill(0)
+      .map((_, i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+          }`}
+        />
+      ))
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full">جاري التحميل...</div>
   }
 
   return (
-    <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
-        <div></div>
-        <h1 className="text-3xl font-bold">التقييمات والملاحظات</h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">الملاحظات والتقييمات</h1>
+        <Button onClick={() => router.push("/mentor-dashboard/feedback/new")}>
+          <Plus className="ml-2 h-4 w-4" />
+          إضافة ملاحظات
+        </Button>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Clock className="h-8 w-8 text-yellow-500 mb-2" />
-            <div className="text-2xl font-bold">{feedbacks.filter(f => f.status === "pending").length}</div>
-            <p className="text-muted-foreground">بانتظار التقييم</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
-            <div className="text-2xl font-bold">{feedbacks.filter(f => f.status === "completed").length}</div>
-            <p className="text-muted-foreground">تقييمات مكتملة</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Star className="h-8 w-8 text-blue-500 mb-2 fill-blue-500" />
-            <div className="text-2xl font-bold">
-              {feedbacks.filter(f => f.status === "completed").length > 0 
-                ? (feedbacks.filter(f => f.status === "completed").reduce((acc, curr) => acc + curr.rating, 0) / 
-                   feedbacks.filter(f => f.status === "completed").length).toFixed(1)
-                : "0.0"}
-            </div>
-            <p className="text-muted-foreground">متوسط التقييم</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
+      
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            placeholder="البحث في الملاحظات..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10"
+          />
+        </div>
+        
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>الشركة الناشئة</span>
               </Button>
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            <CardTitle>التقييمات والملاحظات</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
-              <TabsTrigger value="completed">مكتملة</TabsTrigger>
-              <TabsTrigger value="pending">بانتظار التقييم</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="pending">
-              <div className="space-y-4">
-                {filteredFeedbacks.length > 0 ? (
-                  filteredFeedbacks.map((feedback) => (
-                    <div key={feedback.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
-                          <div className="px-3 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                            بانتظار التقييم
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <h3 className="font-bold text-lg">{feedback.startupName}</h3>
-                            <div className="w-10 h-10 rounded-full overflow-hidden">
-                              <img 
-                                src={feedback.startupLogo} 
-                                alt={`شعار ${feedback.startupName}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground">تاريخ الجلسة</div>
-                            <div className="font-medium">{formatDate(feedback.sessionDate)}</div>
-                          </div>
-                          <div>
-                            <div className="text-sm text-muted-foreground">موضوع الجلسة</div>
-                            <div className="font-medium">{feedback.sessionTopic}</div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <div className="text-sm text-muted-foreground mb-2">التقييم</div>
-                            <div className="flex gap-1 justify-end">
-                              {renderStars(0)}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <div className="text-sm text-muted-foreground mb-2">الملاحظات والتوصيات</div>
-                            <Textarea 
-                              placeholder="أضف ملاحظاتك وتوصياتك هنا..."
-                              className="min-h-[100px] text-right"
-                            />
-                          </div>
-                          
-                          <div className="flex justify-end">
-                            <Button className="flex items-center gap-2">
-                              <Send className="h-4 w-4" />
-                              <span>إرسال التقييم</span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد تقييمات بانتظار المراجعة</h3>
-                    <p className="text-muted-foreground mb-4">لقد أكملت جميع التقييمات المطلوبة</p>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {startups.map((startup) => (
+                <DropdownMenuItem 
+                  key={startup.id}
+                  onClick={() => setStartupFilter(startup.id)}
+                  className={startupFilter === startup.id ? "bg-primary/10" : ""}
+                >
+                  {startup.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>التصنيف</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {categories.map((category) => (
+                <DropdownMenuItem 
+                  key={category}
+                  onClick={() => setCategoryFilter(category)}
+                  className={categoryFilter === category ? "bg-primary/10" : ""}
+                >
+                  {category}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {(searchQuery || startupFilter || categoryFilter) && (
+            <Button variant="ghost" onClick={clearFilters}>
+              مسح الفلاتر
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      {/* Feedback List */}
+      {filteredFeedback().length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredFeedback().map((item) => (
+            <Card key={item.id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{item.startupName}</CardTitle>
+                    <CardDescription className="flex items-center gap-2">
+                      <Calendar size={14} />
+                      <span>{item.date}</span>
+                    </CardDescription>
                   </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="completed">
-              <div className="space-y-4">
-                {filteredFeedbacks.length > 0 ? (
-                  filteredFeedbacks.map((feedback) => (
-                    <div key={feedback.id} className="border rounded-lg overflow-hidden">
-                      <div 
-                        className="p-4 border-b cursor-pointer"
-                        onClick={() => toggleExpand(feedback.id)}
+                  <div className="flex">{renderStars(item.rating)}</div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  {item.sessionTopic && (
+                    <div className="text-sm text-muted-foreground mb-2">
+                      <span className="font-medium">الجلسة:</span> {item.sessionTopic}
+                    </div>
+                  )}
+                  <div className="text-sm text-muted-foreground mb-2">
+                    <span className="font-medium">التصنيف:</span> {item.category}
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-4">
+                    <span className="font-medium">الحالة:</span>{" "}
+                    <span className={
+                      item.status === "DRAFT" ? "text-yellow-600" :
+                      item.status === "PUBLISHED" ? "text-green-600" :
+                      "text-blue-600"
+                    }>
+                      {item.status === "DRAFT" ? "مسودة" :
+                       item.status === "PUBLISHED" ? "منشورة" :
+                       "قيد المراجعة"}
+                    </span>
+                  </div>
+                  <p className="text-sm line-clamp-3">{item.content}</p>
+                </div>
+                
+                <div className="flex justify-between items-center mt-4">
+                  <Link 
+                    href={`/mentor-dashboard/feedback/${item.id}`} 
+                    className="text-primary flex items-center text-sm hover:underline"
+                  >
+                    عرض التفاصيل
+                    <ArrowRight className="h-4 w-4 mr-1" />
+                  </Link>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push(`/mentor-dashboard/feedback/${item.id}/edit`)}
+                    >
+                      تعديل
+                    </Button>
+                    {item.status === "DRAFT" && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Publish feedback logic
+                          console.log("Publishing feedback:", item.id)
+                        }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-1">
-                              {renderStars(feedback.rating)}
-                            </div>
-                            <ChevronDown className={`h-4 w-4 transition-transform ${expandedFeedback === feedback.id ? "rotate-180" : ""}`} />
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <h3 className="font-bold text-lg">{feedback.startupName}</h3>
-                            <div className="w-10 h-10 rounded-full overflow-hidden">
-                              <img 
-                                src={feedback.startupLogo} 
-                                alt={`شعار ${feedback.startupName}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {expandedFeedback === feedback.id && (
-                        <div className="p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <div className="text-sm text-muted-foreground">تاريخ الجلسة</div>
-                              <div className="font-medium">{formatDate(feedback.sessionDate)}</div>
-                            </div>
-                            <div>
-                              <div className="text-sm text-muted-foreground">موضوع الجلسة</div>
-                              <div className="font-medium">{feedback.sessionTopic}</div>
-                            </div>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <div className="text-sm text-muted-foreground">الملاحظات والتوصيات</div>
-                            <p className="text-muted-foreground">{feedback.notes}</p>
-                          </div>
-                          
-                          <div className="flex justify-end">
-                            <Button variant="outline" className="flex items-center gap-2">
-                              <FileText className="h-4 w-4" />
-                              <span>تعديل التقييم</span>
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد تقييمات مكتملة</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على تقييمات مكتملة تطابق معايير البحث</p>
+                        <MessageSquare className="h-4 w-4 ml-1" />
+                        نشر
+                      </Button>
+                    )}
                   </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-lg text-gray-500">لا توجد ملاحظات مطابقة للفلاتر المحددة</p>
+          {(searchQuery || startupFilter || categoryFilter) && (
+            <Button variant="link" onClick={clearFilters}>
+              مسح الفلاتر
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

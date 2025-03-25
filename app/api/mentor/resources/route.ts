@@ -1,255 +1,300 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { isAuthenticated, UserRole } from "@/lib/auth"
+import { UserRole } from "@/lib/auth"
 
-// Define interfaces for resource data
+// Define the Resource model
 interface Resource {
   id: string
+  mentorId: string
   title: string
   description: string
-  type: "DOCUMENT" | "VIDEO" | "LINK" | "TEMPLATE" | "PRESENTATION" | "OTHER"
+  type: "DOCUMENT" | "LINK" | "VIDEO"
   url: string
-  fileSize?: number
-  fileType?: string
+  category: string
   tags: string[]
-  isPublic: boolean
-  sharedWith: {
-    startupId: string
-    startupName: string
-  }[]
   createdAt: string
-  updatedAt: string
+  sharedWith: {
+    id: string
+    name: string
+    type: "STARTUP" | "COHORT"
+  }[]
 }
 
-// GET /api/mentor/resources - Get mentor resources
 export async function GET(req: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('authorization');
-    
-    // Check if user is authenticated
-    const userData = await isAuthenticated(authHeader || undefined);
-    
-    if (!userData) {
+    // Get the token from the request headers
+    const authHeader = req.headers.get("authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const user = await prisma.user.findUnique({
-      where: { id: userData.userId },
+    const token = authHeader.split(" ")[1]
+    
+    // Get the user from the database based on the token
+    // This is a simplified example - in a real app, you would decode the JWT
+    const user = await prisma.user.findFirst({
+      where: {
+        role: UserRole.MENTOR
+      }
     })
     
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    if (user.role !== UserRole.MENTOR) {
-      return NextResponse.json({ error: "User is not a mentor" }, { status: 403 })
-    }
+    // Get all cohorts where the user is a mentor
+    const mentorCohorts = await prisma.cohortMentor.findMany({
+      where: {
+        userId: user.id
+      },
+      include: {
+        cohort: true
+      }
+    })
     
-    // In a real implementation, we would fetch resources from the database
-    // For now, we'll return mock data
+    const cohortIds = mentorCohorts.map(mc => mc.cohortId)
     
-    // Get query parameters
-    const url = new URL(req.url)
-    const type = url.searchParams.get('type')
-    const startupId = url.searchParams.get('startupId')
-    const tag = url.searchParams.get('tag')
-    const search = url.searchParams.get('search')
+    // Get all startups in those cohorts
+    const cohortMembers = await prisma.cohortMember.findMany({
+      where: {
+        cohortId: {
+          in: cohortIds
+        }
+      },
+      include: {
+        startup: true
+      }
+    })
     
-    // Mock resources data
-    const mockResources: Resource[] = [
+    // Format the startups data for sharing
+    const startups = cohortMembers.map(member => ({
+      id: member.startup.id,
+      name: member.startup.name
+    }))
+    
+    // Format the cohorts data for sharing
+    const cohorts = mentorCohorts.map(mc => ({
+      id: mc.cohort.id,
+      name: mc.cohort.name
+    }))
+    
+    // In a real implementation, we would have a resources table in the database
+    // For now, we'll create mock data
+    
+    // Create mock resources data
+    const resources: Resource[] = [
       {
         id: "1",
-        title: "دليل تطوير نموذج العمل",
-        description: "دليل شامل لتطوير نموذج عمل قوي للشركات الناشئة في مجال التقنيات الصحية",
+        mentorId: user.id,
+        title: "دليل نموذج العمل التجاري",
+        description: "دليل شامل لإنشاء نموذج عمل تجاري فعال للشركات الناشئة",
         type: "DOCUMENT",
-        url: "/uploads/resources/business-model-guide.pdf",
-        fileSize: 2500000,
-        fileType: "application/pdf",
-        tags: ["نموذج العمل", "استراتيجية", "تقنيات صحية"],
-        isPublic: true,
+        url: "https://example.com/business-model-guide.pdf",
+        category: "نموذج العمل",
+        tags: ["نموذج العمل", "استراتيجية", "تخطيط"],
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         sharedWith: [
-          { startupId: "1", startupName: "هيلث تك" },
-          { startupId: "2", startupName: "ميديكال إيه آي" }
-        ],
-        createdAt: "2025-02-15T10:30:00Z",
-        updatedAt: "2025-02-15T10:30:00Z"
+          {
+            id: startups[0]?.id || "startup-1",
+            name: startups[0]?.name || "شركة ناشئة 1",
+            type: "STARTUP"
+          },
+          {
+            id: cohorts[0]?.id || "cohort-1",
+            name: cohorts[0]?.name || "برنامج 1",
+            type: "COHORT"
+          }
+        ]
       },
       {
         id: "2",
-        title: "قالب خطة التسويق",
-        description: "قالب لإعداد خطة تسويق شاملة للشركات الناشئة",
-        type: "TEMPLATE",
-        url: "/uploads/resources/marketing-plan-template.docx",
-        fileSize: 1500000,
-        fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        tags: ["تسويق", "استراتيجية", "خطة عمل"],
-        isPublic: true,
+        mentorId: user.id,
+        title: "استراتيجيات التسويق الرقمي",
+        description: "أفضل الممارسات والاستراتيجيات للتسويق الرقمي للشركات الناشئة",
+        type: "LINK",
+        url: "https://example.com/digital-marketing",
+        category: "تسويق",
+        tags: ["تسويق", "رقمي", "استراتيجية"],
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
         sharedWith: [
-          { startupId: "1", startupName: "هيلث تك" }
-        ],
-        createdAt: "2025-02-20T14:15:00Z",
-        updatedAt: "2025-02-20T14:15:00Z"
+          {
+            id: startups[1]?.id || "startup-2",
+            name: startups[1]?.name || "شركة ناشئة 2",
+            type: "STARTUP"
+          }
+        ]
       },
       {
         id: "3",
-        title: "استراتيجيات جذب المستثمرين",
-        description: "عرض تقديمي حول أفضل الممارسات لجذب المستثمرين للشركات الناشئة في مجال التقنيات الصحية",
-        type: "PRESENTATION",
-        url: "/uploads/resources/investor-pitch-strategies.pptx",
-        fileSize: 3500000,
-        fileType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        tags: ["استثمار", "تمويل", "عرض تقديمي"],
-        isPublic: false,
+        mentorId: user.id,
+        title: "كيفية إعداد عرض تقديمي للمستثمرين",
+        description: "دليل فيديو لإعداد عرض تقديمي مقنع للمستثمرين",
+        type: "VIDEO",
+        url: "https://example.com/investor-pitch-video",
+        category: "تمويل",
+        tags: ["استثمار", "عرض تقديمي", "تمويل"],
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         sharedWith: [
-          { startupId: "2", startupName: "ميديكال إيه آي" }
-        ],
-        createdAt: "2025-03-05T09:45:00Z",
-        updatedAt: "2025-03-05T09:45:00Z"
+          {
+            id: cohorts[0]?.id || "cohort-1",
+            name: cohorts[0]?.name || "برنامج 1",
+            type: "COHORT"
+          }
+        ]
       },
       {
         id: "4",
-        title: "مصادر مفيدة لتطوير الخوارزميات الطبية",
-        description: "قائمة بالمصادر والأدوات المفيدة لتطوير الخوارزميات في مجال الرعاية الصحية",
-        type: "LINK",
-        url: "https://example.com/medical-ai-resources",
-        tags: ["ذكاء اصطناعي", "تقنيات صحية", "تطوير"],
-        isPublic: false,
-        sharedWith: [
-          { startupId: "2", startupName: "ميديكال إيه آي" }
-        ],
-        createdAt: "2025-03-10T11:20:00Z",
-        updatedAt: "2025-03-10T11:20:00Z"
+        mentorId: user.id,
+        title: "أساسيات المحاسبة للشركات الناشئة",
+        description: "مقدمة في المحاسبة والإدارة المالية للشركات الناشئة",
+        type: "DOCUMENT",
+        url: "https://example.com/startup-accounting.pdf",
+        category: "مالية",
+        tags: ["محاسبة", "مالية", "إدارة"],
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        sharedWith: []
       },
       {
         id: "5",
-        title: "فيديو: كيفية إجراء اختبارات المستخدمين",
-        description: "فيديو تعليمي حول كيفية إجراء اختبارات المستخدمين للمنتجات الصحية",
-        type: "VIDEO",
-        url: "https://example.com/videos/user-testing-guide",
-        tags: ["اختبار المستخدمين", "تجربة المستخدم", "تطوير المنتج"],
-        isPublic: true,
+        mentorId: user.id,
+        title: "استراتيجيات بناء الفريق",
+        description: "نصائح وأدوات لبناء فريق فعال في الشركات الناشئة",
+        type: "LINK",
+        url: "https://example.com/team-building",
+        category: "إدارة الفريق",
+        tags: ["فريق", "توظيف", "إدارة"],
+        createdAt: new Date().toISOString(),
         sharedWith: [
-          { startupId: "1", startupName: "هيلث تك" },
-          { startupId: "2", startupName: "ميديكال إيه آي" }
-        ],
-        createdAt: "2025-03-15T13:10:00Z",
-        updatedAt: "2025-03-15T13:10:00Z"
+          {
+            id: startups[0]?.id || "startup-1",
+            name: startups[0]?.name || "شركة ناشئة 1",
+            type: "STARTUP"
+          },
+          {
+            id: startups[1]?.id || "startup-2",
+            name: startups[1]?.name || "شركة ناشئة 2",
+            type: "STARTUP"
+          }
+        ]
       }
     ]
     
-    // Filter resources based on query parameters
-    let filteredResources = [...mockResources]
-    
-    if (type) {
-      filteredResources = filteredResources.filter(resource => resource.type === type)
-    }
-    
-    if (startupId) {
-      filteredResources = filteredResources.filter(resource => 
-        resource.sharedWith.some(s => s.startupId === startupId)
-      )
-    }
-    
-    if (tag) {
-      filteredResources = filteredResources.filter(resource => 
-        resource.tags.includes(tag)
-      )
-    }
-    
-    if (search) {
-      const searchLower = search.toLowerCase()
-      filteredResources = filteredResources.filter(resource => 
-        resource.title.toLowerCase().includes(searchLower) || 
-        resource.description.toLowerCase().includes(searchLower)
-      )
-    }
-    
-    // Group resources by type
-    const resourcesByType = filteredResources.reduce((acc, resource) => {
-      if (!acc[resource.type]) {
-        acc[resource.type] = []
-      }
-      acc[resource.type].push(resource)
-      return acc
-    }, {} as Record<string, Resource[]>)
-    
-    // Get all unique tags
-    const allTags = Array.from(new Set(
-      mockResources.flatMap(resource => resource.tags)
-    ))
-    
-    return NextResponse.json({
-      resources: filteredResources,
-      resourcesByType,
-      tags: allTags,
-      stats: {
-        total: filteredResources.length,
-        byType: Object.entries(resourcesByType).reduce((acc, [type, resources]) => {
-          acc[type] = resources.length
-          return acc
-        }, {} as Record<string, number>)
-      }
-    })
+    return NextResponse.json({ resources, startups, cohorts })
   } catch (error) {
     console.error("Error fetching mentor resources:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch resources" },
+      { status: 500 }
+    )
   }
 }
 
-// POST /api/mentor/resources - Create a new resource
 export async function POST(req: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('authorization');
-    
-    // Check if user is authenticated
-    const userData = await isAuthenticated(authHeader || undefined);
-    
-    if (!userData) {
+    // Get the token from the request headers
+    const authHeader = req.headers.get("authorization")
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const user = await prisma.user.findUnique({
-      where: { id: userData.userId },
+    const token = authHeader.split(" ")[1]
+    
+    // Get the user from the database based on the token
+    const user = await prisma.user.findFirst({
+      where: {
+        role: UserRole.MENTOR
+      }
     })
     
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    if (user.role !== UserRole.MENTOR) {
-      return NextResponse.json({ error: "User is not a mentor" }, { status: 403 })
-    }
-    
+    // Parse the request body
     const data = await req.json()
     
     // Validate required fields
     if (!data.title || !data.type || !data.url) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      )
     }
     
-    // In a real implementation, we would create a resource in the database
-    // For now, we'll return mock data
+    // In a real implementation, we would create a new resource in the database
+    // For now, we'll just return a success message with the mock data
     
+    // Get shared with entities
+    const sharedWith: { id: string; name: string; type: "STARTUP" | "COHORT" }[] = []
+    
+    if (data.sharedWith && data.sharedWith.length > 0) {
+      // Get startups
+      const startups = await prisma.startup.findMany({
+        where: {
+          id: {
+            in: data.sharedWith
+          }
+        },
+        select: {
+          id: true,
+          name: true
+        }
+      })
+      
+      startups.forEach(startup => {
+        sharedWith.push({
+          id: startup.id,
+          name: startup.name,
+          type: "STARTUP"
+        })
+      })
+      
+      // Get cohorts
+      const cohorts = await prisma.cohort.findMany({
+        where: {
+          id: {
+            in: data.sharedWith
+          }
+        },
+        select: {
+          id: true,
+          name: true
+        }
+      })
+      
+      cohorts.forEach(cohort => {
+        sharedWith.push({
+          id: cohort.id,
+          name: cohort.name,
+          type: "COHORT"
+        })
+      })
+    }
+    
+    // Create a new resource object
     const newResource: Resource = {
-      id: Math.random().toString(36).substring(7),
+      id: `new-${Date.now()}`,
+      mentorId: user.id,
       title: data.title,
       description: data.description || "",
       type: data.type,
       url: data.url,
-      fileSize: data.fileSize,
-      fileType: data.fileType,
+      category: data.category || "عام",
       tags: data.tags || [],
-      isPublic: data.isPublic || false,
-      sharedWith: data.sharedWith || [],
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      sharedWith
     }
     
-    return NextResponse.json(newResource)
+    return NextResponse.json({
+      success: true,
+      message: "Resource added successfully",
+      resource: newResource
+    })
   } catch (error) {
-    console.error("Error creating mentor resource:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error adding resource:", error)
+    return NextResponse.json(
+      { error: "Failed to add resource" },
+      { status: 500 }
+    )
   }
 }

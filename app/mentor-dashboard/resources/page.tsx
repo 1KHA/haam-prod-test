@@ -1,476 +1,540 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { 
-  Search, 
+  ArrowRight, 
+  BookOpen, 
+  ExternalLink, 
+  File, 
   Filter, 
-  FileText, 
-  Video, 
   Link as LinkIcon, 
-  Download, 
-  Upload,
-  Plus,
-  BookOpen,
-  File,
-  FolderPlus
+  Plus, 
+  Search,
+  Tag,
+  Trash2
 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-export default function ResourcesPage() {
+interface Resource {
+  id: string
+  title: string
+  description: string
+  type: "DOCUMENT" | "LINK" | "VIDEO"
+  url: string
+  category: string
+  tags: string[]
+  createdAt: string
+  sharedWith: {
+    id: string
+    name: string
+    type: "STARTUP" | "COHORT"
+  }[]
+}
+
+export default function MentorResourcesPage() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [resources, setResources] = useState<Resource[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("all")
-  const [activeCategory, setActiveCategory] = useState("all")
-
-  const resources = [
-    {
-      id: 1,
-      title: "دليل إعداد خطة التسويق",
-      description: "دليل شامل لإعداد خطة تسويق فعالة للشركات الناشئة",
-      type: "document",
-      category: "marketing",
-      url: "#",
-      uploadedBy: "أحمد محمد",
-      uploadDate: "2025/02/15",
-      downloads: 45,
-      fileSize: "2.5 MB",
-      fileType: "PDF"
-    },
-    {
-      id: 2,
-      title: "استراتيجيات جمع التمويل",
-      description: "استراتيجيات وأساليب جمع التمويل للشركات الناشئة في مراحلها المبكرة",
-      type: "document",
-      category: "funding",
-      url: "#",
-      uploadedBy: "سارة الخالدي",
-      uploadDate: "2025/02/10",
-      downloads: 78,
-      fileSize: "3.2 MB",
-      fileType: "PDF"
-    },
-    {
-      id: 3,
-      title: "كيفية إعداد عرض تقديمي للمستثمرين",
-      description: "فيديو تعليمي حول كيفية إعداد عرض تقديمي مقنع للمستثمرين",
-      type: "video",
-      category: "funding",
-      url: "#",
-      uploadedBy: "محمد العمري",
-      uploadDate: "2025/01/25",
-      views: 120,
-      duration: "45:30"
-    },
-    {
-      id: 4,
-      title: "نموذج خطة عمل",
-      description: "نموذج جاهز لخطة عمل شاملة للشركات الناشئة",
-      type: "document",
-      category: "planning",
-      url: "#",
-      uploadedBy: "فهد الدوسري",
-      uploadDate: "2025/01/20",
-      downloads: 92,
-      fileSize: "1.8 MB",
-      fileType: "DOCX"
-    },
-    {
-      id: 5,
-      title: "أساسيات تطوير المنتج",
-      description: "دورة تدريبية حول أساسيات تطوير المنتج وإدارة دورة حياته",
-      type: "link",
-      category: "product",
-      url: "https://example.com/product-development",
-      uploadedBy: "نورة العتيبي",
-      uploadDate: "2025/01/15",
-      clicks: 65
-    },
-    {
-      id: 6,
-      title: "نموذج مالي للشركات الناشئة",
-      description: "نموذج مالي شامل للشركات الناشئة يتضمن التوقعات المالية والتدفقات النقدية",
-      type: "document",
-      category: "finance",
-      url: "#",
-      uploadedBy: "خالد السعيد",
-      uploadDate: "2025/01/10",
-      downloads: 56,
-      fileSize: "4.1 MB",
-      fileType: "XLSX"
-    }
-  ]
-
-  const categories = [
-    { id: "all", name: "جميع الفئات" },
-    { id: "marketing", name: "التسويق" },
-    { id: "funding", name: "التمويل" },
-    { id: "planning", name: "التخطيط" },
-    { id: "product", name: "تطوير المنتج" },
-    { id: "finance", name: "الإدارة المالية" }
-  ]
-
-  const filteredResources = resources.filter(resource => {
-    const matchesSearch = resource.title.includes(searchQuery) || 
-                          resource.description.includes(searchQuery)
-    
-    const matchesType = activeTab === "all" || resource.type === activeTab
-    
-    const matchesCategory = activeCategory === "all" || resource.category === activeCategory
-    
-    return matchesSearch && matchesType && matchesCategory
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [typeFilter, setTypeFilter] = useState<string | null>(null)
+  const [categories, setCategories] = useState<string[]>([])
+  const [startups, setStartups] = useState<{id: string, name: string}[]>([])
+  const [cohorts, setCohorts] = useState<{id: string, name: string}[]>([])
+  
+  const [newResource, setNewResource] = useState({
+    title: "",
+    description: "",
+    type: "DOCUMENT",
+    url: "",
+    category: "",
+    tags: "",
+    sharedWith: [] as string[]
   })
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })
+  
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        setIsLoading(true)
+        
+        const response = await fetch("/api/mentor/resources", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch resources")
+        }
+        
+        const data = await response.json()
+        setResources(data.resources || [])
+        
+        // Extract unique categories
+        const uniqueCategories = Array.from(
+          new Set(data.resources.map((r: Resource) => r.category))
+        )
+        setCategories(uniqueCategories as string[])
+        
+        // Get startups and cohorts for sharing
+        setStartups(data.startups || [])
+        setCohorts(data.cohorts || [])
+      } catch (error) {
+        console.error("Error fetching resources:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchResources()
+  }, [])
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setNewResource(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
-
+  
+  const handleSharedWithChange = (id: string) => {
+    setNewResource(prev => {
+      const sharedWith = [...prev.sharedWith]
+      
+      if (sharedWith.includes(id)) {
+        return {
+          ...prev,
+          sharedWith: sharedWith.filter(item => item !== id)
+        }
+      } else {
+        return {
+          ...prev,
+          sharedWith: [...sharedWith, id]
+        }
+      }
+    })
+  }
+  
+  const handleAddResource = async () => {
+    try {
+      const response = await fetch("/api/mentor/resources", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          ...newResource,
+          tags: newResource.tags.split(",").map(tag => tag.trim())
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to add resource")
+      }
+      
+      const data = await response.json()
+      setResources(prev => [...prev, data.resource])
+      
+      // Reset form
+      setNewResource({
+        title: "",
+        description: "",
+        type: "DOCUMENT",
+        url: "",
+        category: "",
+        tags: "",
+        sharedWith: []
+      })
+    } catch (error) {
+      console.error("Error adding resource:", error)
+    }
+  }
+  
+  const handleDeleteResource = async (id: string) => {
+    try {
+      const response = await fetch(`/api/mentor/resources/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete resource")
+      }
+      
+      setResources(prev => prev.filter(resource => resource.id !== id))
+    } catch (error) {
+      console.error("Error deleting resource:", error)
+    }
+  }
+  
+  // Filter resources based on search and filters
+  const filteredResources = () => {
+    let filtered = [...resources]
+    
+    // Apply search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        resource => 
+          resource.title.toLowerCase().includes(query) || 
+          resource.description.toLowerCase().includes(query) ||
+          resource.tags.some(tag => tag.toLowerCase().includes(query))
+      )
+    }
+    
+    // Apply category filter
+    if (categoryFilter) {
+      filtered = filtered.filter(resource => resource.category === categoryFilter)
+    }
+    
+    // Apply type filter
+    if (typeFilter) {
+      filtered = filtered.filter(resource => resource.type === typeFilter)
+    }
+    
+    return filtered
+  }
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("")
+    setCategoryFilter(null)
+    setTypeFilter(null)
+  }
+  
+  // Get icon based on resource type
   const getResourceIcon = (type: string) => {
     switch (type) {
-      case "document": return <FileText className="h-10 w-10 text-blue-500" />
-      case "video": return <Video className="h-10 w-10 text-red-500" />
-      case "link": return <LinkIcon className="h-10 w-10 text-green-500" />
-      default: return <File className="h-10 w-10 text-gray-500" />
+      case "DOCUMENT":
+        return <File className="h-5 w-5" />
+      case "LINK":
+        return <LinkIcon className="h-5 w-5" />
+      case "VIDEO":
+        return <BookOpen className="h-5 w-5" />
+      default:
+        return <File className="h-5 w-5" />
     }
   }
-
-  const getResourceTypeText = (type: string) => {
-    switch (type) {
-      case "document": return "مستند"
-      case "video": return "فيديو"
-      case "link": return "رابط"
-      default: return "ملف"
-    }
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full">جاري التحميل...</div>
   }
-
+  
   return (
-    <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <Button className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            <span>رفع ملف</span>
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <FolderPlus className="h-4 w-4" />
-            <span>إنشاء مجلد</span>
-          </Button>
-        </div>
-        <h1 className="text-3xl font-bold">الموارد التعليمية</h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">الموارد التعليمية</h1>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <FileText className="h-8 w-8 text-blue-500 mb-2" />
-            <div className="text-2xl font-bold">{resources.filter(r => r.type === "document").length}</div>
-            <p className="text-muted-foreground">المستندات</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Video className="h-8 w-8 text-red-500 mb-2" />
-            <div className="text-2xl font-bold">{resources.filter(r => r.type === "video").length}</div>
-            <p className="text-muted-foreground">الفيديوهات</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <LinkIcon className="h-8 w-8 text-green-500 mb-2" />
-            <div className="text-2xl font-bold">{resources.filter(r => r.type === "link").length}</div>
-            <p className="text-muted-foreground">الروابط</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+      
+      <Tabs defaultValue="resources" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="resources">الموارد</TabsTrigger>
+          <TabsTrigger value="add">إضافة مورد جديد</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="resources">
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                placeholder="البحث عن مورد..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10"
+              />
             </div>
-            <CardTitle>الموارد التعليمية</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
-              <TabsTrigger value="link">روابط</TabsTrigger>
-              <TabsTrigger value="video">فيديوهات</TabsTrigger>
-              <TabsTrigger value="document">مستندات</TabsTrigger>
-              <TabsTrigger value="all">الكل</TabsTrigger>
-            </TabsList>
             
-            <div className="flex justify-end gap-2 mb-4">
-              {categories.map(category => (
-                <Button 
-                  key={category.id}
-                  variant={activeCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveCategory(category.id)}
-                >
-                  {category.name}
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Filter size={16} />
+                    <span>التصنيف</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {categories.map((category) => (
+                    <DropdownMenuItem 
+                      key={category}
+                      onClick={() => setCategoryFilter(category)}
+                      className={categoryFilter === category ? "bg-primary/10" : ""}
+                    >
+                      {category}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Filter size={16} />
+                    <span>النوع</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={() => setTypeFilter("DOCUMENT")}
+                    className={typeFilter === "DOCUMENT" ? "bg-primary/10" : ""}
+                  >
+                    مستند
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setTypeFilter("LINK")}
+                    className={typeFilter === "LINK" ? "bg-primary/10" : ""}
+                  >
+                    رابط
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setTypeFilter("VIDEO")}
+                    className={typeFilter === "VIDEO" ? "bg-primary/10" : ""}
+                  >
+                    فيديو
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {(searchQuery || categoryFilter || typeFilter) && (
+                <Button variant="ghost" onClick={clearFilters}>
+                  مسح الفلاتر
                 </Button>
+              )}
+            </div>
+          </div>
+          
+          {/* Resources Grid */}
+          {filteredResources().length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredResources().map((resource) => (
+                <Card key={resource.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <span className="p-2 rounded-full bg-primary/10 text-primary">
+                          {getResourceIcon(resource.type)}
+                        </span>
+                        <span>{resource.title}</span>
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteResource(resource.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                    <CardDescription>{resource.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <div className="text-sm text-muted-foreground mb-2">
+                        <span className="font-medium">التصنيف:</span> {resource.category}
+                      </div>
+                      {resource.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {resource.tags.map((tag, index) => (
+                            <span 
+                              key={index} 
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800"
+                            >
+                              <Tag className="h-3 w-3 ml-1" />
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {resource.sharedWith.length > 0 && (
+                        <div className="text-sm text-muted-foreground mb-2">
+                          <span className="font-medium">مشارك مع:</span>{" "}
+                          {resource.sharedWith.map(item => item.name).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-between items-center mt-4">
+                      <a 
+                        href={resource.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary flex items-center text-sm hover:underline"
+                      >
+                        فتح المورد
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                      </a>
+                      
+                      <div className="text-xs text-gray-500">
+                        {new Date(resource.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-            
-            <TabsContent value="all" className="mt-0">
-              <div className="space-y-4">
-                {filteredResources.length > 0 ? (
-                  filteredResources.map((resource) => (
-                    <div key={resource.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                                {getResourceTypeText(resource.type)}
-                              </div>
-                              <h3 className="font-bold text-lg">{resource.title}</h3>
-                            </div>
-                            <p className="text-muted-foreground mb-4">{resource.description}</p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <div className="text-muted-foreground">تم الرفع بواسطة</div>
-                                <div>{resource.uploadedBy}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">تاريخ الرفع</div>
-                                <div>{formatDate(resource.uploadDate)}</div>
-                              </div>
-                              <div>
-                                {resource.type === "document" && (
-                                  <>
-                                    <div className="text-muted-foreground">التنزيلات</div>
-                                    <div>{resource.downloads}</div>
-                                  </>
-                                )}
-                                {resource.type === "video" && (
-                                  <>
-                                    <div className="text-muted-foreground">المشاهدات</div>
-                                    <div>{resource.views}</div>
-                                  </>
-                                )}
-                                {resource.type === "link" && (
-                                  <>
-                                    <div className="text-muted-foreground">النقرات</div>
-                                    <div>{resource.clicks}</div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center gap-2">
-                            {getResourceIcon(resource.type)}
-                            <Button variant="outline" size="sm" className="flex items-center gap-1">
-                              {resource.type === "document" && <Download className="h-4 w-4" />}
-                              {resource.type === "video" && <Video className="h-4 w-4" />}
-                              {resource.type === "link" && <LinkIcon className="h-4 w-4" />}
-                              <span>
-                                {resource.type === "document" && "تنزيل"}
-                                {resource.type === "video" && "مشاهدة"}
-                                {resource.type === "link" && "فتح"}
-                              </span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد موارد</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على موارد تطابق معايير البحث</p>
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2 mx-auto"
-                      onClick={() => {
-                        setSearchQuery("")
-                        setActiveTab("all")
-                        setActiveCategory("all")
-                      }}
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-lg text-gray-500">لا توجد موارد مطابقة للفلاتر المحددة</p>
+              {(searchQuery || categoryFilter || typeFilter) && (
+                <Button variant="link" onClick={clearFilters}>
+                  مسح الفلاتر
+                </Button>
+              )}
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="add">
+          <Card>
+            <CardHeader>
+              <CardTitle>إضافة مورد جديد</CardTitle>
+              <CardDescription>
+                أضف موارد تعليمية لمشاركتها مع الشركات الناشئة
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title">العنوان</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    value={newResource.title}
+                    onChange={handleInputChange}
+                    placeholder="عنوان المورد"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">الوصف</Label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={newResource.description}
+                    onChange={handleInputChange}
+                    placeholder="وصف المورد"
+                    className="w-full p-2 border rounded-md min-h-[100px]"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="type">النوع</Label>
+                    <select
+                      id="type"
+                      name="type"
+                      value={newResource.type}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border rounded-md"
                     >
-                      <Search className="h-4 w-4" />
-                      <span>عرض جميع الموارد</span>
-                    </Button>
+                      <option value="DOCUMENT">مستند</option>
+                      <option value="LINK">رابط</option>
+                      <option value="VIDEO">فيديو</option>
+                    </select>
                   </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="document" className="mt-0">
-              <div className="space-y-4">
-                {filteredResources.length > 0 ? (
-                  filteredResources.map((resource) => (
-                    <div key={resource.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                {resource.fileType}
-                              </div>
-                              <h3 className="font-bold text-lg">{resource.title}</h3>
-                            </div>
-                            <p className="text-muted-foreground mb-4">{resource.description}</p>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                              <div>
-                                <div className="text-muted-foreground">تم الرفع بواسطة</div>
-                                <div>{resource.uploadedBy}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">تاريخ الرفع</div>
-                                <div>{formatDate(resource.uploadDate)}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">حجم الملف</div>
-                                <div>{resource.fileSize}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">التنزيلات</div>
-                                <div>{resource.downloads}</div>
-                              </div>
-                            </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="category">التصنيف</Label>
+                    <Input
+                      id="category"
+                      name="category"
+                      value={newResource.category}
+                      onChange={handleInputChange}
+                      placeholder="مثال: تطوير المنتج"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="url">الرابط</Label>
+                  <Input
+                    id="url"
+                    name="url"
+                    value={newResource.url}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/resource"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tags">الوسوم (مفصولة بفواصل)</Label>
+                  <Input
+                    id="tags"
+                    name="tags"
+                    value={newResource.tags}
+                    onChange={handleInputChange}
+                    placeholder="مثال: تسويق, استراتيجية, تمويل"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>مشاركة مع</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2">الشركات الناشئة</h4>
+                      <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                        {startups.map(startup => (
+                          <div key={startup.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`startup-${startup.id}`}
+                              checked={newResource.sharedWith.includes(startup.id)}
+                              onChange={() => handleSharedWithChange(startup.id)}
+                              className="h-4 w-4 ml-2"
+                            />
+                            <Label htmlFor={`startup-${startup.id}`} className="text-sm font-normal">
+                              {startup.name}
+                            </Label>
                           </div>
-                          <div className="flex flex-col items-center gap-2">
-                            <FileText className="h-10 w-10 text-blue-500" />
-                            <Button variant="outline" size="sm" className="flex items-center gap-1">
-                              <Download className="h-4 w-4" />
-                              <span>تنزيل</span>
-                            </Button>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد مستندات</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على مستندات تطابق معايير البحث</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="video" className="mt-0">
-              <div className="space-y-4">
-                {filteredResources.length > 0 ? (
-                  filteredResources.map((resource) => (
-                    <div key={resource.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="px-3 py-1 rounded-full text-xs bg-red-100 text-red-800">
-                                {resource.duration}
-                              </div>
-                              <h3 className="font-bold text-lg">{resource.title}</h3>
-                            </div>
-                            <p className="text-muted-foreground mb-4">{resource.description}</p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <div className="text-muted-foreground">تم الرفع بواسطة</div>
-                                <div>{resource.uploadedBy}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">تاريخ الرفع</div>
-                                <div>{formatDate(resource.uploadDate)}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">المشاهدات</div>
-                                <div>{resource.views}</div>
-                              </div>
-                            </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2">البرامج</h4>
+                      <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                        {cohorts.map(cohort => (
+                          <div key={cohort.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`cohort-${cohort.id}`}
+                              checked={newResource.sharedWith.includes(cohort.id)}
+                              onChange={() => handleSharedWithChange(cohort.id)}
+                              className="h-4 w-4 ml-2"
+                            />
+                            <Label htmlFor={`cohort-${cohort.id}`} className="text-sm font-normal">
+                              {cohort.name}
+                            </Label>
                           </div>
-                          <div className="flex flex-col items-center gap-2">
-                            <Video className="h-10 w-10 text-red-500" />
-                            <Button variant="outline" size="sm" className="flex items-center gap-1">
-                              <Video className="h-4 w-4" />
-                              <span>مشاهدة</span>
-                            </Button>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <Video className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد فيديوهات</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على فيديوهات تطابق معايير البحث</p>
                   </div>
-                )}
+                </div>
+                
+                <Button onClick={handleAddResource} className="w-full">
+                  <Plus className="ml-2 h-4 w-4" />
+                  إضافة مورد
+                </Button>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="link" className="mt-0">
-              <div className="space-y-4">
-                {filteredResources.length > 0 ? (
-                  filteredResources.map((resource) => (
-                    <div key={resource.id} className="border rounded-lg overflow-hidden">
-                      <div className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                                رابط خارجي
-                              </div>
-                              <h3 className="font-bold text-lg">{resource.title}</h3>
-                            </div>
-                            <p className="text-muted-foreground mb-4">{resource.description}</p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <div className="text-muted-foreground">تم الإضافة بواسطة</div>
-                                <div>{resource.uploadedBy}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">تاريخ الإضافة</div>
-                                <div>{formatDate(resource.uploadDate)}</div>
-                              </div>
-                              <div>
-                                <div className="text-muted-foreground">النقرات</div>
-                                <div>{resource.clicks}</div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center gap-2">
-                            <LinkIcon className="h-10 w-10 text-green-500" />
-                            <Button variant="outline" size="sm" className="flex items-center gap-1">
-                              <LinkIcon className="h-4 w-4" />
-                              <span>فتح</span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <LinkIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">لا توجد روابط</h3>
-                    <p className="text-muted-foreground mb-4">لم يتم العثور على روابط تطابق معايير البحث</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -1,146 +1,123 @@
-# منصة المسرعات والحاضنات
+# Accelerator Platform Admin Dashboard
 
-منصة متكاملة لإدارة برامج المسرعات والحاضنات، تربط بين الشركات الناشئة والموجهين والمستثمرين ومديري البرامج.
+The admin dashboard provides a comprehensive interface for managing the accelerator platform. It includes user management, startup tracking, program administration, and various other features.
 
-## نظرة عامة
+Seeded database with initial data:
+Admin user (admin@example.com / admin123)
+Sample startup (startup@example.com / startup123)
+Sample mentor (mentor@example.com / mentor123)
+Sample investor (investor@example.com / investor123)
+Default system settings
 
-منصة المسرعات والحاضنات هي منصة متكاملة تهدف إلى تسهيل إدارة برامج المسرعات والحاضنات وتعزيز التواصل بين جميع الأطراف المعنية. توفر المنصة لوحات تحكم مخصصة لكل نوع من المستخدمين:
+## Features
 
-- **المديرون**: إدارة جميع جوانب المنصة
-- **مديرو البرامج**: إدارة برامج المسرعات والحاضنات
-- **الشركات الناشئة**: إدارة مشاركتهم في البرامج
-- **الموجهون**: إدارة جلسات الإرشاد والتوجيه
-- **المستثمرون**: استعراض الفرص الاستثمارية وإدارة الاستثمارات
+### User Management
+- View all users with filtering and pagination
+- Create new users with different roles
+- Edit user details and roles
+- Delete users with safeguards
 
-## المميزات الرئيسية
+### Dashboard Overview
+- Total users statistics
+- Active startups count
+- Upcoming events
+- Funding opportunities
 
-- لوحات تحكم مخصصة لكل نوع من المستخدمين
-- إدارة برامج المسرعات والحاضنات
-- إدارة الشركات الناشئة والموجهين
-- إدارة جلسات الإرشاد والتوجيه
-- إدارة الفرص الاستثمارية
-- تقارير وتحليلات متقدمة
-- واجهة مستخدم سهلة الاستخدام باللغة العربية
+### Navigation
+- Responsive sidebar with icon navigation
+- User profile and settings in the top bar
+- Quick access to notifications
 
-## التقنيات المستخدمة
+## Project Structure
 
-- **Next.js**: إطار عمل React للتطبيقات الويب
-- **TypeScript**: لغة برمجة قوية ومطورة من JavaScript
-- **Tailwind CSS**: إطار عمل CSS للتصميم
-- **Shadcn UI**: مكتبة مكونات واجهة المستخدم
-- **Prisma**: ORM للتعامل مع قواعد البيانات
-- **SQLite**: قاعدة بيانات خفيفة الوزن
-- **JWT**: تقنية للمصادقة وإدارة الجلسات
-- **bcryptjs**: مكتبة لتشفير كلمات المرور
+```
+haam/
+├── app/
+│   ├── admin-dashboard/
+│   │   ├── layout.tsx           # Admin dashboard layout
+│   │   ├── page.tsx            # Main dashboard page
+│   │   └── users/              # User management pages
+│   │       ├── page.tsx        # Users list
+│   │       ├── new/            # Create user
+│   │       └── [id]/           # Edit user
+│   └── api/
+│       └── admin/
+│           └── users/          # User management API routes
+├── components/
+│   ├── admin/                  # Admin-specific components
+│   │   ├── Sidebar.tsx
+│   │   └── TopBar.tsx
+│   └── ui/                     # Reusable UI components
+│       ├── button.tsx
+│       ├── card.tsx
+│       ├── data-table.tsx
+│       ├── dropdown-menu.tsx
+│       ├── input.tsx
+│       ├── select.tsx
+│       ├── table.tsx
+│       ├── toast.tsx
+│       └── use-toast.ts
+└── lib/
+    └── utils.ts               # Utility functions
+```
 
-## متطلبات النظام
+## Setup
 
-- Node.js (الإصدار 18 أو أحدث)
-- npm (الإصدار 9 أو أحدث)
+1. Install dependencies:
+```bash
+npm install
+```
 
-## كيفية التثبيت
+2. Set up environment variables:
+```env
+DATABASE_URL="your-database-url"
+NEXTAUTH_SECRET="your-auth-secret"
+```
 
-1. استنساخ المشروع:
-   ```
-   git clone https://github.com/yourusername/haam.git
-   cd haam
-   ```
+3. Run database migrations:
+```bash
+npx prisma migrate dev
+```
 
-2. تثبيت الاعتمادات:
-   ```
-   npm install
-   ```
+4. Start the development server:
+```bash
+npm run dev
+```
 
-## كيفية التشغيل
+## Development
 
-1. تهيئة قاعدة البيانات (للمرة الأولى فقط):
-   ```
-   node run.js --init-db
-   ```
-   أو
-   ```
-   npm run start-app -- --init-db
-   ```
-   هذا الأمر سيقوم بإنشاء قاعدة البيانات وتهيئتها بالبيانات الأولية، بما في ذلك حسابات المستخدمين التالية:
-   - مدير النظام: admin@example.com / admin123
-   - مدير البرنامج: manager@example.com / manager123
-   - موجه: mentor@example.com / mentor123
-   - مستثمر: investor@example.com / investor123
-   - شركة ناشئة: startup@example.com / startup123
-   - محكم: judge@example.com / judge123
-   - مشارك: participant@example.com / participant123
+### Adding New Features
+1. Create new components in the appropriate directory
+2. Add API routes under `/app/api`
+3. Update the sidebar navigation if needed
+4. Add new pages under `/app/admin-dashboard`
 
-2. تشغيل التطبيق في وضع التطوير:
+### Component Guidelines
+- Use the provided UI components from `/components/ui`
+- Follow the established patterns for forms and data tables
+- Implement proper error handling and loading states
+- Use toast notifications for user feedback
 
-   يمكنك تشغيل التطبيق بإحدى الطرق التالية:
+### API Guidelines
+- Implement proper authentication checks
+- Follow RESTful conventions
+- Include appropriate error handling
+- Add TypeScript types for request/response data
 
-   باستخدام Node.js مباشرة:
-   ```
-   node run.js
-   ```
+## Security
 
-   باستخدام ملف التشغيل:
-   ```
-   run
-   ```
-   أو
-   ```
-   run.bat
-   ```
+- All admin routes are protected with authentication
+- Role-based access control is implemented
+- API routes validate user permissions
+- Sensitive operations require confirmation
 
-   باستخدام npm:
-   ```
-   npm run start-app
-   ```
+## Contributing
 
-   لتشغيل خادم التطوير فقط (بدون تهيئة قاعدة البيانات):
-   ```
-   npm run dev
-   ```
+1. Create a new branch for your feature
+2. Follow the established code style
+3. Add appropriate tests
+4. Submit a pull request
 
-3. افتح المتصفح وانتقل إلى:
-   ```
-   http://localhost:3000
-   ```
+## License
 
-## الميزات الجديدة
-
-### نظام إدارة الهاكاثونات
-
-تم إضافة نظام متكامل لإدارة الهاكاثونات، يتيح للمديرين إنشاء وإدارة الهاكاثونات، وللمحكمين تقييم المشاريع المشاركة. يشمل النظام:
-
-- إدارة الهاكاثونات (إنشاء، تعديل، إلغاء)
-- إدارة الفرق المشاركة
-- إدارة المحكمين
-- تقييم المشاريع
-- متابعة النتائج والإحصائيات
-
-### نظام المصادقة وإدارة المستخدمين
-
-تم تطوير نظام متكامل للمصادقة وإدارة المستخدمين، يتيح:
-
-- تسجيل الدخول والخروج
-- إنشاء حسابات جديدة
-- إدارة الملفات الشخصية
-- تحديد الصلاحيات بناءً على نوع المستخدم
-
-## الوثائق
-
-للحصول على معلومات مفصلة حول كيفية استخدام المنصة، يرجى الاطلاع على [دليل الاستخدام](./instruction.md).
-
-## المساهمة
-
-نرحب بمساهماتكم في تطوير هذه المنصة. يرجى اتباع الخطوات التالية للمساهمة:
-
-1. قم بعمل fork للمشروع
-2. قم بإنشاء فرع جديد للميزة التي ترغب في إضافتها
-3. قم بتنفيذ التغييرات
-4. قم بإرسال طلب سحب (Pull Request)
-
-## الترخيص
-
-هذا المشروع مرخص بموجب [MIT License](LICENSE).
-
-## الاتصال
-
-للاستفسارات أو الدعم، يرجى التواصل معنا عبر البريد الإلكتروني: support@haam.sa
+This project is proprietary and confidential.

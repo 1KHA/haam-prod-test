@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
@@ -23,27 +23,120 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
+import { PermissionRequirement } from "@/lib/permissions"
 
-const navItems = [
-  { name: "لوحة التحكم", href: "/admin-dashboard", icon: Home },
-  { name: "المستخدمون", href: "/admin-dashboard/users", icon: Users },
-  { name: "الأدوار والصلاحيات", href: "/admin-dashboard/users/roles", icon: Shield },
-  { name: "إعدادات النظام", href: "/admin-dashboard/system/settings", icon: Settings },
-  { name: "الشركات الناشئة", href: "/admin-dashboard/startups", icon: Building },
-  { name: "البرامج", href: "/admin-dashboard/programs", icon: Rocket },
-  { name: "التمويل", href: "/admin-dashboard/funding", icon: DollarSign },
-  { name: "الفعاليات", href: "/admin-dashboard/events", icon: Calendar },
-  { name: "سجلات الأمان", href: "/admin-dashboard/security/logs", icon: Shield },
-  { name: "التحليلات", href: "/admin-dashboard/analytics", icon: BarChart },
-  { name: "الإشعارات", href: "/admin-dashboard/notifications", icon: Bell },
-  { name: "التقارير", href: "/admin-dashboard/reports", icon: FileText },
-  { name: "التكاملات", href: "/admin-dashboard/integrations", icon: Plug },
-  { name: "المدفوعات", href: "/admin-dashboard/payments", icon: CreditCard },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  permission?: PermissionRequirement;
+}
+
+const navItems: NavItem[] = [
+  { 
+    name: "لوحة التحكم", 
+    href: "/admin-dashboard", 
+    icon: Home,
+    permission: { category: "dashboard", action: "view" }
+  },
+  { 
+    name: "المستخدمون", 
+    href: "/admin-dashboard/users", 
+    icon: Users,
+    permission: { category: "users", action: "view" }
+  },
+  { 
+    name: "الأدوار والصلاحيات", 
+    href: "/admin-dashboard/users/roles", 
+    icon: Shield,
+    permission: { category: "users", action: "edit" }
+  },
+  { 
+    name: "إعدادات النظام", 
+    href: "/admin-dashboard/system/settings", 
+    icon: Settings,
+    permission: { category: "settings", action: "view" }
+  },
+  { 
+    name: "الشركات الناشئة", 
+    href: "/admin-dashboard/startups", 
+    icon: Building,
+    permission: { category: "startups", action: "view" }
+  },
+  { 
+    name: "البرامج", 
+    href: "/admin-dashboard/programs", 
+    icon: Rocket,
+    permission: { category: "programs", action: "view" }
+  },
+  { 
+    name: "التمويل", 
+    href: "/admin-dashboard/funding", 
+    icon: DollarSign,
+    permission: { category: "funding", action: "view" }
+  },
+  { 
+    name: "الفعاليات", 
+    href: "/admin-dashboard/events", 
+    icon: Calendar,
+    permission: { category: "events", action: "view" }
+  },
+  { 
+    name: "سجلات الأمان", 
+    href: "/admin-dashboard/security/logs", 
+    icon: Shield,
+    permission: { category: "settings", action: "view" }
+  },
+  { 
+    name: "التحليلات", 
+    href: "/admin-dashboard/analytics", 
+    icon: BarChart,
+    permission: { category: "analytics", action: "view" }
+  },
+  { 
+    name: "الإشعارات", 
+    href: "/admin-dashboard/notifications", 
+    icon: Bell,
+    permission: { category: "notifications", action: "view" }
+  },
+  { 
+    name: "التقارير", 
+    href: "/admin-dashboard/reports", 
+    icon: FileText,
+    permission: { category: "reports", action: "view" }
+  },
+  { 
+    name: "التكاملات", 
+    href: "/admin-dashboard/integrations", 
+    icon: Plug,
+    permission: { category: "integrations", action: "view" }
+  },
+  { 
+    name: "المدفوعات", 
+    href: "/admin-dashboard/payments", 
+    icon: CreditCard,
+    permission: { category: "payments", action: "view" }
+  },
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      // If no permission is specified, show the item
+      if (!item.permission) return true
+      
+      // Check if user has the required permission
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   return (
     <motion.aside
@@ -61,7 +154,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

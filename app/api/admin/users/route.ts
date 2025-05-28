@@ -1,261 +1,221 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hash } from 'bcrypt';
-import { UserRole } from '@prisma/client';
+import { checkPermission } from '@/lib/permissions';
 
-// GET /api/admin/users - Get all users with pagination and filtering
-export async function GET(request: Request) {
+// GET /api/admin/users - Get all users
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
-    const role = searchParams.get('role') || undefined;
+    // Check permission
+    const permissionCheck = await checkPermission(req, { category: 'users', action: 'view' });
     
-    const skip = (page - 1) * limit;
-    
-    // Build the where clause for filtering
-    const where: any = {};
-    
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } }
-      ];
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { error: permissionCheck.error },
+        { status: permissionCheck.error === 'Unauthorized' ? 401 : 403 }
+      );
     }
-    
-    if (role) {
-      where.role = role;
-    }
-    
-    // Get users with pagination
+
+    // Fetch users with their profiles
     const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        specialization: true,
-        startupProfile: {
-          select: {
-            companyName: true,
-            industry: true,
-            stage: true
-          }
-        },
-        mentorProfile: {
-          select: {
-            expertise: true,
-            experience: true
-          }
-        },
-        investorProfile: {
-          select: {
-            companyName: true,
-            investmentFocus: true
-          }
-        },
-        acceleratorProfile: {
-          select: {
-            organizationName: true,
-            industry: true,
-            focusAreas: true
-          }
-        }
+      include: {
+        profile: true,
+        startupProfile: true,
+        mentorProfile: true,
+        investorProfile: true,
+        judgeProfile: true,
+        adminProfile: true,
+        programManagerProfile: true,
+        acceleratorProfile: true,
+        participantProfile: true,
       },
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
-    
-    // Get total count for pagination
-    const total = await prisma.user.count({ where });
-    
-    // Transform the users to include a virtual status field
-    const transformedUsers = users.map(user => {
-      // Determine if the user has completed their profile
-      const hasProfile = user.startupProfile || user.mentorProfile || 
-                         user.investorProfile || user.acceleratorProfile;
-      
-      return {
-        ...user,
-        // Virtual status field
-        status: hasProfile ? 'ACTIVE' : 'PENDING',
-        // Add a program field based on profile data
-        program: user.startupProfile?.companyName || 
-                 user.acceleratorProfile?.organizationName || 
-                 user.mentorProfile?.expertise || 
-                 user.investorProfile?.companyName || '-'
-      };
-    });
-    
-    return NextResponse.json({
-      users: transformedUsers,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+
+    // Format the response
+    const formattedUsers = users.map(user => ({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      specialization: user.specialization,
+      createdAt: user.createdAt,
+      profile: user.profile,
+      roleProfile: 
+        user.startupProfile || 
+        user.mentorProfile || 
+        user.investorProfile || 
+        user.judgeProfile || 
+        user.adminProfile || 
+        user.programManagerProfile || 
+        user.acceleratorProfile || 
+        user.participantProfile,
+    }));
+
+    return NextResponse.json({ users: formattedUsers });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch users' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
 // POST /api/admin/users - Create a new user
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, password, role, specialization } = body;
+    // Check permission
+    const permissionCheck = await checkPermission(req, { category: 'users', action: 'add' });
     
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { error: permissionCheck.error },
+        { status: permissionCheck.error === 'Unauthorized' ? 401 : 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { email, password, name, role, specialization } = body;
+
     // Validate required fields
-    if (!name || !email || !password || !role) {
+    if (!email || !password || !name || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
-    
-    // Check if user with email already exists
+
+    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
-    
+
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
+        { error: 'User already exists' },
+        { status: 409 }
       );
     }
-    
-    // Hash the password
-    const hashedPassword = await hash(password, 10);
-    
-    // Create the user
+
+    // Hash password
+    const { hashPassword } = await import('@/lib/auth');
+    const hashedPassword = await hashPassword(password);
+
+    // Create user
     const user = await prisma.user.create({
       data: {
-        name,
         email,
         password: hashedPassword,
-        role: role as UserRole,
-        specialization
+        name,
+        role,
+        specialization,
+        profile: {
+          create: {},
+        },
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        specialization: true,
-        createdAt: true
-      }
+      include: {
+        profile: true,
+      },
     });
-    
-    return NextResponse.json(user, { status: 201 });
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json({ user: userWithoutPassword }, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);
     return NextResponse.json(
-      { error: 'Failed to create user' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/admin/users - Bulk update users
-export async function PUT(request: Request) {
+// PUT /api/admin/users - Update a user
+export async function PUT(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { userIds, action, data } = body;
+    // Check permission
+    const permissionCheck = await checkPermission(req, { category: 'users', action: 'edit' });
     
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'No users specified' },
+        { error: permissionCheck.error },
+        { status: permissionCheck.error === 'Unauthorized' ? 401 : 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { id, email, name, role, specialization } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
         { status: 400 }
       );
     }
-    
-    if (!action) {
-      return NextResponse.json(
-        { error: 'No action specified' },
-        { status: 400 }
-      );
-    }
-    
-    let result;
-    
-    switch (action) {
-      case 'updateRole':
-        if (!data.role) {
-          return NextResponse.json(
-            { error: 'No role specified' },
-            { status: 400 }
-          );
-        }
-        
-        result = await prisma.$transaction(
-          userIds.map(id => 
-            prisma.user.update({
-              where: { id },
-              data: { role: data.role as UserRole },
-              select: { id: true }
-            })
-          )
-        );
-        break;
-        
-      case 'updateSpecialization':
-        if (!data.specialization) {
-          return NextResponse.json(
-            { error: 'No specialization specified' },
-            { status: 400 }
-          );
-        }
-        
-        result = await prisma.$transaction(
-          userIds.map(id => 
-            prisma.user.update({
-              where: { id },
-              data: { specialization: data.specialization },
-              select: { id: true }
-            })
-          )
-        );
-        break;
-        
-      case 'delete':
-        result = await prisma.$transaction(
-          userIds.map(id => 
-            prisma.user.delete({
-              where: { id },
-              select: { id: true }
-            })
-          )
-        );
-        break;
-        
-      default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
-    }
-    
-    return NextResponse.json({
-      success: true,
-      count: result.length,
-      action
+
+    // Update user
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        email,
+        name,
+        role,
+        specialization,
+      },
+      include: {
+        profile: true,
+      },
     });
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json({ user: userWithoutPassword });
   } catch (error) {
-    console.error('Error updating users:', error);
+    console.error('Error updating user:', error);
     return NextResponse.json(
-      { error: 'Failed to update users' },
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/users - Delete a user
+export async function DELETE(req: NextRequest) {
+  try {
+    // Check permission
+    const permissionCheck = await checkPermission(req, { category: 'users', action: 'delete' });
+    
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { error: permissionCheck.error },
+        { status: permissionCheck.error === 'Unauthorized' ? 401 : 403 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Delete user (cascade will handle related records)
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

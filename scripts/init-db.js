@@ -14,11 +14,11 @@ async function hashPassword(password) {
 function runMigrations() {
   try {
     console.log('Running Prisma migrations...');
-    execSync('npx prisma migrate dev --name init --schema ../prisma/schema.prisma', { stdio: 'inherit' });
+    execSync('npx prisma migrate dev --name init --schema prisma/schema.prisma', { stdio: 'inherit' });
     console.log('Migrations completed successfully.');
     
     console.log('Generating Prisma client...');
-    execSync('npx prisma generate --schema ../prisma/schema.prisma', { stdio: 'inherit' });
+    execSync('npx prisma generate --schema prisma/schema.prisma', { stdio: 'inherit' });
     console.log('Prisma client generated successfully.');
   } catch (error) {
     console.error('Error running migrations or generating client:', error);

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 
-// GET /api/admin/startups/[id] - Get a specific startup by ID
+// GET /api/admin/startups/[startupId] - Get a specific startup by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
     // Get authorization header
@@ -20,11 +20,11 @@ export async function GET(
       );
     }
 
-    const { id } = params;
+    const { startupId } = params;
     
     // Get the startup
     const startup = await prisma.startup.findUnique({
-      where: { id },
+      where: { id: startupId },
       include: {
         creator: {
           select: {
@@ -96,10 +96,10 @@ export async function GET(
   }
 }
 
-// PUT /api/admin/startups/[id] - Update a specific startup
+// PUT /api/admin/startups/[startupId] - Update a specific startup
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
     // Get authorization header
@@ -114,11 +114,11 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const { startupId } = params;
     
     // Check if startup exists
     const existingStartup = await prisma.startup.findUnique({
-      where: { id },
+      where: { id: startupId },
       select: { id: true }
     });
     
@@ -191,7 +191,7 @@ export async function PUT(
     
     // Update the startup
     const updatedStartup = await prisma.startup.update({
-      where: { id },
+      where: { id: startupId },
       data: updateData,
       include: {
         creator: {
@@ -214,10 +214,10 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admin/startups/[id] - Delete a specific startup
+// DELETE /api/admin/startups/[startupId] - Delete a specific startup
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
     // Get authorization header
@@ -232,11 +232,11 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { startupId } = params;
     
     // Check if startup exists
     const existingStartup = await prisma.startup.findUnique({
-      where: { id },
+      where: { id: startupId },
       select: { id: true }
     });
     
@@ -249,7 +249,7 @@ export async function DELETE(
     
     // Delete the startup
     await prisma.startup.delete({
-      where: { id }
+      where: { id: startupId }
     });
     
     return NextResponse.json({

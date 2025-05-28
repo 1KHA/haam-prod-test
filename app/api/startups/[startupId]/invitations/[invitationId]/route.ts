@@ -6,7 +6,7 @@ import { sendEmail } from '@/lib/email'; // Import email functions
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string, invitationId: string } }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -16,7 +16,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { startupId, invitationId } = params;
     const body = await request.json();
     const { status } = body; // 'ACCEPTED' or 'REJECTED'
 
@@ -25,7 +25,7 @@ export async function PATCH(
     }
 
     const invitation = await prisma.invitation.findUnique({
-      where: { id },
+      where: { id: invitationId, startupId: startupId },
       include: {
         startup: true,
       },
@@ -61,7 +61,7 @@ export async function PATCH(
 
     const updatedInvitation = await prisma.$transaction(async (tx) => {
       const updated = await tx.invitation.update({
-        where: { id },
+        where: { id: invitationId },
         data: {
           status: status,
           respondedAt: new Date(),

@@ -17,7 +17,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
     // Get authorization header
@@ -43,7 +43,7 @@ export async function GET(
     // Get startup by ID
     const startup = await prisma.startup.findUnique({
       where: {
-        id: params.id,
+        id: params.startupId,
         creatorId: user.userId, // Ensure the startup belongs to the user
       },
     });
@@ -88,7 +88,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
     // Get authorization header
@@ -114,7 +114,7 @@ export async function PUT(
     // Check if startup exists and belongs to the user
     const existingStartup = await prisma.startup.findUnique({
       where: {
-        id: params.id,
+        id: params.startupId,
         creatorId: user.userId,
       },
     });
@@ -193,7 +193,7 @@ export async function PUT(
     // Update startup in database
     const updatedStartup = await prisma.startup.update({
       where: {
-        id: params.id,
+        id: params.startupId,
       },
       data: {
         name,

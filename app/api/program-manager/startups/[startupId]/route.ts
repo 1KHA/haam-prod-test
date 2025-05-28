@@ -4,10 +4,10 @@ import { isAuthenticated, UserRole } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
-    const startupId = params.id;
+    const { startupId } = params;
     
     // Get authorization header
     const authHeader = request.headers.get('authorization');
@@ -196,10 +196,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { startupId: string } }
 ) {
   try {
-    const startupId = params.id;
+    const { startupId } = params;
     const data = await request.json();
     
     // Get authorization header

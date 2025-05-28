@@ -17,6 +17,8 @@ import {
   Award
 } from "lucide-react"
 
+import { RouteGuard } from "@/components/auth/RouteGuard"
+import { UserRole } from "@prisma/client"
 export default function MentorDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -26,6 +28,11 @@ export default function MentorDashboard() {
   }
 
   return (
+    <RouteGuard 
+      requiredPermission={{ category: 'dashboard', action: 'view' }}
+      requiredRole={UserRole.MENTOR}
+    >
+      
     <div className="space-y-6 text-right">
       <h1 className="text-3xl font-bold">مرحباً بك د. خالد العمري</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -432,5 +439,7 @@ export default function MentorDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  
+    </RouteGuard>
   )
 }

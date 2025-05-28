@@ -17,6 +17,8 @@ import {
   ArrowDown
 } from "lucide-react"
 
+import { RouteGuard } from "@/components/auth/RouteGuard"
+import { UserRole } from "@prisma/client"
 export default function InvestorDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -26,6 +28,11 @@ export default function InvestorDashboard() {
   }
 
   return (
+    <RouteGuard 
+      requiredPermission={{ category: 'dashboard', action: 'view' }}
+      requiredRole={UserRole.INVESTOR}
+    >
+      
     <div className="space-y-6 text-right">
       <h1 className="text-3xl font-bold">مرحباً بك م. فهد العتيبي</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -474,5 +481,7 @@ export default function InvestorDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  
+    </RouteGuard>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
@@ -19,22 +19,79 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/startup-dashboard", icon: Home },
-  { name: "فريق العمل", href: "/startup-dashboard/team", icon: Users },
-  { name: "الفعاليات", href: "/startup-dashboard/events", icon: Calendar },
-  { name: "الموجهون", href: "/startup-dashboard/mentors", icon: BookOpen },
-  { name: "التمويل", href: "/startup-dashboard/funding", icon: DollarSign },
-  { name: "الموارد", href: "/startup-dashboard/resources", icon: FileText },
-  { name: "المراحل", href: "/startup-dashboard/milestones", icon: Target },
-  { name: "التقارير", href: "/startup-dashboard/reports", icon: FileBarChart },
-  { name: "المناقشات", href: "/startup-dashboard/discussions", icon: MessageSquare },
+  { 
+    name: "لوحة التحكم", 
+    href: "/startup-dashboard", 
+    icon: Home,
+    permission: { category: 'dashboard', action: 'view' }
+  },
+  { 
+    name: "فريق العمل", 
+    href: "/startup-dashboard/team", 
+    icon: Users,
+    permission: { category: 'users', action: 'view' }
+  },
+  { 
+    name: "الفعاليات", 
+    href: "/startup-dashboard/events", 
+    icon: Calendar,
+    permission: { category: 'events', action: 'view' }
+  },
+  { 
+    name: "الموجهون", 
+    href: "/startup-dashboard/mentors", 
+    icon: BookOpen,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "التمويل", 
+    href: "/startup-dashboard/funding", 
+    icon: DollarSign,
+    permission: { category: 'funding', action: 'view' }
+  },
+  { 
+    name: "الموارد", 
+    href: "/startup-dashboard/resources", 
+    icon: FileText,
+    permission: { category: 'resources', action: 'view' }
+  },
+  { 
+    name: "المراحل", 
+    href: "/startup-dashboard/milestones", 
+    icon: Target,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "التقارير", 
+    href: "/startup-dashboard/reports", 
+    icon: FileBarChart,
+    permission: { category: 'reports', action: 'view' }
+  },
+  { 
+    name: "المناقشات", 
+    href: "/startup-dashboard/discussions", 
+    icon: MessageSquare,
+    permission: { category: 'discussions', action: 'view' }
+  },
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      if (!item.permission) return true
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   return (
     <motion.aside
@@ -52,7 +109,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

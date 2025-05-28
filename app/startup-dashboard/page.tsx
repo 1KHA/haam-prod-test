@@ -19,6 +19,8 @@ import {
   Rocket
 } from "lucide-react"
 
+import { RouteGuard } from "@/components/auth/RouteGuard"
+import { UserRole } from "@prisma/client"
 export default function StartupDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -28,6 +30,11 @@ export default function StartupDashboard() {
   }
 
   return (
+    <RouteGuard 
+      requiredPermission={{ category: 'dashboard', action: 'view' }}
+      requiredRole={UserRole.STARTUP}
+    >
+      
     <div className="space-y-6 text-right">
       <h1 className="text-3xl font-bold">مرحباً بكم في تك سوليوشنز</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -451,5 +458,7 @@ export default function StartupDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  
+    </RouteGuard>
   )
 }

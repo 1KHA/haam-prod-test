@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
@@ -16,26 +16,90 @@ import {
   ClipboardCheck,
   BookOpen,
   Share2,
-  Clock
+  Clock,
+  User
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/mentor-dashboard", icon: Home },
-  { name: "الشركات الناشئة", href: "/mentor-dashboard/startups", icon: Rocket },
-  { name: "جلسات الإرشاد", href: "/mentor-dashboard/sessions", icon: Calendar },
-  { name: "إدارة التوفر", href: "/mentor-dashboard/availability", icon: Clock },
-  { name: "التقييمات والملاحظات", href: "/mentor-dashboard/feedback", icon: ClipboardCheck },
-  { name: "الموارد التعليمية", href: "/mentor-dashboard/resources", icon: BookOpen },
-  { name: "المناقشات", href: "/mentor-dashboard/discussions", icon: MessageSquare },
-  { name: "التقارير", href: "/mentor-dashboard/reports", icon: FileText },
-  { name: "مجتمع الموجهين", href: "/mentor-dashboard/community", icon: Share2 }
+  { 
+    name: "لوحة التحكم", 
+    href: "/mentor-dashboard", 
+    icon: Home,
+    permission: { category: 'dashboard', action: 'view' }
+  },
+  { 
+    name: "الملف الشخصي", 
+    href: "/mentor-dashboard/profile", 
+    icon: User,
+    permission: { category: 'users', action: 'view' }
+  },
+  { 
+    name: "الشركات الناشئة", 
+    href: "/mentor-dashboard/startups", 
+    icon: Rocket,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "جلسات الإرشاد", 
+    href: "/mentor-dashboard/sessions", 
+    icon: Calendar,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "إدارة التوفر", 
+    href: "/mentor-dashboard/availability", 
+    icon: Clock,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "التقييمات والملاحظات", 
+    href: "/mentor-dashboard/feedback", 
+    icon: ClipboardCheck,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "الموارد التعليمية", 
+    href: "/mentor-dashboard/resources", 
+    icon: BookOpen,
+    permission: { category: 'resources', action: 'view' }
+  },
+  { 
+    name: "المناقشات", 
+    href: "/mentor-dashboard/discussions", 
+    icon: MessageSquare,
+    permission: { category: 'discussions', action: 'view' }
+  },
+  { 
+    name: "التقارير", 
+    href: "/mentor-dashboard/reports", 
+    icon: FileText,
+    permission: { category: 'reports', action: 'view' }
+  },
+  { 
+    name: "مجتمع الموجهين", 
+    href: "/mentor-dashboard/community", 
+    icon: Share2,
+    permission: { category: 'discussions', action: 'view' }
+  }
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      if (!item.permission) return true
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   return (
     <motion.aside
@@ -53,7 +117,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

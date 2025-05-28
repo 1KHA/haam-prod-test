@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
@@ -21,24 +21,92 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/accelerator-dashboard", icon: Home, exact: true },
-  { name: "الملف الشخصي", href: "/accelerator-dashboard/profile", icon: User },
-  { name: "الشركات الناشئة", href: "/accelerator-dashboard/startups", icon: Briefcase },
-  { name: "فريق العمل", href: "/accelerator-dashboard/team", icon: Users },
-  { name: "التقديم للبرامج", href: "/accelerator-dashboard/apply", icon: Rocket },
-  { name: "الموجهون", href: "/accelerator-dashboard/mentors", icon: BookOpen },
-  { name: "الفعاليات", href: "/accelerator-dashboard/events", icon: Calendar },
-  { name: "الموارد التعليمية", href: "/accelerator-dashboard/resources", icon: FileText },
-  { name: "طلبات التمويل", href: "/accelerator-dashboard/funding", icon: DollarSign },
-  { name: "المراحل والتقدم", href: "/accelerator-dashboard/milestones", icon: Target },
-  { name: "الدعم والمساعدة", href: "/accelerator-dashboard/support", icon: HelpCircle },
+  { 
+    name: "لوحة التحكم", 
+    href: "/accelerator-dashboard", 
+    icon: Home, 
+    exact: true,
+    permission: { category: 'dashboard', action: 'view' }
+  },
+  { 
+    name: "الملف الشخصي", 
+    href: "/accelerator-dashboard/profile", 
+    icon: User,
+    permission: { category: 'users', action: 'view' }
+  },
+  { 
+    name: "الشركات الناشئة", 
+    href: "/accelerator-dashboard/startups", 
+    icon: Briefcase,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "فريق العمل", 
+    href: "/accelerator-dashboard/team", 
+    icon: Users,
+    permission: { category: 'users', action: 'view' }
+  },
+  { 
+    name: "التقديم للبرامج", 
+    href: "/accelerator-dashboard/apply", 
+    icon: Rocket,
+    permission: { category: 'applications', action: 'add' }
+  },
+  { 
+    name: "الموجهون", 
+    href: "/accelerator-dashboard/mentors", 
+    icon: BookOpen,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "الفعاليات", 
+    href: "/accelerator-dashboard/events", 
+    icon: Calendar,
+    permission: { category: 'events', action: 'view' }
+  },
+  { 
+    name: "الموارد التعليمية", 
+    href: "/accelerator-dashboard/resources", 
+    icon: FileText,
+    permission: { category: 'resources', action: 'view' }
+  },
+  { 
+    name: "طلبات التمويل", 
+    href: "/accelerator-dashboard/funding", 
+    icon: DollarSign,
+    permission: { category: 'funding', action: 'view' }
+  },
+  { 
+    name: "المراحل والتقدم", 
+    href: "/accelerator-dashboard/milestones", 
+    icon: Target,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "الدعم والمساعدة", 
+    href: "/accelerator-dashboard/support", 
+    icon: HelpCircle,
+    permission: { category: 'dashboard', action: 'view' }
+  },
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      if (!item.permission) return true
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   // Function to check if a nav item is active
   const isActive = (item: { href: string, exact?: boolean }) => {
@@ -64,7 +132,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
@@ -18,19 +18,67 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/judge-dashboard", icon: Home },
-  { name: "المشاريع بانتظار التقييم", href: "/judge-dashboard/pending", icon: Clock },
-  { name: "التقييمات المكتملة", href: "/judge-dashboard/completed", icon: CheckCircle },
-  { name: "الهاكاثونات", href: "/judge-dashboard/hackathons", icon: Rocket },
-  { name: "معايير التقييم", href: "/judge-dashboard/criteria", icon: Star },
-  { name: "التقارير والإحصائيات", href: "/judge-dashboard/reports", icon: BarChart },
+  { 
+    name: "لوحة التحكم", 
+    href: "/judge-dashboard", 
+    icon: Home,
+    permission: { category: 'dashboard', action: 'view' }
+  },
+  { 
+    name: "التقييم", 
+    href: "/judge-dashboard/evaluate", 
+    icon: Star,
+    permission: { category: 'evaluation', action: 'view' }
+  },
+  { 
+    name: "المشاريع بانتظار التقييم", 
+    href: "/judge-dashboard/pending", 
+    icon: Clock,
+    permission: { category: 'evaluation', action: 'view' }
+  },
+  { 
+    name: "التقييمات المكتملة", 
+    href: "/judge-dashboard/completed", 
+    icon: CheckCircle,
+    permission: { category: 'evaluation', action: 'view' }
+  },
+  { 
+    name: "الهاكاثونات", 
+    href: "/judge-dashboard/hackathons", 
+    icon: Rocket,
+    permission: { category: 'hackathons', action: 'view' }
+  },
+  { 
+    name: "معايير التقييم", 
+    href: "/judge-dashboard/criteria", 
+    icon: Award,
+    permission: { category: 'evaluation', action: 'view' }
+  },
+  { 
+    name: "التقارير والإحصائيات", 
+    href: "/judge-dashboard/reports", 
+    icon: BarChart,
+    permission: { category: 'reports', action: 'view' }
+  },
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      if (!item.permission) return true
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   return (
     <motion.aside
@@ -48,7 +96,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

@@ -1,25 +1,67 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { Home, Users, Flag, Award, Star, Book, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/participant-dashboard", icon: Home },
-  { name: "فريقي", href: "/participant-dashboard/team", icon: Flag },
-  { name: "المشاريع", href: "/participant-dashboard/projects", icon: Star },
-  { name: "الموجهون", href: "/participant-dashboard/mentors", icon: Book },
-  { name: "الفعاليات", href: "/participant-dashboard/events", icon: Calendar },
-  { name: "الجدول الزمني", href: "/participant-dashboard/schedule", icon: Calendar },
+  { 
+    name: "لوحة التحكم", 
+    href: "/participant-dashboard", 
+    icon: Home,
+    permission: { category: 'dashboard', action: 'view' }
+  },
+  { 
+    name: "فريقي", 
+    href: "/participant-dashboard/team", 
+    icon: Flag,
+    permission: { category: 'users', action: 'view' }
+  },
+  { 
+    name: "المشاريع", 
+    href: "/participant-dashboard/projects", 
+    icon: Star,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "الموجهون", 
+    href: "/participant-dashboard/mentors", 
+    icon: Book,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "الفعاليات", 
+    href: "/participant-dashboard/events", 
+    icon: Calendar,
+    permission: { category: 'events', action: 'view' }
+  },
+  { 
+    name: "الجدول الزمني", 
+    href: "/participant-dashboard/schedule", 
+    icon: Calendar,
+    permission: { category: 'events', action: 'view' }
+  },
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      if (!item.permission) return true
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   return (
     <motion.aside
@@ -37,7 +79,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

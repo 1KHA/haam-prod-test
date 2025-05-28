@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
@@ -24,27 +24,109 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/usePermissions"
 
 const navItems = [
-  { name: "لوحة التحكم", href: "/program-manager-dashboard", icon: Layers },
-  { name: "إدارة الدفعات", href: "/program-manager-dashboard/cohorts", icon: Users },
-  { name: "إدارة الشركات الناشئة", href: "/program-manager-dashboard/startups", icon: Briefcase },
-  { name: "مراجعة الطلبات", href: "/program-manager-dashboard/applications", icon: FileCheck },
-  { name: "اختيار المتقدمين", href: "/program-manager-dashboard/selection", icon: UserCheck },
-  { name: "تعيين الموجهين", href: "/program-manager-dashboard/mentors", icon: Award },
-  { name: "جدولة الجلسات", href: "/program-manager-dashboard/sessions", icon: Handshake },
-  { name: "إدارة الفعاليات", href: "/program-manager-dashboard/events", icon: Calendar },
-  { name: "إدارة التمويل", href: "/program-manager-dashboard/funding", icon: DollarSign },
-  { name: "الموارد التعليمية", href: "/program-manager-dashboard/resources", icon: BookOpen },
-  { name: "التقييم والملاحظات", href: "/program-manager-dashboard/feedback", icon: FileText },
-  { name: "المهام والمراحل", href: "/program-manager-dashboard/milestones", icon: ClipboardList },
-  { name: "التقارير والتحليلات", href: "/program-manager-dashboard/reports", icon: BarChart },
-  { name: "المناقشات", href: "/program-manager-dashboard/discussions", icon: MessageSquare },
+  { 
+    name: "لوحة التحكم", 
+    href: "/program-manager-dashboard", 
+    icon: Layers,
+    permission: { category: 'dashboard', action: 'view' }
+  },
+  { 
+    name: "إدارة الدفعات", 
+    href: "/program-manager-dashboard/cohorts", 
+    icon: Users,
+    permission: { category: 'cohorts', action: 'view' }
+  },
+  { 
+    name: "إدارة الشركات الناشئة", 
+    href: "/program-manager-dashboard/startups", 
+    icon: Briefcase,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "مراجعة الطلبات", 
+    href: "/program-manager-dashboard/applications", 
+    icon: FileCheck,
+    permission: { category: 'applications', action: 'view' }
+  },
+  { 
+    name: "اختيار المتقدمين", 
+    href: "/program-manager-dashboard/selection", 
+    icon: UserCheck,
+    permission: { category: 'applications', action: 'view' }
+  },
+  { 
+    name: "تعيين الموجهين", 
+    href: "/program-manager-dashboard/mentors", 
+    icon: Award,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "جدولة الجلسات", 
+    href: "/program-manager-dashboard/sessions", 
+    icon: Handshake,
+    permission: { category: 'mentorship', action: 'view' }
+  },
+  { 
+    name: "إدارة الفعاليات", 
+    href: "/program-manager-dashboard/events", 
+    icon: Calendar,
+    permission: { category: 'events', action: 'view' }
+  },
+  { 
+    name: "إدارة التمويل", 
+    href: "/program-manager-dashboard/funding", 
+    icon: DollarSign,
+    permission: { category: 'funding', action: 'view' }
+  },
+  { 
+    name: "الموارد التعليمية", 
+    href: "/program-manager-dashboard/resources", 
+    icon: BookOpen,
+    permission: { category: 'resources', action: 'view' }
+  },
+  { 
+    name: "التقييم والملاحظات", 
+    href: "/program-manager-dashboard/feedback", 
+    icon: FileText,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "المهام والمراحل", 
+    href: "/program-manager-dashboard/milestones", 
+    icon: ClipboardList,
+    permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "التقارير والتحليلات", 
+    href: "/program-manager-dashboard/reports", 
+    icon: BarChart,
+    permission: { category: 'reports', action: 'view' }
+  },
+  { 
+    name: "المناقشات", 
+    href: "/program-manager-dashboard/discussions", 
+    icon: MessageSquare,
+    permission: { category: 'discussions', action: 'view' }
+  },
 ]
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const pathname = usePathname()
+  const { hasPermission, loading } = usePermissions()
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = useMemo(() => {
+    if (loading) return []
+    
+    return navItems.filter(item => {
+      if (!item.permission) return true
+      return hasPermission(item.permission)
+    })
+  }, [hasPermission, loading])
 
   return (
     <motion.aside
@@ -62,7 +144,7 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto">
           <ul className="py-2">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}

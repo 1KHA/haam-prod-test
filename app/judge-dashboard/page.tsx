@@ -20,6 +20,8 @@ import {
   BarChart
 } from "lucide-react"
 
+import { RouteGuard } from "@/components/auth/RouteGuard"
+import { UserRole } from "@prisma/client"
 export default function JudgeDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -115,6 +117,11 @@ export default function JudgeDashboard() {
   }
 
   return (
+    <RouteGuard 
+      requiredPermission={{ category: 'dashboard', action: 'view' }}
+      requiredRole={UserRole.JUDGE}
+    >
+      
     <div className="space-y-6 text-right">
       <h1 className="text-3xl font-bold">مرحباً بك {judgeData.name}</h1>
       <p className="text-muted-foreground">التخصص: {judgeData.specialty}</p>
@@ -382,5 +389,7 @@ export default function JudgeDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  
+    </RouteGuard>
   )
 }

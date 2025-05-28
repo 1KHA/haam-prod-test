@@ -34,6 +34,9 @@ model User {
   programs      Program[] // Added relation to programs
   managedCohorts Cohort[] // Added relation to cohorts as manager
   cohortMentorships CohortMentor[] // Added relation to cohort mentorships
+  invitationsSent Invitation[] @relation("InviterToInvitation")
+  companyMemberships CompanyMember[] @relation("UserToCompanyMember")
+  invitationsReceived Invitation[] @relation("InviteeToInvitation") // Added for clarity, though not strictly required by error
 }
 
 model Profile {
@@ -179,6 +182,8 @@ model Startup {
   creatorId           String
   creator             User           @relation(fields: [creatorId], references: [id])
   cohortMemberships   CohortMember[]
+  invitations         Invitation[] @relation("StartupToInvitation")
+  members             CompanyMember[] @relation("StartupToCompanyMember")
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 }
@@ -294,6 +299,24 @@ enum HackathonStatus {
   CANCELLED
 }
 
+enum InvitationType {
+  ENTREPRENEUR
+  COMPANY
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum MemberStatus {
+  ACTIVE
+  INVITED
+  REJECTED
+}
+
 // Models for programs and cohorts
 model Program {
   id                  String    @id @default(uuid())
@@ -358,4 +381,37 @@ model CohortMentor {
   updatedAt DateTime @updatedAt
 
   @@unique([cohortId, userId])
+}
+
+model Invitation {
+  id           String           @id @default(uuid())
+  type         InvitationType
+  inviterId    String
+  inviter      User             @relation("InviterToInvitation", fields: [inviterId], references: [id])
+  inviteeEmail String
+  invitee      User?            @relation("InviteeToInvitation", fields: [inviteeEmail], references: [email]) // Link to User model if invitee exists
+  startupId    String?
+  startup      Startup?         @relation("StartupToInvitation", fields: [startupId], references: [id])
+  status       InvitationStatus  @default(PENDING)
+  respondedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  companyMember CompanyMember? // This is the back-relation, no fields/references here
+}
+
+model CompanyMember {
+  id           String      @id @default(uuid())
+  startupId    String
+  startup      Startup     @relation("StartupToCompanyMember", fields: [startupId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation("UserToCompanyMember", fields: [userId], references: [id], onDelete: Cascade)
+  role         String      @default("Member")
+  status       MemberStatus @default(INVITED)
+  invitationId String?     @unique // Ensure uniqueness for one-to-one relation
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
+  joinedAt     DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([startupId, userId])
 }

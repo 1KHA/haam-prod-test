@@ -219,30 +219,41 @@ export default function UsersTable() {
   // Update user roles
   const updateUserRoles = async () => {
     if (!selectedRole || selectedUsers.length === 0) return
-    
+
+    if (selectedUsers.length > 1) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يرجى تحديد مستخدم واحد فقط لتغيير دوره من هذه الصفحة. استخدم صفحة تغيير الأدوار الجماعية للعمليات المتعددة.",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
-      const response = await fetch('/api/admin/users', {
+      // Get token from localStorage (or context/provider if available)
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+      const response = await fetch(`/api/admin/users/${selectedUsers[0]}/role`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          userIds: selectedUsers,
-          action: 'updateRole',
-          data: { role: selectedRole }
+          role: selectedRole
         })
       })
-      
+
       const data = await response.json()
-      
+
       if (response.ok) {
         showAdminToast({
           title: "تم بنجاح",
-          description: `تم تحديث ${data.count} أدوار المستخدمين إلى ${selectedRole}`,
+          description: `تم تحديث دور المستخدم إلى ${selectedRole}`,
         })
         setSelectedUsers([])
         setIsRoleDialogOpen(false)
-        
+
         // If real-time is disabled, manually refresh the data
         if (!isRealTimeEnabled) {
           fetchUsers()
@@ -250,7 +261,7 @@ export default function UsersTable() {
       } else {
         showAdminToast({
           title: "خطأ",
-          description: data.error || "فشل في تحديث أدوار المستخدمين",
+          description: data.error || "فشل في تحديث دور المستخدم",
           variant: "destructive"
         })
       }
@@ -258,7 +269,7 @@ export default function UsersTable() {
       console.error('Error updating user roles:', error)
       showAdminToast({
         title: "خطأ",
-        description: "فشل في تحديث أدوار المستخدمين",
+        description: "فشل في تحديث دور المستخدم",
         variant: "destructive"
       })
     }

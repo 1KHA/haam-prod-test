@@ -57,11 +57,16 @@ export function getTokenFromHeader(authHeader?: string): string | null {
 
 // Middleware to check if user is authenticated
 export async function isAuthenticated(authHeader?: string): Promise<TokenPayload | null> {
+  console.log('[AUTH] Incoming Authorization header:', authHeader);
   const token = getTokenFromHeader(authHeader);
+  console.log('[AUTH] Extracted token:', token);
   if (!token) {
+    console.log('[AUTH] No token found in header.');
     return null;
   }
-  return verifyToken(token);
+  const payload = verifyToken(token);
+  console.log('[AUTH] Decoded payload:', payload);
+  return payload;
 }
 
 // Middleware to check if user has required role

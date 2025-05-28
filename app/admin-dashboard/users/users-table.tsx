@@ -342,7 +342,7 @@ export default function UsersTable() {
       'INVESTOR': 'مستثمر',
       'JUDGE': 'محكم',
       'PARTICIPANT': 'مشارك',
-      'ACCELERATOR': 'مسرع أعمال'
+'ACCELERATOR': 'رائد أعمال'
     }
     
     return roleMap[role] || role

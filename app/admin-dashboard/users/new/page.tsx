@@ -151,7 +151,7 @@ export default function NewUserPage() {
                   <SelectItem value="INVESTOR">مستثمر</SelectItem>
                   <SelectItem value="JUDGE">محكم</SelectItem>
                   <SelectItem value="PARTICIPANT">مشارك</SelectItem>
-                  <SelectItem value="ACCELERATOR">مسرع أعمال</SelectItem>
+<SelectItem value="ACCELERATOR">رائد أعمال</SelectItem>
                 </SelectContent>
               </Select>
             </div>

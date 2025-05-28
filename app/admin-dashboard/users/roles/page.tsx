@@ -1064,7 +1064,7 @@ export default function RolesPermissions() {
                       "مستثمر": "INVESTOR",
                       "محكم": "JUDGE",
                       "مشارك": "PARTICIPANT",
-                      "مسرع أعمال": "ACCELERATOR"
+"رائد أعمال": "ACCELERATOR"
                     };
                     const internalKey = roleNameMap[role.name] || (role.name || "").toUpperCase().replace(/\s+/g, "_");
                     const categories = rolePermissionMap[internalKey as keyof typeof rolePermissionMap];

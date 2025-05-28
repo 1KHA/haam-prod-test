@@ -140,7 +140,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
       'INVESTOR': 'مستثمر',
       'JUDGE': 'محكم',
       'PARTICIPANT': 'مشارك',
-      'ACCELERATOR': 'مسرع أعمال'
+'ACCELERATOR': 'رائد أعمال'
     }
     
     return roleMap[role] || role

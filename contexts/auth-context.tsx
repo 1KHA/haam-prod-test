@@ -159,8 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       case UserRole.PROGRAM_MANAGER:
         router.push('/program-manager-dashboard');
         break;
-      case UserRole.STARTUP:
-        router.push('/startup-dashboard');
+      case UserRole.ENTREPRENEUR:
+        router.push('/entrepreneur-dashboard');
         break;
       case UserRole.MENTOR:
         router.push('/mentor-dashboard');
@@ -173,9 +173,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         break;
       case UserRole.PARTICIPANT:
         router.push('/participant-dashboard');
-        break;
-      case UserRole.ACCELERATOR:
-        router.push('/accelerator-dashboard');
         break;
       default:
         router.push('/');

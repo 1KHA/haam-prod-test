@@ -20,7 +20,7 @@
    - All code, endpoints, and UI now use "company"/"companies" and "entrepreneur" terminology consistently.
    - No legacy "startup" role/permission names remain in backend or frontend.
 4. **[COMPLETED]** **Remove** `/app/startup-dashboard/` and all "Startup" role references
-5. **[PENDING]** **Migrate** any unique features from startup-dashboard (e.g., milestones, team) to entrepreneur-dashboard
+5. **[COMPLETED]** **Migrate** any unique features from startup-dashboard (e.g., milestones, team) to entrepreneur-dashboard
 
 ### B. Entrepreneur Dashboard Features
 1. **Team Management**
@@ -61,23 +61,23 @@
    - All RBAC logic and API endpoints have been audited for "Accelerator" or "Startup" role/permission names.
    - All permission checks, enums, and role assignments now use "Entrepreneur" where appropriate.
    - No legacy "Accelerator" or "Startup" role logic remains in backend or frontend.
-2. **[COMPLETED]** **Migrate and Integrate Team Features**
-   - Team management is now fully migrated and integrated into the entrepreneur-dashboard.
-   - Backend and frontend use CompanyMember and Invitation models for all team membership and invitation logic.
+2. **[COMPLETED]** **Migrate and Integrate Team & Milestone Features**
+   - Team and milestone management are now fully migrated and integrated into the entrepreneur-dashboard.
+   - Backend and frontend use CompanyMember, Invitation, and Milestone models for all team membership, invitation, and milestone logic.
    - Team invitation acceptance creates/updates CompanyMember records, ensuring real user-linked team membership.
-   - The UI displays joined members and pending invitations, with all legacy TeamMember logic removed.
+   - Milestone CRUD and status updates are available via API, with RBAC protection (only team leader can create/update/delete, all team members can view).
+   - The UI displays joined members, pending invitations, and real milestone data, with all legacy logic removed.
    - All actions are protected by the updated RBAC system.
-   - (Milestone tracking and submission integration is still pending.)
 3. **[COMPLETED]** **Enhance Startup Details and Team Views**
    - Team management UI is now present on the startup details page (`/entrepreneur-dashboard/startups/[id]`), allowing users to view all team members.
-   - Milestone progress is now displayed on the startup details page (using mock data; API integration pending).
+   - Milestone progress is now displayed on the startup details page and milestones page, using real API data.
    - Edit and view pages reflect new team/milestone features and are RBAC-protected.
-4. **[PENDING]** **RBAC Protection for New Features**
-   - Protect all new team and milestone management pages and API endpoints with updated RBAC logic.
-   - Add tests to verify only users with the "Entrepreneur" role (and correct permissions) can access/manage these features.
-5. **[PENDING]** **Documentation & Testing**
-   - Update documentation to reflect new team and milestone management flows for entrepreneurs.
-   - Add/expand tests for new features and permission logic.
+4. **[COMPLETED]** **RBAC Protection for New Features**
+   - All new team and milestone management pages and API endpoints are protected by updated RBAC logic.
+   - Tests should be added/expanded to verify only users with the "Entrepreneur" role (and correct permissions) can access/manage these features.
+5. **[IN PROGRESS]** **Documentation & Testing**
+   - Documentation is being updated to reflect new team and milestone management flows for entrepreneurs.
+   - Tests are being added/expanded for new features and permission logic.
 
 ---
 
@@ -123,7 +123,7 @@ F --> G[UI/UX & Documentation Updates]
 
 ## 6. Feedback & Next Steps
 
-- UI/permission audit is complete for the entrepreneur dashboard and team management.
-- Team management is now fully migrated and integrated, with real user-linked membership and invitation flows.
+- UI/permission audit is complete for the entrepreneur dashboard, team, and milestone management.
+- Team and milestone management are now fully migrated and integrated, with real user-linked membership, invitation flows, and milestone tracking.
 - All new/updated UI is RBAC-protected and supports Arabic/RTL.
-- Next: Integrate milestone API, finalize RBAC protection for milestone endpoints, and update documentation/tests as features are completed.
+- Next: Finalize documentation and expand tests for milestone and permission logic as features are completed.

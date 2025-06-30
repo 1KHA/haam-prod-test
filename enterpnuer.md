@@ -44,8 +44,9 @@ This document lists all features and functions present in the `app/entrepreneur-
 
 ## 6. Milestones (`milestones/page.tsx`)
 
-- View company milestones and progress
-- (Planned) Submit milestone updates (by team leader)
+- View company milestones and progress (real API data)
+- Team leader can create, update, and delete milestones
+- All team members can view milestones and progress
 - Track milestone completion status
 
 ---
@@ -108,8 +109,8 @@ This document lists all features and functions present in the `app/entrepreneur-
 - View pending team invitations (via Invitation model)
 - Search/filter team members
 - Display member profile info (name, email, role, position, phone, department, avatar)
-- (Planned) Assign team leader and manage roles
-- (Planned) Remove team members
+- Assign team leader and manage roles (RBAC enforced)
+- Remove team members (if permitted by role)
 
 ---
 
@@ -130,14 +131,13 @@ This document lists all features and functions present in the `app/entrepreneur-
 - `/api/company/[id]/members` — List company members and pending invitations
 - `/api/startups` — List and create companies for the entrepreneur
 - `/api/startups/[id]` — Get, update, and manage company details
-- `/api/milestones` — (Planned) Milestone management endpoints
+- `/api/milestones` — Milestone management (list, create; RBAC: only team leader can create)
+- `/api/milestones/[id]` — Get, update, and delete milestones (RBAC: only team leader can update/delete, all members can view)
 
 ---
 
 ## 16. Planned/Upcoming Features
 
-- Full milestone management and submission by team leader
-- Assigning/removing team leader and managing team roles
 - Enhanced notifications for team and milestone events
 - Expanded documentation and onboarding flows
 

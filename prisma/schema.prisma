@@ -37,6 +37,7 @@ model User {
   invitationsSent Invitation[] @relation("InviterToInvitation")
   companyMemberships CompanyMember[] @relation("UserToCompanyMember")
   invitationsReceived Invitation[] @relation("InviteeToInvitation") // Added for clarity, though not strictly required by error
+  milestonesCreated Milestone[] @relation("UserToMilestone")
 }
 
 model Profile {
@@ -184,6 +185,7 @@ model Startup {
   cohortMemberships   CohortMember[]
   invitations         Invitation[] @relation("StartupToInvitation")
   members             CompanyMember[] @relation("StartupToCompanyMember")
+  milestones          Milestone[] @relation("StartupToMilestone")
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 }
@@ -245,6 +247,24 @@ model TimelineEvent {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
+
+model Milestone {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  dueDate     DateTime
+  status      String   // e.g., "upcoming", "in_progress", "completed", "overdue"
+  progress    Int      // 0-100
+  priority    String   // "high", "medium", "low"
+  category    String   // e.g., "product", "business", "funding", "team", "other"
+  startupId   String
+  startup     Startup  @relation("StartupToMilestone", fields: [startupId], references: [id], onDelete: Cascade)
+  createdBy   String
+  creator     User     @relation("UserToMilestone", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 
 // New models for roles and permissions
 model Role {

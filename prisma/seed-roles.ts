@@ -137,13 +137,13 @@ async function main() {
 
   // Create entrepreneur role
   const entrepreneurRole = await prisma.role.upsert({
-    where: { name: 'رائد أعمال' },
+    where: { name: 'ENTREPRENEUR' },
     update: {
-      description: 'إدارة الشركة الناشئة والوصول إلى الموارد والتمويل',
+      description: 'Manage company, access resources and funding',
     },
     create: {
-      name: 'رائد أعمال',
-      description: 'إدارة الشركة الناشئة والوصول إلى الموارد والتمويل',
+      name: 'ENTREPRENEUR',
+      description: 'Manage company, access resources and funding',
     },
   });
 

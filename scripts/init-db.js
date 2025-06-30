@@ -39,6 +39,14 @@ async function seedDatabase() {
   try {
     console.log('Seeding database with initial data...');
 
+    // Clear existing users and dependent data
+    await prisma.user.deleteMany({});
+    // Optionally clear other tables if needed (e.g., startups, company members, invitations, milestones, etc.)
+    // await prisma.startup.deleteMany({});
+    // await prisma.companyMember.deleteMany({});
+    // await prisma.invitation.deleteMany({});
+    // await prisma.milestone.deleteMany({});
+
     // Create admin user
     const adminPassword = await hashPassword('admin123');
     const admin = await prisma.user.create({
@@ -134,34 +142,7 @@ async function seedDatabase() {
     });
     console.log('Created investor user:', investor.email);
 
-    // Create startup user
-    const startupPassword = await hashPassword('startup123');
-    const startup = await prisma.user.create({
-      data: {
-        email: 'startup@example.com',
-        password: startupPassword,
-        name: 'Startup Founder',
-        role: 'STARTUP',
-        startupProfile: {
-          create: {
-            companyName: 'InnoTech',
-            industry: 'Software',
-            stage: 'Seed',
-            foundingDate: new Date('2023-01-01'),
-            website: 'https://innotech.example.com',
-            description: 'Innovative software solutions for businesses',
-            teamSize: 5,
-          },
-        },
-        profile: {
-          create: {
-            bio: 'Tech entrepreneur with a passion for innovation',
-          },
-        },
-      },
-    });
-    console.log('Created startup user:', startup.email);
-
+    // (Removed legacy startup user creation - replaced by entrepreneur user)
     // Create judge user
     const judgePassword = await hashPassword('judge123');
     const judge = await prisma.user.create({
@@ -209,6 +190,39 @@ async function seedDatabase() {
       },
     });
     console.log('Created participant user:', participant.email);
+
+    // Create entrepreneur user
+    const entrepreneurPassword = await hashPassword('entrepreneur123');
+    const entrepreneur = await prisma.user.create({
+      data: {
+        email: 'entrepreneur@example.com',
+        password: entrepreneurPassword,
+        name: 'Entrepreneur User',
+        role: 'ENTREPRENEUR',
+        entrepreneurProfile: {
+          create: {
+            organizationName: 'InnovateX',
+            industry: 'Technology',
+            focusAreas: 'AI, SaaS, Fintech',
+            programLength: '6 months',
+            website: 'https://innovatex.example.com',
+            description: 'Building the next generation of tech solutions',
+          },
+        },
+        profile: {
+          create: {
+            bio: 'Entrepreneur passionate about building impactful startups',
+            avatar: null,
+            phone: '+966500000000',
+            address: 'Riyadh, Saudi Arabia',
+            city: 'Riyadh',
+            country: 'Saudi Arabia',
+            position: 'Founder & CEO',
+          },
+        },
+      },
+    });
+    console.log('Created entrepreneur user:', entrepreneur.email);
 
     // Create a sample hackathon
     const hackathon = await prisma.hackathon.create({

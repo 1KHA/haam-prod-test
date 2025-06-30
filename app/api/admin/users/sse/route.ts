@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
                   investmentFocus: true
                 }
               },
-              acceleratorProfile: {
+              entrepreneurProfile: {
                 select: {
                   organizationName: true,
                   industry: true,
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
             const transformedUsers = users.map(user => {
               // Determine if the user has completed their profile
               const hasProfile = user.startupProfile || user.mentorProfile || 
-                                user.investorProfile || user.acceleratorProfile;
+                                user.investorProfile || user.entrepreneurProfile;
               
               return {
                 ...user,
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
                 status: hasProfile ? 'ACTIVE' : 'PENDING',
                 // Add a program field based on profile data
                 program: user.startupProfile?.companyName || 
-                        user.acceleratorProfile?.organizationName || 
+                        user.entrepreneurProfile?.organizationName || 
                         user.mentorProfile?.expertise || 
                         user.investorProfile?.companyName || '-'
               };

@@ -1,0 +1,241 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { User, Mail, Phone, UserPlus } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { cn } from "@/lib/utils"
+import { RouteGuard } from "@/components/auth/RouteGuard"
+import { UserRole } from "@prisma/client"
+
+interface CompanyMember {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt: string;
+  profile?: {
+    phone?: string;
+    avatar?: string;
+    position?: string;
+    department?: string;
+    [key: string]: any;
+  } | null;
+}
+
+interface Invitation {
+  id: string;
+  inviteeEmail: string;
+  status: string;
+  createdAt: string;
+}
+
+export default function TeamPage() {
+  const { token } = useAuth();
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [members, setMembers] = useState<CompanyMember[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+
+  // Fetch entrepreneur's companies and set companyId
+  useEffect(() => {
+    const fetchCompanyId = async () => {
+      if (!token) return;
+      try {
+        const response = await fetch("/api/startups", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.companies && data.companies.length > 0) {
+            setCompanyId(data.companies[0].id);
+          } else {
+            setError("لم يتم العثور على شركة لهذا المستخدم.");
+          }
+        } else {
+          setError("فشل في جلب بيانات الشركة.");
+        }
+      } catch (err) {
+        setError("حدث خطأ أثناء جلب بيانات الشركة.");
+      }
+    };
+    fetchCompanyId();
+  }, [token]);
+
+  // Fetch company members and invitations
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!token || !companyId) return;
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/company/${companyId}/members`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setMembers(data.members);
+          setInvitations(data.invitations);
+        } else {
+          setError("فشل في جلب بيانات الفريق.");
+        }
+      } catch (err) {
+        setError("حدث خطأ أثناء جلب بيانات الفريق.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMembers();
+  }, [token, companyId]);
+
+  const filteredMembers = members.filter((member) => {
+    const matchesSearch =
+      (member.name && member.name.includes(searchQuery)) ||
+      (member.email && member.email.includes(searchQuery)) ||
+      (member.role && member.role.includes(searchQuery));
+    return matchesSearch;
+  });
+
+  return (
+    <RouteGuard
+      requiredPermission={{ category: 'users', action: 'view' }}
+      requiredRole={UserRole.ENTREPRENEUR}
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">فريق العمل</h1>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md flex items-center">
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div className="relative w-64">
+            <UserPlus className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="بحث..."
+              className="pr-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            إجمالي الأعضاء: {members.length}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-2">الأعضاء الحاليون</h2>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-32">
+              <p>جاري تحميل البيانات...</p>
+            </div>
+          ) : filteredMembers.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">لا يوجد أعضاء في الفريق</p>
+            </div>
+          ) : (
+            <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-start", "rtl-grid")}>
+              {filteredMembers.map((member) => (
+                <Card key={member.id} className="w-full">
+                  <CardHeader className="pb-2 flex flex-row items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                      <img
+                        src={member.profile?.avatar || "https://via.placeholder.com/150"}
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://via.placeholder.com/150";
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <CardTitle className="text-lg">{member.name}</CardTitle>
+                      <div className="text-sm text-muted-foreground">{member.role}</div>
+                      {member.profile?.position && (
+                        <div className="text-xs">{member.profile.position}</div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-right rtl-info">
+                      <div className="flex items-center justify-start">
+                        <Mail className="h-4 w-4 ml-2 text-muted-foreground" />
+                        <span className="text-sm">{member.email}</span>
+                      </div>
+                      {member.profile?.phone && (
+                        <div className="flex items-center justify-start">
+                          <Phone className="h-4 w-4 ml-2 text-muted-foreground" />
+                          <span className="text-sm">{member.profile.phone}</span>
+                        </div>
+                      )}
+                      {member.profile?.department && (
+                        <div className="flex items-center justify-start">
+                          <User className="h-4 w-4 ml-2 text-muted-foreground" />
+                          <span className="text-sm">{member.profile.department}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-2 mt-8">الدعوات المعلقة</h2>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-16">
+              <p>جاري تحميل الدعوات...</p>
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">لا توجد دعوات معلقة</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-start">
+              {invitations.map((inv) => (
+                <Card key={inv.id} className="w-full">
+                  <CardHeader>
+                    <CardTitle className="text-lg">دعوة</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col gap-2">
+                      <div>
+                        <span className="font-semibold">البريد الإلكتروني:</span> {inv.inviteeEmail}
+                      </div>
+                      <div>
+                        <span className="font-semibold">الحالة:</span> {inv.status}
+                      </div>
+                      <div>
+                        <span className="font-semibold">تاريخ الإرسال:</span> {new Date(inv.createdAt).toLocaleString("ar-EG")}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <style jsx global>{`
+          .rtl-grid {
+            direction: rtl;
+          }
+          .rtl-info {
+            direction: rtl;
+          }
+        `}</style>
+      </div>
+    </RouteGuard>
+  );
+}

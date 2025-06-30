@@ -22,10 +22,9 @@ export async function GET(
         createdAt: true,
         updatedAt: true,
         profile: true,
-        startupProfile: true,
         mentorProfile: true,
         investorProfile: true,
-        acceleratorProfile: true,
+        entrepreneurProfile: true,
         participantProfile: true,
         adminProfile: true,
         programManagerProfile: true,
@@ -58,8 +57,8 @@ export async function GET(
     }
     
     // Determine if the user has completed their profile
-    const hasProfile = user.startupProfile || user.mentorProfile || 
-                       user.investorProfile || user.acceleratorProfile ||
+    const hasProfile = user.mentorProfile || 
+                       user.investorProfile || user.entrepreneurProfile ||
                        user.participantProfile || user.adminProfile ||
                        user.programManagerProfile || user.judgeProfile;
     

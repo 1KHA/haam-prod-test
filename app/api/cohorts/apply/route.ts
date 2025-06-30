@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
     
     // Check if user is authenticated and has appropriate role
     const user = await isAuthenticated(authHeader || undefined);
-    if (!user || (user.role !== UserRole.STARTUP && user.role !== UserRole.ACCELERATOR)) {
+    if (!user || (user.role !== UserRole.ENTREPRENEUR)) {
       return NextResponse.json(
-        { error: 'Unauthorized. Only startups or accelerators can apply to cohorts.' },
+        { error: 'Unauthorized. Only entrepreneurs can apply to cohorts.' },
         { status: 401 }
       );
     }

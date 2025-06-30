@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
           author: {
             id: "startup2",
             name: "ميديكال إيه آي",
-            role: "STARTUP"
+          role: "ENTREPRENEUR"
           },
           createdAt: "2025-03-20T15:30:00Z",
           updatedAt: "2025-03-20T15:30:00Z",
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
         createdBy: {
           id: "startup1",
           name: "هيلث تك",
-          role: "STARTUP"
+          role: "ENTREPRENEUR"
         },
         createdAt: "2025-03-10T09:15:00Z",
         updatedAt: "2025-03-21T11:45:00Z",
@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
           author: {
             id: "startup1",
             name: "هيلث تك",
-            role: "STARTUP"
+            role: "ENTREPRENEUR"
           },
           createdAt: "2025-03-21T11:45:00Z",
           updatedAt: "2025-03-21T11:45:00Z",

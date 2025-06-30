@@ -43,21 +43,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Update role-specific profile based on schema
-    if (user.role === UserRole.ACCELERATOR) {
-      await prisma.acceleratorProfile.update({
+    if (user.role === UserRole.ENTREPRENEUR) {
+      await prisma.entrepreneurProfile.update({
         where: { userId: user.userId },
         data: {
           organizationName: company.name,
-          website: company.website,
-          description: company.description,
-          industry: company.industry,
-        },
-      });
-    } else if (user.role === UserRole.STARTUP) {
-      await prisma.startupProfile.update({
-        where: { userId: user.userId },
-        data: {
-          companyName: company.name,
           website: company.website,
           description: company.description,
           industry: company.industry,
@@ -71,8 +61,7 @@ export async function POST(request: NextRequest) {
       include: {
         profile: true,
         mentorProfile: user.role === UserRole.MENTOR,
-        acceleratorProfile: user.role === UserRole.ACCELERATOR,
-        startupProfile: user.role === UserRole.STARTUP,
+        entrepreneurProfile: user.role === UserRole.ENTREPRENEUR,
         participantProfile: user.role === UserRole.PARTICIPANT,
         investorProfile: user.role === UserRole.INVESTOR,
         judgeProfile: user.role === UserRole.JUDGE,

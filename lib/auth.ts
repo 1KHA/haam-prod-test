@@ -5,12 +5,11 @@ import { sign, verify } from 'jsonwebtoken';
 export enum UserRole {
   ADMIN = 'ADMIN',
   PROGRAM_MANAGER = 'PROGRAM_MANAGER',
-  STARTUP = 'STARTUP',
   MENTOR = 'MENTOR',
   INVESTOR = 'INVESTOR',
   JUDGE = 'JUDGE',
   PARTICIPANT = 'PARTICIPANT',
-  ACCELERATOR = 'ACCELERATOR'
+  ENTREPRENEUR = 'ENTREPRENEUR'
 }
 
 // Secret key for JWT

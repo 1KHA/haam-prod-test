@@ -19,13 +19,12 @@ export async function GET(req: NextRequest) {
     const users = await prisma.user.findMany({
       include: {
         profile: true,
-        startupProfile: true,
         mentorProfile: true,
         investorProfile: true,
         judgeProfile: true,
         adminProfile: true,
         programManagerProfile: true,
-        acceleratorProfile: true,
+        entrepreneurProfile: true,
         participantProfile: true,
       },
       orderBy: {
@@ -43,13 +42,12 @@ export async function GET(req: NextRequest) {
       createdAt: user.createdAt,
       profile: user.profile,
       roleProfile: 
-        user.startupProfile || 
         user.mentorProfile || 
         user.investorProfile || 
         user.judgeProfile || 
         user.adminProfile || 
         user.programManagerProfile || 
-        user.acceleratorProfile || 
+        user.entrepreneurProfile || 
         user.participantProfile,
     }));
 

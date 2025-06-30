@@ -87,18 +87,6 @@ async function main() {
     },
   });
 
-  // Create startup role
-  const startupRole = await prisma.role.upsert({
-    where: { name: 'شركة ناشئة' },
-    update: {
-      description: 'إدارة الشركة الناشئة والوصول إلى الموارد والتمويل',
-    },
-    create: {
-      name: 'شركة ناشئة',
-      description: 'إدارة الشركة الناشئة والوصول إلى الموارد والتمويل',
-    },
-  });
-
   // Create mentor role
   const mentorRole = await prisma.role.upsert({
     where: { name: 'موجه' },
@@ -147,15 +135,15 @@ async function main() {
     },
   });
 
-  // Create accelerator role
-  const acceleratorRole = await prisma.role.upsert({
-    where: { name: 'مسرع أعمال' },
+  // Create entrepreneur role
+  const entrepreneurRole = await prisma.role.upsert({
+    where: { name: 'رائد أعمال' },
     update: {
-      description: 'مسرع أعمال يدير برامج التسريع',
+      description: 'إدارة الشركة الناشئة والوصول إلى الموارد والتمويل',
     },
     create: {
-      name: 'مسرع أعمال',
-      description: 'مسرع أعمال يدير برامج التسريع',
+      name: 'رائد أعمال',
+      description: 'إدارة الشركة الناشئة والوصول إلى الموارد والتمويل',
     },
   });
 
@@ -257,59 +245,6 @@ async function main() {
         await prisma.rolePermission.create({
           data: {
             roleId: programManagerRole.id,
-            permissionId: permission.id,
-          },
-        });
-      }
-    }
-  }
-
-  // Add permissions to startup role
-  const startupPermissions = [
-    { category: 'dashboard', action: 'view' },
-    { category: 'programs', action: 'view' },
-    { category: 'funding', action: 'view' },
-    { category: 'funding', action: 'add' },
-    { category: 'payments', action: 'view' },
-    { category: 'reports', action: 'view' },
-    { category: 'users', action: 'view' },
-    { category: 'users', action: 'add' },
-    { category: 'users', action: 'edit' },
-    { category: 'users', action: 'delete' },
-    { category: 'startups', action: 'view' },
-    { category: 'startups', action: 'edit' },
-    { category: 'mentorship', action: 'view' },
-    { category: 'events', action: 'view' },
-    { category: 'resources', action: 'view' },
-    { category: 'discussions', action: 'view' },
-    { category: 'discussions', action: 'edit' },
-  ];
-
-  for (const { category, action } of startupPermissions) {
-    const permission = await prisma.permission.findUnique({
-      where: {
-        category_action: {
-          category,
-          action,
-        },
-      },
-    });
-
-    if (permission) {
-      // Check if the role permission already exists
-      const existingRolePermission = await prisma.rolePermission.findFirst({
-        where: {
-          roleId: startupRole.id,
-          permissionId: permission.id,
-          userId: null,
-        },
-      });
-
-      if (!existingRolePermission) {
-        // Create the role permission if it doesn't exist
-        await prisma.rolePermission.create({
-          data: {
-            roleId: startupRole.id,
             permissionId: permission.id,
           },
         });
@@ -497,21 +432,29 @@ async function main() {
     }
   }
 
-  // Add permissions to accelerator role
-  const acceleratorPermissions = [
+  // Add permissions to entrepreneur role
+  const entrepreneurPermissions = [
     { category: 'dashboard', action: 'view' },
     { category: 'programs', action: 'view' },
     { category: 'applications', action: 'add' },
-    { category: 'startups', action: 'view' },
-    { category: 'mentorship', action: 'view' },
     { category: 'funding', action: 'view' },
+    { category: 'funding', action: 'add' },
+    { category: 'payments', action: 'view' },
+    { category: 'reports', action: 'view' },
+    { category: 'users', action: 'view' },
+    { category: 'users', action: 'add' },
+    { category: 'users', action: 'edit' },
+    { category: 'users', action: 'delete' },
+    { category: 'startups', action: 'view' },
+    { category: 'startups', action: 'edit' },
+    { category: 'mentorship', action: 'view' },
     { category: 'events', action: 'view' },
     { category: 'resources', action: 'view' },
-    { category: 'users', action: 'view' },
-    { category: 'users', action: 'edit' },
+    { category: 'discussions', action: 'view' },
+    { category: 'discussions', action: 'edit' },
   ];
 
-  for (const { category, action } of acceleratorPermissions) {
+  for (const { category, action } of entrepreneurPermissions) {
     const permission = await prisma.permission.findUnique({
       where: {
         category_action: {
@@ -525,7 +468,7 @@ async function main() {
       // Check if the role permission already exists
       const existingRolePermission = await prisma.rolePermission.findFirst({
         where: {
-          roleId: acceleratorRole.id,
+          roleId: entrepreneurRole.id,
           permissionId: permission.id,
           userId: null,
         },
@@ -535,7 +478,7 @@ async function main() {
         // Create the role permission if it doesn't exist
         await prisma.rolePermission.create({
           data: {
-            roleId: acceleratorRole.id,
+            roleId: entrepreneurRole.id,
             permissionId: permission.id,
           },
         });

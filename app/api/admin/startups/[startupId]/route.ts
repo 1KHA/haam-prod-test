@@ -31,7 +31,7 @@ export async function GET(
             id: true,
             name: true,
             email: true,
-            acceleratorProfile: {
+            entrepreneurProfile: {
               select: {
                 organizationName: true,
                 industry: true,
@@ -75,13 +75,13 @@ export async function GET(
         id: startup.creator.id,
         name: startup.creator.name,
         email: startup.creator.email,
-        accelerator: startup.creator.acceleratorProfile ? {
-          name: startup.creator.acceleratorProfile.organizationName,
-          industry: startup.creator.acceleratorProfile.industry,
-          focusAreas: startup.creator.acceleratorProfile.focusAreas,
-          programLength: startup.creator.acceleratorProfile.programLength,
-          website: startup.creator.acceleratorProfile.website,
-          description: startup.creator.acceleratorProfile.description
+        entrepreneur: startup.creator.entrepreneurProfile ? {
+          name: startup.creator.entrepreneurProfile.organizationName,
+          industry: startup.creator.entrepreneurProfile.industry,
+          focusAreas: startup.creator.entrepreneurProfile.focusAreas,
+          programLength: startup.creator.entrepreneurProfile.programLength,
+          website: startup.creator.entrepreneurProfile.website,
+          description: startup.creator.entrepreneurProfile.description
         } : null
       }
     };
@@ -165,7 +165,7 @@ export async function PUT(
     if (pitchDeckUrl !== undefined) updateData.pitchDeckUrl = pitchDeckUrl;
     if (status !== undefined) updateData.status = status;
     
-    // If changing creator, check if new creator exists and is an accelerator
+    // If changing creator, check if new creator exists and is an entrepreneur
     if (creatorId !== undefined) {
       const creator = await prisma.user.findUnique({
         where: { id: creatorId },
@@ -179,9 +179,9 @@ export async function PUT(
         );
       }
       
-      if (creator.role !== UserRole.ACCELERATOR) {
+      if (creator.role !== UserRole.ENTREPRENEUR) {
         return NextResponse.json(
-          { error: 'Creator must be an accelerator' },
+          { error: 'Creator must be an entrepreneur' },
           { status: 400 }
         );
       }

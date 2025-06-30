@@ -27,7 +27,7 @@ model User {
   judgeProfile JudgeProfile?
   adminProfile AdminProfile?
   programManagerProfile ProgramManagerProfile?
-  acceleratorProfile AcceleratorProfile?
+  entrepreneurProfile EntrepreneurProfile?
   startups      Startup[] // Added relation to startups
   teamMembers   TeamMember[] // Added relation to team members
   rolePermissions RolePermission[] // Added relation to role permissions
@@ -134,7 +134,7 @@ model ProgramManagerProfile {
   updatedAt     DateTime  @updatedAt
 }
 
-model AcceleratorProfile {
+model EntrepreneurProfile {
   id            String    @id @default(uuid())
   userId        String    @unique
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -284,12 +284,11 @@ model RolePermission {
 enum UserRole {
   ADMIN
   PROGRAM_MANAGER
-  STARTUP
   MENTOR
   INVESTOR
   JUDGE
   PARTICIPANT
-  ACCELERATOR
+  ENTREPRENEUR
 }
 
 enum HackathonStatus {

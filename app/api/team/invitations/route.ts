@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Inviter user not found' }, { status: 404 });
     }
 
-    // Only users with STARTUP role can send entrepreneur invitations
-    if (user.role !== UserRole.STARTUP) {
+    // Only users with ENTREPRENEUR role can send entrepreneur invitations
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
         { error: 'Only entrepreneurs can send team invitations' },
         { status: 403 }
@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Construct accept/reject links (these would typically point to frontend routes that call the PATCH API)
-    const acceptLink = `${request.nextUrl.origin}/accelerator-dashboard/team/invitations/${invitation.id}?status=accepted`;
-    const rejectLink = `${request.nextUrl.origin}/accelerator-dashboard/team/invitations/${invitation.id}?status=rejected`;
+    const acceptLink = `${request.nextUrl.origin}/entrepreneur-dashboard/team/invitations/${invitation.id}?status=accepted`;
+    const rejectLink = `${request.nextUrl.origin}/entrepreneur-dashboard/team/invitations/${invitation.id}?status=rejected`;
 
     // Send invitation email
     await sendEmail({

@@ -19,10 +19,10 @@ export async function GET(
       );
     }
 
-    // Only accelerators can view their team members
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can view their team members
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can view team members' },
+        { error: 'Only entrepreneurs can view team members' },
         { status: 403 }
       );
     }
@@ -83,10 +83,10 @@ export async function PUT(
       );
     }
 
-    // Only accelerators can update their team members
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can update their team members
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can update team members' },
+        { error: 'Only entrepreneurs can update team members' },
         { status: 403 }
       );
     }
@@ -173,10 +173,10 @@ export async function DELETE(
       );
     }
 
-    // Only accelerators can delete their team members
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can delete their team members
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can delete team members' },
+        { error: 'Only entrepreneurs can delete team members' },
         { status: 403 }
       );
     }

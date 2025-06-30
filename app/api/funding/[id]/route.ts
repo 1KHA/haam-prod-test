@@ -1,6 +1,7 @@
-npm import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { UserRole } from '@/lib/auth';
 
 // GET /api/funding/[id] - Get a specific funding opportunity
 export async function GET(
@@ -17,7 +18,7 @@ export async function GET(
       where: { email: session.user.email },
     });
 
-    if (!user || user.role !== 'ACCELERATOR') {
+    if (!user || user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -32,7 +33,7 @@ export async function GET(
       );
     }
 
-    if (fundingOpportunity.acceleratorId !== user.id) {
+    if (fundingOpportunity.entrepreneurId !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -61,7 +62,7 @@ export async function PUT(
       where: { email: session.user.email },
     });
 
-    if (!user || user.role !== 'ACCELERATOR') {
+    if (!user || user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -76,7 +77,7 @@ export async function PUT(
       );
     }
 
-    if (fundingOpportunity.acceleratorId !== user.id) {
+    if (fundingOpportunity.entrepreneurId !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -129,7 +130,7 @@ export async function DELETE(
       where: { email: session.user.email },
     });
 
-    if (!user || user.role !== 'ACCELERATOR') {
+    if (!user || user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -144,7 +145,7 @@ export async function DELETE(
       );
     }
 
-    if (fundingOpportunity.acceleratorId !== user.id) {
+    if (fundingOpportunity.entrepreneurId !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

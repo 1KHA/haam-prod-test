@@ -32,55 +32,55 @@ export async function GET(
       );
     }
 
-    // Only accelerators can view their startups
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can view their own companies
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can view startups' },
+        { error: 'Only entrepreneurs can view their own companies' },
         { status: 403 }
       );
     }
 
-    // Get startup by ID
-    const startup = await prisma.startup.findUnique({
+    // Get company by ID (must belong to the entrepreneur)
+    const company = await prisma.startup.findUnique({
       where: {
         id: params.startupId,
-        creatorId: user.userId, // Ensure the startup belongs to the user
+        creatorId: user.userId, // Ensure the company belongs to the entrepreneur
       },
     });
     
-    // Check if startup exists
-    if (!startup) {
+    // Check if company exists
+    if (!company) {
       return NextResponse.json(
-        { error: 'Startup not found' },
+        { error: 'Company not found' },
         { status: 404 }
       );
     }
     
-    // Return startup details
+    // Return company details
     return NextResponse.json({
-      startup: {
-        id: startup.id,
-        name: startup.name,
-        industry: startup.industry,
-        stage: startup.stage,
-        description: startup.description,
-        problem: startup.problem,
-        solution: startup.solution,
-        targetMarket: startup.targetMarket,
-        businessModel: startup.businessModel,
-        competitiveAdvantage: startup.competitiveAdvantage,
-        teamSize: startup.teamSize,
-        fundingNeeds: startup.fundingNeeds,
-        pitchDeckUrl: startup.pitchDeckUrl,
-        status: startup.status,
-        createdAt: startup.createdAt,
+      company: {
+        id: company.id,
+        name: company.name,
+        industry: company.industry,
+        stage: company.stage,
+        description: company.description,
+        problem: company.problem,
+        solution: company.solution,
+        targetMarket: company.targetMarket,
+        businessModel: company.businessModel,
+        competitiveAdvantage: company.competitiveAdvantage,
+        teamSize: company.teamSize,
+        fundingNeeds: company.fundingNeeds,
+        pitchDeckUrl: company.pitchDeckUrl,
+        status: company.status,
+        createdAt: company.createdAt,
       },
     });
     
   } catch (error) {
-    console.error('Get startup details error:', error);
+    console.error('Get company details error:', error);
     return NextResponse.json(
-      { error: 'An error occurred while fetching startup details' },
+      { error: 'An error occurred while fetching company details' },
       { status: 500 }
     );
   }
@@ -103,25 +103,25 @@ export async function PUT(
       );
     }
 
-    // Only accelerators can update their startups
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can update their own companies
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can update startups' },
+        { error: 'Only entrepreneurs can update their own companies' },
         { status: 403 }
       );
     }
 
-    // Check if startup exists and belongs to the user
-    const existingStartup = await prisma.startup.findUnique({
+    // Check if company exists and belongs to the entrepreneur
+    const existingCompany = await prisma.startup.findUnique({
       where: {
         id: params.startupId,
         creatorId: user.userId,
       },
     });
 
-    if (!existingStartup) {
+    if (!existingCompany) {
       return NextResponse.json(
-        { error: 'Startup not found' },
+        { error: 'Company not found' },
         { status: 404 }
       );
     }
@@ -154,7 +154,7 @@ export async function PUT(
     }
     
     // Validate and save file if provided
-    let pitchDeckPath: string | null = existingStartup.pitchDeckUrl;
+    let pitchDeckPath: string | null = existingCompany.pitchDeckUrl;
     
     if (pitchDeck) {
       // Check file type
@@ -190,8 +190,8 @@ export async function PUT(
       pitchDeckPath = `/uploads/pitchdecks/${fileName}`;
     }
     
-    // Update startup in database
-    const updatedStartup = await prisma.startup.update({
+    // Update company in database
+    const updatedCompany = await prisma.startup.update({
       where: {
         id: params.startupId,
       },
@@ -213,20 +213,20 @@ export async function PUT(
     
     // Return success response
     return NextResponse.json({
-      message: 'Startup updated successfully',
-      startup: {
-        id: updatedStartup.id,
-        name: updatedStartup.name,
-        industry: updatedStartup.industry,
-        stage: updatedStartup.stage,
-        status: updatedStartup.status,
+      message: 'Company updated successfully',
+      company: {
+        id: updatedCompany.id,
+        name: updatedCompany.name,
+        industry: updatedCompany.industry,
+        stage: updatedCompany.stage,
+        status: updatedCompany.status,
       },
     });
     
   } catch (error) {
-    console.error('Update startup error:', error);
+    console.error('Update company error:', error);
     return NextResponse.json(
-      { error: 'An error occurred while updating the startup' },
+      { error: 'An error occurred while updating the company' },
       { status: 500 }
     );
   }

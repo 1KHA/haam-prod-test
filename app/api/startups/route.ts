@@ -16,16 +16,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only accelerators can view their startups
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can view their own companies
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can view startups' },
+        { error: 'Only entrepreneurs can view their own companies' },
         { status: 403 }
       );
     }
 
-    // Get startups created by the user
-    const startups = await prisma.startup.findMany({
+    // Get companies created by the entrepreneur
+    const companies = await prisma.startup.findMany({
       where: {
         creatorId: user.userId,
       },
@@ -34,23 +34,23 @@ export async function GET(request: NextRequest) {
       },
     });
     
-    // Return startups
+    // Return companies
     return NextResponse.json({
-      startups: startups.map((startup: any) => ({
-        id: startup.id,
-        name: startup.name,
-        industry: startup.industry,
-        stage: startup.stage,
-        description: startup.description,
-        status: startup.status,
-        createdAt: startup.createdAt,
+      companies: companies.map((company: any) => ({
+        id: company.id,
+        name: company.name,
+        industry: company.industry,
+        stage: company.stage,
+        description: company.description,
+        status: company.status,
+        createdAt: company.createdAt,
       })),
     });
     
   } catch (error) {
-    console.error('Get startups error:', error);
+    console.error('Get companies error:', error);
     return NextResponse.json(
-      { error: 'An error occurred while fetching startups' },
+      { error: 'An error occurred while fetching companies' },
       { status: 500 }
     );
   }

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            acceleratorProfile: {
+            entrepreneurProfile: {
               select: {
                 organizationName: true,
                 industry: true,
@@ -101,10 +101,10 @@ export async function GET(request: NextRequest) {
           id: startup.creator.id,
           name: startup.creator.name,
           email: startup.creator.email,
-          accelerator: startup.creator.acceleratorProfile ? {
-            name: startup.creator.acceleratorProfile.organizationName,
-            industry: startup.creator.acceleratorProfile.industry,
-            focusAreas: startup.creator.acceleratorProfile.focusAreas
+          entrepreneur: startup.creator.entrepreneurProfile ? {
+            name: startup.creator.entrepreneurProfile.organizationName,
+            industry: startup.creator.entrepreneurProfile.industry,
+            focusAreas: startup.creator.entrepreneurProfile.focusAreas
           } : null
         }
       };
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if creator exists and is an accelerator
+    // Check if creator exists and is an entrepreneur
     const creator = await prisma.user.findUnique({
       where: { id: creatorId },
       select: { id: true, role: true }
@@ -187,9 +187,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (creator.role !== UserRole.ACCELERATOR) {
+    if (creator.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Creator must be an accelerator' },
+        { error: 'Creator must be an entrepreneur' },
         { status: 400 }
       );
     }

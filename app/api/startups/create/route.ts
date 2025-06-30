@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only accelerators can create startups
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can create startups
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can create startups' },
+        { error: 'Only entrepreneurs can create startups' },
         { status: 403 }
       );
     }

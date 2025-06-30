@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated } from '@/lib/auth';
+import { isAuthenticated, UserRole } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,14 +21,13 @@ export async function GET(request: NextRequest) {
       where: { id: user.userId },
       include: {
         profile: true,
-        participantProfile: user.role === 'PARTICIPANT',
-        startupProfile: user.role === 'STARTUP',
-        mentorProfile: user.role === 'MENTOR',
-        investorProfile: user.role === 'INVESTOR',
-        judgeProfile: user.role === 'JUDGE',
-        adminProfile: user.role === 'ADMIN',
-        programManagerProfile: user.role === 'PROGRAM_MANAGER',
-        acceleratorProfile: user.role === 'ACCELERATOR',
+        participantProfile: user.role === UserRole.PARTICIPANT,
+        mentorProfile: user.role === UserRole.MENTOR,
+        investorProfile: user.role === UserRole.INVESTOR,
+        judgeProfile: user.role === UserRole.JUDGE,
+        adminProfile: user.role === UserRole.ADMIN,
+        programManagerProfile: user.role === UserRole.PROGRAM_MANAGER,
+        entrepreneurProfile: user.role === UserRole.ENTREPRENEUR,
       },
     });
 

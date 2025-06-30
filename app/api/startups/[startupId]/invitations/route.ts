@@ -86,8 +86,8 @@ export async function POST(
     // TODO: Send invitation email to inviteeEmail
 
     // Construct accept/reject links (these would typically point to frontend routes that call the PATCH API)
-    const acceptLink = `${request.nextUrl.origin}/accelerator-dashboard/startups/invitations/${invitation.id}?status=accepted`;
-    const rejectLink = `${request.nextUrl.origin}/accelerator-dashboard/startups/invitations/${invitation.id}?status=rejected`;
+    const acceptLink = `${request.nextUrl.origin}/entrepreneur-dashboard/startups/invitations/${invitation.id}?status=accepted`;
+    const rejectLink = `${request.nextUrl.origin}/entrepreneur-dashboard/startups/invitations/${invitation.id}?status=rejected`;
 
     // Send invitation email
     await sendEmail({

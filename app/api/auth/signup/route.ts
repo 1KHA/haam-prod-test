@@ -87,14 +87,6 @@ export async function POST(request: NextRequest) {
           },
         });
         break;
-      case UserRole.STARTUP:
-        await prisma.startupProfile.create({
-          data: {
-            userId: user.id,
-            companyName: body.companyName || 'Default Company Name',
-          },
-        });
-        break;
       case UserRole.MENTOR:
         await prisma.mentorProfile.create({
           data: {
@@ -130,11 +122,11 @@ export async function POST(request: NextRequest) {
           },
         });
         break;
-      case UserRole.ACCELERATOR:
-        await prisma.acceleratorProfile.create({
+      case UserRole.ENTREPRENEUR:
+        await prisma.entrepreneurProfile.create({
           data: {
             userId: user.id,
-            organizationName: organizationName || 'Default Accelerator Name',
+            organizationName: organizationName || 'Default Entrepreneur Name',
           },
         });
         break;

@@ -47,13 +47,62 @@ export async function PATCH(
       );
     }
 
-    const updatedInvitation = await prisma.invitation.update({
+    let updatedInvitation = await prisma.invitation.update({
       where: { id },
       data: {
         status: status,
         respondedAt: new Date(),
       },
     });
+
+    // If accepted, add the user as a CompanyMember for the associated startup
+    if (status === InvitationStatus.ACCEPTED && invitation.startupId) {
+      // Find or create the user by inviteeEmail
+      let inviteeUser = await prisma.user.findUnique({
+        where: { email: invitation.inviteeEmail },
+      });
+
+      // If user does not exist, return error (could implement auto-registration flow)
+      if (!inviteeUser) {
+        return NextResponse.json(
+          { error: 'Invitee user not found. Please register first.' },
+          { status: 404 }
+        );
+      }
+
+      // Check if CompanyMember already exists
+      let existingMember = await prisma.companyMember.findUnique({
+        where: {
+          startupId_userId: {
+            startupId: invitation.startupId,
+            userId: inviteeUser.id,
+          },
+        },
+      });
+
+      if (!existingMember) {
+        // Create CompanyMember record
+        const companyMember = await prisma.companyMember.create({
+          data: {
+            startupId: invitation.startupId,
+            userId: inviteeUser.id,
+            role: "Member",
+            status: "ACTIVE",
+            invitationId: invitation.id,
+            joinedAt: new Date(),
+          },
+        });
+        // Optionally, update invitation with companyMember (if needed)
+      } else {
+        // If already exists, update status to ACTIVE if needed
+        if (existingMember.status !== "ACTIVE") {
+          await prisma.companyMember.update({
+            where: { id: existingMember.id },
+            data: { status: "ACTIVE", joinedAt: new Date() },
+          });
+        }
+      }
+    }
 
     // TODO: Send notification email to inviter about the response
 

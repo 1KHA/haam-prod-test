@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only accelerators can view their team members
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can view their team members
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can view team members' },
+        { error: 'Only entrepreneurs can view team members' },
         { status: 403 }
       );
     }
@@ -71,10 +71,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only accelerators can create team members
-    if (user.role !== UserRole.ACCELERATOR) {
+    // Only entrepreneurs can create team members
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json(
-        { error: 'Only accelerators can create team members' },
+        { error: 'Only entrepreneurs can create team members' },
         { status: 403 }
       );
     }

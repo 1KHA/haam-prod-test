@@ -471,6 +471,84 @@ export default function RolesPermissions() {
         ]
       }
     ],
+    ENTREPRENEUR: [
+      {
+        category: "dashboard",
+        displayName: "لوحة التحكم",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard"] }
+        ]
+      },
+      {
+        category: "users",
+        displayName: "الفريق",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/team"] },
+          { action: "add", pages: ["/entrepreneur-dashboard/team (Add Member)"] },
+          { action: "edit", pages: ["/entrepreneur-dashboard/team (Edit Member)"] }
+        ]
+      },
+      {
+        category: "startups",
+        displayName: "الشركة الناشئة",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/milestones", "/entrepreneur-dashboard/startup"] },
+          { action: "edit", pages: ["/entrepreneur-dashboard/milestones", "/entrepreneur-dashboard/startup"] }
+        ]
+      },
+      {
+        category: "funding",
+        displayName: "التمويل",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/funding"] },
+          { action: "add", pages: ["/entrepreneur-dashboard/funding"] }
+        ]
+      },
+      {
+        category: "mentorship",
+        displayName: "الإرشاد",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/mentors"] }
+        ]
+      },
+      {
+        category: "events",
+        displayName: "الفعاليات",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/events"] }
+        ]
+      },
+      {
+        category: "resources",
+        displayName: "الموارد",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/resources"] }
+        ]
+      },
+      {
+        category: "programs",
+        displayName: "البرامج",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/programs"] },
+          { action: "add", pages: ["/entrepreneur-dashboard/apply"] }
+        ]
+      },
+      {
+        category: "profile",
+        displayName: "الملف الشخصي",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/profile"] },
+          { action: "edit", pages: ["/entrepreneur-dashboard/profile"] }
+        ]
+      },
+      {
+        category: "support",
+        displayName: "الدعم",
+        actions: [
+          { action: "view", pages: ["/entrepreneur-dashboard/support"] }
+        ]
+      }
+    ],
     ACCELERATOR: [
       {
         category: "dashboard",
@@ -1063,8 +1141,9 @@ export default function RolesPermissions() {
                       "موجه": "MENTOR",
                       "مستثمر": "INVESTOR",
                       "محكم": "JUDGE",
-                      "مشارك": "PARTICIPANT",
-"رائد أعمال": "ACCELERATOR"
+"مشارك": "PARTICIPANT",
+"رائد أعمال": "ENTREPRENEUR",
+"مسرع أعمال": "ACCELERATOR"
                     };
                     const internalKey = roleNameMap[role.name] || (role.name || "").toUpperCase().replace(/\s+/g, "_");
                     const categories = rolePermissionMap[internalKey as keyof typeof rolePermissionMap];

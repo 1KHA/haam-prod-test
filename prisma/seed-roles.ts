@@ -135,15 +135,37 @@ async function main() {
     },
   });
 
+  // Clean up old 'ENTREPRENEUR' role if it exists
+  try {
+    const oldRole = await prisma.role.findUnique({ where: { name: 'ENTREPRENEUR' } });
+    if (oldRole) {
+      // Reassign users before deleting
+      const newRole = await prisma.role.findUnique({ where: { name: 'رائد أعمال' } });
+      if (newRole) {
+        await prisma.user.updateMany({
+          where: { role: 'ENTREPRENEUR' },
+          data: { role: 'ENTREPRENEUR' },
+        });
+      }
+      // Delete associated role permissions first
+      await prisma.rolePermission.deleteMany({ where: { roleId: oldRole.id } });
+      await prisma.role.delete({ where: { name: 'ENTREPRENEUR' } });
+      console.log('Cleaned up old ENTREPRENEUR role.');
+    }
+  } catch (error) {
+    // Ignore if it doesn't exist or fails for other reasons
+    console.log('No old ENTREPRENEUR role to clean up or error during cleanup.');
+  }
+
   // Create entrepreneur role
   const entrepreneurRole = await prisma.role.upsert({
-    where: { name: 'ENTREPRENEUR' },
+    where: { name: 'رائد أعمال' },
     update: {
-      description: 'Manage company, access resources and funding',
+      description: 'إدارة الشركة والوصول إلى الموارد والتمويل',
     },
     create: {
-      name: 'ENTREPRENEUR',
-      description: 'Manage company, access resources and funding',
+      name: 'رائد أعمال',
+      description: 'إدارة الشركة والوصول إلى الموارد والتمويل',
     },
   });
 

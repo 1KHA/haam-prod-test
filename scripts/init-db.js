@@ -192,7 +192,7 @@ async function seedDatabase() {
     console.log('Created participant user:', participant.email);
 
     // Create entrepreneur user
-    const entrepreneurPassword = await hashPassword('entrepreneur123');
+    const entrepreneurPassword = await hashPassword('c');
     const entrepreneur = await prisma.user.create({
       data: {
         email: 'entrepreneur@example.com',

@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
+import { checkPermission } from '@/lib/permissions';
 
 // GET /api/admin/programs - Get all programs with pagination and filtering
 export async function GET(request: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    // Check permission
+    const permissionCheck = await checkPermission(request, { category: 'programs', action: 'view' });
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: permissionCheck.error },
+        { status: 403 }
       );
     }
 
@@ -141,15 +138,12 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/programs - Create a new program
 export async function POST(request: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    // Check permission
+    const permissionCheck = await checkPermission(request, { category: 'programs', action: 'add' });
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: permissionCheck.error },
+        { status: 403 }
       );
     }
 
@@ -191,7 +185,7 @@ export async function POST(request: NextRequest) {
         applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : null,
         requirements,
         benefits,
-        creatorId: user.userId
+        creatorId: permissionCheck.userId!
       },
       include: {
         creator: {
@@ -217,15 +211,12 @@ export async function POST(request: NextRequest) {
 // PUT /api/admin/programs - Bulk update programs
 export async function PUT(request: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    // Check permission
+    const permissionCheck = await checkPermission(request, { category: 'programs', action: 'edit' });
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: permissionCheck.error },
+        { status: 403 }
       );
     }
 

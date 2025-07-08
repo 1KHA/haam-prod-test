@@ -7,6 +7,8 @@ import { User, Mail, Phone, UserPlus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 import { RouteGuard } from "@/components/auth/RouteGuard"
+import { PermissionGate } from "@/hooks/usePermissions"
+import { Button } from "@/components/ui/button"
 import { UserRole } from "@prisma/client"
 
 interface CompanyMember {
@@ -108,6 +110,14 @@ export default function TeamPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">فريق العمل</h1>
+          <PermissionGate
+            requirement={{ category: 'users', action: 'add' }}
+          >
+            <Button>
+              <UserPlus className="ml-2 h-4 w-4" />
+              إضافة عضو جديد
+            </Button>
+          </PermissionGate>
         </div>
 
         {error && (

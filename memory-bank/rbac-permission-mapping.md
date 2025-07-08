@@ -11,6 +11,7 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 - **INVESTOR** - مستثمر (Investor)
 - **JUDGE** - محكم (Judge)
 - **PARTICIPANT** - مشارك (Participant)
+- **ENTREPRENEUR** - رائد أعمال (Entrepreneur)
 - **ACCELERATOR** - مسرع أعمال (Accelerator)
 
 ## Permission Categories
@@ -148,6 +149,21 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 | Route/Tab/Function | Permission (Category/Action) | Roles Allowed |
 |-------------------|------------------------------|---------------|
 | /participant-dashboard | dashboard/view | PARTICIPANT |
+
+### Entrepreneur Dashboard Routes
+
+| Route/Tab/Function | Permission (Category/Action) | Roles Allowed |
+|-------------------|------------------------------|---------------|
+| /entrepreneur-dashboard | dashboard/view | ENTREPRENEUR |
+| /entrepreneur-dashboard/team | users/view, users/add, users/edit | ENTREPRENEUR |
+| /entrepreneur-dashboard/milestones | startups/view, startups/edit | ENTREPRENEUR |
+| /entrepreneur-dashboard/funding | funding/view, funding/add | ENTREPRENEUR |
+| /entrepreneur-dashboard/mentors | mentorship/view | ENTREPRENEUR |
+| /entrepreneur-dashboard/events | events/view | ENTREPRENEUR |
+| /entrepreneur-dashboard/resources | resources/view | ENTREPRENEUR |
+| /entrepreneur-dashboard/programs | programs/view, applications/add | ENTREPRENEUR |
+| /entrepreneur-dashboard/profile | profile/view, profile/edit | ENTREPRENEUR |
+| /entrepreneur-dashboard/support | support/view | ENTREPRENEUR |
 
 ### Accelerator Dashboard Routes
 

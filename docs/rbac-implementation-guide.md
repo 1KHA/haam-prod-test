@@ -79,6 +79,10 @@ if (hasRole(UserRole.ADMIN)) {
   <Button>Add User</Button>
 </PermissionGate>
 
+// It is best practice to use PermissionGate to protect sensitive UI elements
+// such as "Add", "Edit", and "Delete" buttons. This ensures that users who
+// do not have the required permissions will not even see the UI elements.
+
 // Role-based rendering
 <RoleGate role={[UserRole.ADMIN, UserRole.PROGRAM_MANAGER]}>
   <AdminPanel />
@@ -148,11 +152,22 @@ import { PermissionGate } from '@/hooks/usePermissions';
 function UserManagement() {
   return (
     <div>
-      <h1>User Management</h1>
-      
-      <PermissionGate requirement={{ category: 'users', action: 'add' }}>
-        <Button onClick={handleAddUser}>Add User</Button>
-      </PermissionGate>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إدارة المستخدمين</h1>
+        <PermissionGate
+          requirement={{ category: 'users', action: 'add' }}
+        >
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => router.push("/admin-dashboard/users/new")}
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>إضافة مستخدم</span>
+          </Button>
+        </PermissionGate>
+      </div>
       
       <PermissionGate 
         requirement={[

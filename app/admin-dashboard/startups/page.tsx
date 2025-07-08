@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 import { useRouter } from "next/navigation"
+import { PermissionGate } from "@/hooks/usePermissions"
 
 interface Startup {
   id: string
@@ -366,15 +367,19 @@ export default function StartupsManagement() {
             <Download className="h-4 w-4" />
             <span>تصدير</span>
           </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={handleAddStartup}
+          <PermissionGate
+            requirement={{ category: 'startups', action: 'add' }}
           >
-            <Plus className="h-4 w-4" />
-            <span>إضافة شركة ناشئة</span>
-          </Button>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="flex items-center gap-1"
+              onClick={handleAddStartup}
+            >
+              <Plus className="h-4 w-4" />
+              <span>إضافة شركة ناشئة</span>
+            </Button>
+          </PermissionGate>
         </div>
         <h1 className="text-3xl font-bold">إدارة الشركات الناشئة</h1>
       </div>

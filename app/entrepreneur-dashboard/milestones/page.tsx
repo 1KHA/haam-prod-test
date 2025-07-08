@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { RouteGuard } from "@/components/auth/RouteGuard"
+import { PermissionGate } from "@/hooks/usePermissions"
 import { UserRole } from "@prisma/client"
 import { useAuth } from "@/contexts/auth-context"
 
@@ -313,17 +314,21 @@ export default function MilestonesPage() {
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button
-            onClick={() => {
-              setIsCreatingMilestone(true);
-              setSelectedMilestoneId(null);
-            }}
-            className="flex items-center gap-2"
-            disabled={isCreatingMilestone}
+          <PermissionGate
+            requirement={{ category: 'startups', action: 'edit' }}
           >
-            <Plus className="h-4 w-4" />
-            إضافة مرحلة جديدة
-          </Button>
+            <Button
+              onClick={() => {
+                setIsCreatingMilestone(true);
+                setSelectedMilestoneId(null);
+              }}
+              className="flex items-center gap-2"
+              disabled={isCreatingMilestone}
+            >
+              <Plus className="h-4 w-4" />
+              إضافة مرحلة جديدة
+            </Button>
+          </PermissionGate>
           <h1 className="text-3xl font-bold">المراحل والتقدم</h1>
         </div>
 

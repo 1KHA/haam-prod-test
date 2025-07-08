@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
+import { checkPermission } from '@/lib/permissions';
+import { UserRole } from '@prisma/client';
 
 // GET /api/admin/startups - Get all startups with pagination and filtering
 export async function GET(request: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    // Check permission
+    const permissionCheck = await checkPermission(request, { category: 'startups', action: 'view' });
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: permissionCheck.error },
+        { status: 403 }
       );
     }
 
@@ -135,15 +133,12 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/startups - Create a new startup
 export async function POST(request: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    // Check permission
+    const permissionCheck = await checkPermission(request, { category: 'startups', action: 'add' });
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: permissionCheck.error },
+        { status: 403 }
       );
     }
 
@@ -236,15 +231,12 @@ export async function POST(request: NextRequest) {
 // PUT /api/admin/startups - Bulk update startups
 export async function PUT(request: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    // Check permission
+    const permissionCheck = await checkPermission(request, { category: 'startups', action: 'edit' });
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: permissionCheck.error },
+        { status: 403 }
       );
     }
 

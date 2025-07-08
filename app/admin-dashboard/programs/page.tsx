@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 import { DataTable } from "@/components/ui/data-table"
+import { PermissionGate } from "@/hooks/usePermissions"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -328,14 +329,18 @@ export default function ProgramsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
-        <Button 
-          variant="default" 
-          className="flex items-center gap-1"
-          onClick={() => router.push('/admin-dashboard/programs/new')}
+        <PermissionGate
+          requirement={{ category: 'programs', action: 'add' }}
         >
-          <Plus className="h-4 w-4" />
-          <span>إضافة برنامج</span>
-        </Button>
+          <Button 
+            variant="default" 
+            className="flex items-center gap-1"
+            onClick={() => router.push('/admin-dashboard/programs/new')}
+          >
+            <Plus className="h-4 w-4" />
+            <span>إضافة برنامج</span>
+          </Button>
+        </PermissionGate>
         <h1 className="text-3xl font-bold">إدارة البرامج</h1>
       </div>
 

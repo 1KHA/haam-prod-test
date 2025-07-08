@@ -6,13 +6,11 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 ## User Roles
 - **ADMIN** - مدير النظام (System Administrator)
 - **PROGRAM_MANAGER** - مدير برنامج (Program Manager)
-- **STARTUP** - شركة ناشئة (Startup)
 - **MENTOR** - موجه (Mentor)
 - **INVESTOR** - مستثمر (Investor)
 - **JUDGE** - محكم (Judge)
 - **PARTICIPANT** - مشارك (Participant)
 - **ENTREPRENEUR** - رائد أعمال (Entrepreneur)
-- **ACCELERATOR** - مسرع أعمال (Accelerator)
 
 ## Permission Categories
 - **dashboard** - لوحة التحكم
@@ -86,21 +84,6 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 | /program-manager-dashboard/sessions | mentorship/view, mentorship/edit | PROGRAM_MANAGER |
 | /program-manager-dashboard/discussions | discussions/view, discussions/edit | PROGRAM_MANAGER |
 
-### Startup Dashboard Routes
-
-| Route/Tab/Function | Permission (Category/Action) | Roles Allowed |
-|-------------------|------------------------------|---------------|
-| /startup-dashboard | dashboard/view | STARTUP |
-| /startup-dashboard/team | users/view | STARTUP |
-| /startup-dashboard/team (Add Member) | users/add | STARTUP |
-| /startup-dashboard/team (Edit Member) | users/edit | STARTUP |
-| /startup-dashboard/milestones | startups/view, startups/edit | STARTUP |
-| /startup-dashboard/funding | funding/view, funding/add | STARTUP |
-| /startup-dashboard/mentors | mentorship/view | STARTUP |
-| /startup-dashboard/events | events/view | STARTUP |
-| /startup-dashboard/resources | resources/view | STARTUP |
-| /startup-dashboard/reports | reports/view | STARTUP |
-| /startup-dashboard/discussions | discussions/view, discussions/edit | STARTUP |
 
 ### Mentor Dashboard Routes
 
@@ -165,22 +148,6 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 | /entrepreneur-dashboard/profile | profile/view, profile/edit | ENTREPRENEUR |
 | /entrepreneur-dashboard/support | support/view | ENTREPRENEUR |
 
-### Accelerator Dashboard Routes
-
-| Route/Tab/Function | Permission (Category/Action) | Roles Allowed |
-|-------------------|------------------------------|---------------|
-| /accelerator-dashboard | dashboard/view | ACCELERATOR |
-| /accelerator-dashboard/programs | programs/view | ACCELERATOR |
-| /accelerator-dashboard/apply | applications/add | ACCELERATOR |
-| /accelerator-dashboard/startups | startups/view | ACCELERATOR |
-| /accelerator-dashboard/mentors | mentorship/view | ACCELERATOR |
-| /accelerator-dashboard/funding | funding/view | ACCELERATOR |
-| /accelerator-dashboard/events | events/view | ACCELERATOR |
-| /accelerator-dashboard/resources | resources/view | ACCELERATOR |
-| /accelerator-dashboard/milestones | startups/view | ACCELERATOR |
-| /accelerator-dashboard/profile | users/view, users/edit | ACCELERATOR |
-| /accelerator-dashboard/support | dashboard/view | ACCELERATOR |
-| /accelerator-dashboard/team | users/view | ACCELERATOR |
 
 ## API Route Permission Mapping
 

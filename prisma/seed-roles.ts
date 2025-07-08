@@ -135,6 +135,21 @@ async function main() {
     },
   });
 
+  // Clean up old roles
+  const rolesToDelete = ['مسرع أعمال', 'شركة ناشئة'];
+  for (const roleName of rolesToDelete) {
+    try {
+      const role = await prisma.role.findUnique({ where: { name: roleName } });
+      if (role) {
+        await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
+        await prisma.role.delete({ where: { name: roleName } });
+        console.log(`Cleaned up old ${roleName} role.`);
+      }
+    } catch (error) {
+      console.log(`No ${roleName} role to clean up or error during cleanup.`);
+    }
+  }
+
   // Clean up old 'ENTREPRENEUR' role if it exists
   try {
     const oldRole = await prisma.role.findUnique({ where: { name: 'ENTREPRENEUR' } });

@@ -250,76 +250,6 @@ export default function RolesPermissions() {
         ]
       }
     ],
-    STARTUP: [
-      {
-        category: "dashboard",
-        displayName: "لوحة التحكم",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard"] }
-        ]
-      },
-      {
-        category: "users",
-        displayName: "الفريق",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/team"] },
-          { action: "add", pages: ["/startup-dashboard/team (Add Member)"] },
-          { action: "edit", pages: ["/startup-dashboard/team (Edit Member)"] }
-        ]
-      },
-      {
-        category: "startups",
-        displayName: "الشركة الناشئة",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/milestones"] },
-          { action: "edit", pages: ["/startup-dashboard/milestones"] }
-        ]
-      },
-      {
-        category: "funding",
-        displayName: "التمويل",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/funding"] },
-          { action: "add", pages: ["/startup-dashboard/funding"] }
-        ]
-      },
-      {
-        category: "mentorship",
-        displayName: "الإرشاد",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/mentors"] }
-        ]
-      },
-      {
-        category: "events",
-        displayName: "الفعاليات",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/events"] }
-        ]
-      },
-      {
-        category: "resources",
-        displayName: "الموارد",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/resources"] }
-        ]
-      },
-      {
-        category: "reports",
-        displayName: "التقارير",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/reports"] }
-        ]
-      },
-      {
-        category: "discussions",
-        displayName: "المناقشات",
-        actions: [
-          { action: "view", pages: ["/startup-dashboard/discussions"] },
-          { action: "edit", pages: ["/startup-dashboard/discussions"] }
-        ]
-      }
-    ],
     MENTOR: [
       {
         category: "dashboard",
@@ -549,79 +479,6 @@ export default function RolesPermissions() {
         ]
       }
     ],
-    ACCELERATOR: [
-      {
-        category: "dashboard",
-        displayName: "لوحة التحكم",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard", "/accelerator-dashboard/support"] }
-        ]
-      },
-      {
-        category: "programs",
-        displayName: "البرامج",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/programs"] }
-        ]
-      },
-      {
-        category: "applications",
-        displayName: "الطلبات",
-        actions: [
-          { action: "add", pages: ["/accelerator-dashboard/apply"] }
-        ]
-      },
-      {
-        category: "startups",
-        displayName: "الشركات الناشئة",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/startups"] }
-        ]
-      },
-      {
-        category: "mentorship",
-        displayName: "الإرشاد",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/mentors"] }
-        ]
-      },
-      {
-        category: "funding",
-        displayName: "التمويل",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/funding"] }
-        ]
-      },
-      {
-        category: "events",
-        displayName: "الفعاليات",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/events"] }
-        ]
-      },
-      {
-        category: "resources",
-        displayName: "الموارد",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/resources"] }
-        ]
-      },
-      {
-        category: "startups",
-        displayName: "المهام",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/milestones"] }
-        ]
-      },
-      {
-        category: "users",
-        displayName: "الملف الشخصي والفريق",
-        actions: [
-          { action: "view", pages: ["/accelerator-dashboard/profile", "/accelerator-dashboard/team"] },
-          { action: "edit", pages: ["/accelerator-dashboard/profile"] }
-        ]
-      }
-    ]
   };
 
   // Permission actions for icon mapping
@@ -1137,13 +994,11 @@ export default function RolesPermissions() {
                     const roleNameMap: Record<string, string> = {
                       "مدير النظام": "ADMIN",
                       "مدير برنامج": "PROGRAM_MANAGER",
-                      "شركة ناشئة": "STARTUP",
                       "موجه": "MENTOR",
                       "مستثمر": "INVESTOR",
                       "محكم": "JUDGE",
 "مشارك": "PARTICIPANT",
-"رائد أعمال": "ENTREPRENEUR",
-"مسرع أعمال": "ACCELERATOR"
+"رائد أعمال": "ENTREPRENEUR"
                     };
                     const internalKey = roleNameMap[role.name] || (role.name || "").toUpperCase().replace(/\s+/g, "_");
                     const categories = rolePermissionMap[internalKey as keyof typeof rolePermissionMap];

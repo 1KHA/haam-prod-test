@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { UserRole } from '@prisma/client';
 
 // GET /api/admin/users - Get all users
 export async function GET(req: NextRequest) {
@@ -77,6 +78,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, password, name, role, specialization } = body;
 
+    // Map Arabic role name to English enum value
+    const roleMap: { [key: string]: UserRole } = {
+      'مدير النظام': UserRole.ADMIN,
+      'مدير برنامج': UserRole.PROGRAM_MANAGER,
+      'موجه': UserRole.MENTOR,
+      'مستثمر': UserRole.INVESTOR,
+      'محكم': UserRole.JUDGE,
+      'مشارك': UserRole.PARTICIPANT,
+      'رائد أعمال': UserRole.ENTREPRENEUR,
+    };
+
+    const userRole = roleMap[role] || null;
+
+    if (!userRole) {
+      return NextResponse.json(
+        { error: 'Invalid role specified' },
+        { status: 400 }
+      );
+    }
+
     // Validate required fields
     if (!email || !password || !name || !role) {
       return NextResponse.json(
@@ -107,7 +128,7 @@ export async function POST(req: NextRequest) {
         email,
         password: hashedPassword,
         name,
-        role,
+        role: userRole,
         specialization,
         profile: {
           create: {},
@@ -154,13 +175,26 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Map Arabic role name to English enum value
+    const roleMap: { [key: string]: UserRole } = {
+      'مدير النظام': UserRole.ADMIN,
+      'مدير برنامج': UserRole.PROGRAM_MANAGER,
+      'موجه': UserRole.MENTOR,
+      'مستثمر': UserRole.INVESTOR,
+      'محكم': UserRole.JUDGE,
+      'مشارك': UserRole.PARTICIPANT,
+      'رائد أعمال': UserRole.ENTREPRENEUR,
+    };
+
+    const userRole = role ? roleMap[role] : undefined;
+
     // Update user
     const user = await prisma.user.update({
       where: { id },
       data: {
         email,
         name,
-        role,
+        role: userRole,
         specialization,
       },
       include: {

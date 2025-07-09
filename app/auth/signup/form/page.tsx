@@ -152,7 +152,7 @@ export default function SignUpForm() {
       if (signupType === "hackathon") {
         userRole = UserRole.PARTICIPANT;
       } else {
-        userRole = UserRole.ACCELERATOR;
+        userRole = UserRole.ENTREPRENEUR;
       }
     }
     
@@ -164,7 +164,6 @@ export default function SignUpForm() {
       role: userRole,
       specialization: formData.specialization,
       phone: formData.phone, // Add phone to userData
-      organizationName: userRole === UserRole.ACCELERATOR ? "My Accelerator" : undefined,
     };
     
     console.log("Submitting user data:", userData);

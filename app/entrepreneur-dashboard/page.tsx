@@ -23,8 +23,6 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
-import { RouteGuard } from "@/components/auth/RouteGuard"
-import { UserRole } from "@prisma/client"
 export default function EntrepreneurDashboard() {
   const { user } = useAuth()
   const router = useRouter()
@@ -86,11 +84,6 @@ export default function EntrepreneurDashboard() {
   ]
 
   return (
-    <RouteGuard 
-      requiredPermission={{ category: 'dashboard', action: 'view' }}
-      requiredRole={UserRole.ENTREPRENEUR}
-    >
-      
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">مرحباً، {user?.name}</h1>
@@ -327,7 +320,5 @@ export default function EntrepreneurDashboard() {
         </TabsContent>
       </Tabs>
     </div>
-  
-    </RouteGuard>
   )
 }

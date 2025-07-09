@@ -248,12 +248,11 @@ function getRoleNameInArabic(role: UserRole): string {
   const roleMap: Record<UserRole, string> = {
     [UserRole.ADMIN]: 'مدير النظام',
     [UserRole.PROGRAM_MANAGER]: 'مدير برنامج',
-    [UserRole.STARTUP]: 'شركة ناشئة',
     [UserRole.MENTOR]: 'موجه',
     [UserRole.INVESTOR]: 'مستثمر',
     [UserRole.JUDGE]: 'محكم',
     [UserRole.PARTICIPANT]: 'مشارك',
-    [UserRole.ACCELERATOR]: 'مسرع أعمال',
+    [UserRole.ENTREPRENEUR]: 'رائد أعمال',
   };
   return roleMap[role] || role;
 }

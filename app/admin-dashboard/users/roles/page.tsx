@@ -658,37 +658,39 @@ export default function RolesPermissions() {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/admin/roles/${roleId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        showAdminToast({
-          title: "تم بنجاح",
-          description: "تم حذف الدور بنجاح"
+    if (window.confirm("هل أنت متأكد أنك تريد حذف هذا الدور؟")) {
+      try {
+        const response = await fetch(`/api/admin/roles/${roleId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         
-        // Refresh roles
-        fetchRoles();
-      } else {
-        const errorData = await response.json();
+        if (response.ok) {
+          showAdminToast({
+            title: "تم بنجاح",
+            description: "تم حذف الدور بنجاح"
+          });
+          
+          // Refresh roles
+          fetchRoles();
+        } else {
+          const errorData = await response.json();
+          showAdminToast({
+            title: "خطأ",
+            description: errorData.error || "فشل في حذف الدور",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting role:', error);
         showAdminToast({
           title: "خطأ",
-          description: errorData.error || "فشل في حذف الدور",
+          description: "فشل في حذف الدور",
           variant: "destructive"
         });
       }
-    } catch (error) {
-      console.error('Error deleting role:', error);
-      showAdminToast({
-        title: "خطأ",
-        description: "فشل في حذف الدور",
-        variant: "destructive"
-      });
     }
   };
 

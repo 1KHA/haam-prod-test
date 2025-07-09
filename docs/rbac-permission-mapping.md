@@ -192,19 +192,19 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 |-----------|------------------------------|---------------|
 | GET /api/startups | startups/view | ALL ROLES |
 | GET /api/startups/[id] | startups/view | ALL ROLES |
-| POST /api/startups/create | startups/add | STARTUP, ADMIN |
-| PUT /api/startups/[id] | startups/edit | STARTUP (own), ADMIN, PROGRAM_MANAGER |
-| GET /api/team | users/view | STARTUP |
-| POST /api/team | users/add | STARTUP |
-| PUT /api/team/[id] | users/edit | STARTUP |
-| DELETE /api/team/[id] | users/delete | STARTUP |
+| POST /api/startups/create | startups/add | ENTREPRENEUR, ADMIN |
+| PUT /api/startups/[id] | startups/edit | ENTREPRENEUR (own), ADMIN, PROGRAM_MANAGER |
+| GET /api/team | users/view | ENTREPRENEUR |
+| POST /api/team | users/add | ENTREPRENEUR |
+| PUT /api/team/[id] | users/edit | ENTREPRENEUR |
+| DELETE /api/team/[id] | users/delete | ENTREPRENEUR |
 
 ### Funding API Routes
 
 | API Route | Permission (Category/Action) | Roles Allowed |
 |-----------|------------------------------|---------------|
-| GET /api/funding | funding/view | STARTUP, INVESTOR, ADMIN, PROGRAM_MANAGER |
-| POST /api/funding | funding/add | STARTUP, INVESTOR |
+| GET /api/funding | funding/view | ENTREPRENEUR, INVESTOR, ADMIN, PROGRAM_MANAGER |
+| POST /api/funding | funding/add | ENTREPRENEUR, INVESTOR |
 | PUT /api/funding/[id] | funding/edit | INVESTOR, ADMIN, PROGRAM_MANAGER |
 | DELETE /api/funding/[id] | funding/delete | ADMIN |
 
@@ -240,7 +240,7 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 | GET /api/programs | programs/view | ALL AUTHENTICATED |
 | GET /api/cohorts | cohorts/view | ALL AUTHENTICATED |
 | GET /api/cohorts/active | cohorts/view | ALL AUTHENTICATED |
-| POST /api/cohorts/apply | applications/add | STARTUP, ACCELERATOR |
+| POST /api/cohorts/apply | applications/add | ENTREPRENEUR |
 
 ## UI Component Permission Mapping
 
@@ -277,7 +277,7 @@ interface NavItem {
 
 1. **ADMIN** role has all permissions by default
 2. Users can only edit their own profile unless they have specific user management permissions
-3. Startups can only edit their own data unless they have broader permissions
+3. Entrepreneurs can only edit their own data unless they have broader permissions
 4. Mentors can only view/edit sessions and feedback for their assigned startups
 5. Investors can only manage their own investment deals
 

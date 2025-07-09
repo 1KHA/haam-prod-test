@@ -35,7 +35,7 @@ const navItems = [
     name: "الملف الشخصي", 
     href: "/entrepreneur-dashboard/profile",
     icon: User,
-    permission: { category: 'users', action: 'view' }
+    permission: { category: 'profile', action: 'view' }
   },
   { 
     name: "الشركات الناشئة", 
@@ -89,7 +89,7 @@ const navItems = [
     name: "الدعم والمساعدة", 
     href: "/entrepreneur-dashboard/support",
     icon: HelpCircle,
-    permission: { category: 'dashboard', action: 'view' }
+    permission: { category: 'support', action: 'view' }
   },
 ]
 

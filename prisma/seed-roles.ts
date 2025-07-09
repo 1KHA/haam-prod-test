@@ -26,7 +26,9 @@ async function main() {
     'notifications',
     'discussions',
     'portfolio',
-    'evaluation'
+    'evaluation',
+    'profile',
+    'support'
   ];
 
   const permissionActions = [
@@ -489,6 +491,9 @@ async function main() {
     { category: 'resources', action: 'view' },
     { category: 'discussions', action: 'view' },
     { category: 'discussions', action: 'edit' },
+    { category: 'profile', action: 'view' },
+    { category: 'profile', action: 'edit' },
+    { category: 'support', action: 'view' },
   ];
 
   for (const { category, action } of entrepreneurPermissions) {

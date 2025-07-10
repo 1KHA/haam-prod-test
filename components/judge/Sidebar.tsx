@@ -89,9 +89,9 @@ export default function Sidebar() {
       animate={{ width: isCollapsed ? 64 : 256 }}
     >
       <div className="flex flex-col h-full text-right">
-        <div className="flex items-center justify-end p-4 border-b">
+        <div className="flex items-center justify-start p-4 border-b">
           <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
         <nav className="flex-1 overflow-y-auto">
@@ -101,14 +101,14 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-end p-2 mx-2 rounded-lg",
+                    "flex items-center justify-start p-2 mx-2 rounded-lg",
                     pathname === item.href
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
-                  <span className={cn("ml-2", { "sr-only": isCollapsed })}>{item.name}</span>
                   <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <span className={cn("mr-2", { "sr-only": isCollapsed })}>{item.name}</span>
                 </Link>
               </li>
             ))}

@@ -44,10 +44,17 @@ export async function POST(request: NextRequest) {
 
     // Update role-specific profile based on schema
     if (user.role === UserRole.ENTREPRENEUR) {
-      await prisma.entrepreneurProfile.update({
+      await prisma.entrepreneurProfile.upsert({
         where: { userId: user.userId },
-        data: {
+        update: {
           organizationName: company.name,
+          website: company.website,
+          description: company.description,
+          industry: company.industry,
+        },
+        create: {
+          userId: user.userId,
+          organizationName: company.name || '',
           website: company.website,
           description: company.description,
           industry: company.industry,

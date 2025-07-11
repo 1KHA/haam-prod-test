@@ -143,53 +143,6 @@ async function seedDatabase() {
     console.log('Created investor user:', investor.email);
 
     // (Removed legacy startup user creation - replaced by entrepreneur user)
-    // Create judge user
-    const judgePassword = await hashPassword('judge123');
-    const judge = await prisma.user.create({
-      data: {
-        email: 'judge@example.com',
-        password: judgePassword,
-        name: 'Judge User',
-        role: 'JUDGE',
-        judgeProfile: {
-          create: {
-            specialty: 'Technical Innovation, Business Model',
-            experience: 'Judged 10+ hackathons',
-          },
-        },
-        profile: {
-          create: {
-            bio: 'Experienced hackathon judge',
-          },
-        },
-      },
-    });
-    console.log('Created judge user:', judge.email);
-
-    // Create participant user
-    const participantPassword = await hashPassword('participant123');
-    const participant = await prisma.user.create({
-      data: {
-        email: 'participant@example.com',
-        password: participantPassword,
-        name: 'Participant User',
-        role: 'PARTICIPANT',
-        participantProfile: {
-          create: {
-            skills: 'JavaScript, React, Node.js',
-            interests: 'Web Development, Mobile Apps',
-            education: 'Computer Science Degree',
-            experience: '2 years of development experience',
-          },
-        },
-        profile: {
-          create: {
-            bio: 'Passionate developer looking to build innovative solutions',
-          },
-        },
-      },
-    });
-    console.log('Created participant user:', participant.email);
 
     // Create entrepreneur user
     const entrepreneurPassword = await hashPassword('entrepreneur123');
@@ -224,78 +177,6 @@ async function seedDatabase() {
     });
     console.log('Created entrepreneur user:', entrepreneur.email);
 
-    // Create a sample hackathon
-    const hackathon = await prisma.hackathon.create({
-      data: {
-        name: 'هاكاثون التقنية المالية',
-        description: 'هاكاثون لتطوير حلول مبتكرة في مجال التقنية المالية',
-        startDate: new Date('2025-04-01'),
-        endDate: new Date('2025-04-07'),
-        location: 'الرياض، المملكة العربية السعودية',
-        status: 'UPCOMING',
-        teams: {
-          create: [
-            {
-              name: 'فريق AI Innovators',
-              members: 4,
-              project: 'نظام ذكاء اصطناعي للكشف المبكر عن الأمراض',
-              status: 'ACTIVE',
-            },
-            {
-              name: 'فريق Tech Wizards',
-              members: 3,
-              project: 'منصة لإدارة المشاريع باستخدام الذكاء الاصطناعي',
-              status: 'ACTIVE',
-            },
-          ],
-        },
-        judges: {
-          create: [
-            {
-              name: 'Judge User',
-              specialty: 'Technical Innovation, Business Model',
-            },
-            {
-              name: 'أحمد محمد',
-              specialty: 'User Experience, Design',
-            },
-          ],
-        },
-        prizes: {
-          create: [
-            {
-              rank: 'المركز الأول',
-              amount: '50,000 ريال',
-            },
-            {
-              rank: 'المركز الثاني',
-              amount: '30,000 ريال',
-            },
-            {
-              rank: 'المركز الثالث',
-              amount: '20,000 ريال',
-            },
-          ],
-        },
-        timeline: {
-          create: [
-            {
-              date: new Date('2025-04-01'),
-              event: 'بداية الهاكاثون',
-            },
-            {
-              date: new Date('2025-04-03'),
-              event: 'عرض التقدم المرحلي',
-            },
-            {
-              date: new Date('2025-04-07'),
-              event: 'العروض النهائية وإعلان الفائزين',
-            },
-          ],
-        },
-      },
-    });
-    console.log('Created sample hackathon:', hackathon.name);
 
     console.log('Database seeding completed successfully.');
   } catch (error) {

@@ -24,7 +24,6 @@ model User {
   startupProfile StartupProfile?
   mentorProfile MentorProfile?
   investorProfile InvestorProfile?
-  judgeProfile JudgeProfile?
   adminProfile AdminProfile?
   programManagerProfile ProgramManagerProfile?
   entrepreneurProfile EntrepreneurProfile?
@@ -105,15 +104,6 @@ model InvestorProfile {
   updatedAt     DateTime  @updatedAt
 }
 
-model JudgeProfile {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  specialty     String?
-  experience    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
 
 model AdminProfile {
   id            String    @id @default(uuid())
@@ -190,63 +180,6 @@ model Startup {
   updatedAt           DateTime       @updatedAt
 }
 
-model Hackathon {
-  id            String    @id @default(uuid())
-  name          String
-  description   String?
-  startDate     DateTime
-  endDate       DateTime
-  location      String?
-  status        HackathonStatus @default(UPCOMING)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  teams         Team[]
-  judges        Judge[]
-  prizes        Prize[]
-  timeline      TimelineEvent[]
-}
-
-model Team {
-  id            String    @id @default(uuid())
-  name          String
-  hackathonId   String
-  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  members       Int?
-  project       String?
-  status        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model Judge {
-  id            String    @id @default(uuid())
-  name          String
-  hackathonId   String
-  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  specialty     String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model Prize {
-  id            String    @id @default(uuid())
-  rank          String
-  amount        String
-  hackathonId   String
-  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model TimelineEvent {
-  id            String    @id @default(uuid())
-  date          DateTime
-  event         String
-  hackathonId   String
-  hackathon     Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
 
 model Milestone {
   id          String   @id @default(uuid())
@@ -306,16 +239,8 @@ enum UserRole {
   PROGRAM_MANAGER
   MENTOR
   INVESTOR
-  JUDGE
   PARTICIPANT
   ENTREPRENEUR
-}
-
-enum HackathonStatus {
-  UPCOMING
-  ACTIVE
-  COMPLETED
-  CANCELLED
 }
 
 enum InvitationType {

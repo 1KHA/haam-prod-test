@@ -143,14 +143,6 @@ export default function RolesPermissions() {
         ]
       },
       {
-        category: "hackathons",
-        displayName: "الهاكاثونات",
-        actions: [
-          { action: "view", pages: ["/admin-dashboard/hackathons"] },
-          { action: "edit", pages: ["/admin-dashboard/hackathons"] }
-        ]
-      },
-      {
         category: "integrations",
         displayName: "التكاملات",
         actions: [
@@ -371,24 +363,6 @@ export default function RolesPermissions() {
         actions: [
           { action: "view", pages: ["/investor-dashboard/profile"] },
           { action: "edit", pages: ["/investor-dashboard/profile"] }
-        ]
-      }
-    ],
-    JUDGE: [
-      {
-        category: "dashboard",
-        displayName: "لوحة التحكم",
-        actions: [
-          { action: "view", pages: ["/judge-dashboard"] }
-        ]
-      },
-      {
-        category: "evaluation",
-        displayName: "التقييم",
-        actions: [
-          { action: "view", pages: ["/judge-dashboard/evaluate"] },
-          { action: "edit", pages: ["/judge-dashboard/evaluate"] },
-          { action: "add", pages: ["/judge-dashboard/evaluate (Score Submission)"] }
         ]
       }
     ],
@@ -998,7 +972,6 @@ export default function RolesPermissions() {
                       "مدير برنامج": "PROGRAM_MANAGER",
                       "موجه": "MENTOR",
                       "مستثمر": "INVESTOR",
-                      "محكم": "JUDGE",
 "مشارك": "PARTICIPANT",
 "رائد أعمال": "ENTREPRENEUR"
                     };

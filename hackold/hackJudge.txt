@@ -1,0 +1,35 @@
+Judge Dashboard Features
+1. Dashboard Overview
+Quick Access to Assigned Tasks: View upcoming evaluations, pitch events, and pending applications.
+Real-Time Scoring Updates: Track startups evaluated, average scores, and ranking.
+Notifications & Deadlines: Reminders for upcoming judging sessions, score submission deadlines, and feedback requests.
+2. Profile & Availability Management
+Profile Setup: Update bio, expertise, and judging preferences (e.g., industry focus).
+Availability Scheduling: Set available time slots for reviewing applications or attending pitch sessions.
+3. Application & Pitch Evaluation
+Application Review & Scoring
+
+Access startup applications with business summaries, pitch decks, and financial projections.
+Score startups based on predefined criteria (e.g., Market Viability, Team Strength, Scalability).
+Submit comments and recommendations.
+Pitch Competition Scoring
+
+View live or recorded startup pitches.
+Score based on criteria like presentation clarity, business potential, and innovation.
+Compare scores with other judges for ranking.
+Feedback Submission
+
+Provide structured feedback on strengths, weaknesses, and areas for improvement.
+Option to leave confidential comments for program managers.
+4. Startup Shortlisting & Decision Making
+Final Evaluation Summary: See a compiled list of top-ranked startups based on judge scores.
+Collaborative Discussion: Engage in discussions with other judges for final selections.
+Voting & Approval System: Vote on startups for funding, awards, or program admission.
+5. Event & Demo Day Participation
+Judge Startup Pitches: Attend or review recorded demo day pitches.
+Provide Live Feedback: Submit instant feedback during pitch events.
+Track Event Schedule: View assigned judging sessions and event agenda.
+6. Reports & Insights
+Judging Performance Analytics: Track startups evaluated, average scores given, and feedback impact.
+Startup Growth Tracking: Follow progress of judged startups over time.
+Final Reports: Download and review overall judging results.

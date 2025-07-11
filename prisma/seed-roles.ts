@@ -21,12 +21,10 @@ async function main() {
     'cohorts',
     'resources',
     'analytics',
-    'hackathons',
     'integrations',
     'notifications',
     'discussions',
     'portfolio',
-    'evaluation',
     'profile',
     'support'
   ];
@@ -113,17 +111,6 @@ async function main() {
     },
   });
 
-  // Create judge role
-  const judgeRole = await prisma.role.upsert({
-    where: { name: 'محكم' },
-    update: {
-      description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات',
-    },
-    create: {
-      name: 'محكم',
-      description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات',
-    },
-  });
 
   // Create participant role
   const participantRole = await prisma.role.upsert({
@@ -392,47 +379,6 @@ async function main() {
     }
   }
 
-  // Add permissions to judge role
-  const judgePermissions = [
-    { category: 'dashboard', action: 'view' },
-    { category: 'startups', action: 'view' },
-    { category: 'reports', action: 'view' },
-    { category: 'evaluation', action: 'view' },
-    { category: 'evaluation', action: 'edit' },
-    { category: 'evaluation', action: 'add' },
-  ];
-
-  for (const { category, action } of judgePermissions) {
-    const permission = await prisma.permission.findUnique({
-      where: {
-        category_action: {
-          category,
-          action,
-        },
-      },
-    });
-
-    if (permission) {
-      // Check if the role permission already exists
-      const existingRolePermission = await prisma.rolePermission.findFirst({
-        where: {
-          roleId: judgeRole.id,
-          permissionId: permission.id,
-          userId: null,
-        },
-      });
-
-      if (!existingRolePermission) {
-        // Create the role permission if it doesn't exist
-        await prisma.rolePermission.create({
-          data: {
-            roleId: judgeRole.id,
-            permissionId: permission.id,
-          },
-        });
-      }
-    }
-  }
 
   // Add permissions to participant role
   const participantPermissions = [

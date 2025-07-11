@@ -250,7 +250,6 @@ function getRoleNameInArabic(role: UserRole): string {
     [UserRole.PROGRAM_MANAGER]: 'مدير برنامج',
     [UserRole.MENTOR]: 'موجه',
     [UserRole.INVESTOR]: 'مستثمر',
-    [UserRole.JUDGE]: 'محكم',
     [UserRole.PARTICIPANT]: 'مشارك',
     [UserRole.ENTREPRENEUR]: 'رائد أعمال',
   };

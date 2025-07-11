@@ -1,0 +1,111 @@
+**Product Requirements Document (PRD)**
+
+# **Hackathon Management Platform**
+
+## **1. Introduction**
+The Hackathon Management Platform is a web-based system designed to facilitate the organization and management of hackathons, providing real-time data for administrators, participants, judges, mentors, and organizers. It ensures seamless coordination of events, participant registration, project submissions, judging, and result announcements.
+
+## **2. Objectives**
+- Provide a user-friendly interface for hackathon organizers, participants, judges, and mentors.
+- Enable real-time updates for dashboards and result tracking.
+- Streamline project submissions, evaluations, and scoring.
+- Offer automated leaderboards and result announcements.
+- Facilitate communication among participants, mentors, and organizers.
+
+## **3. User Roles & Permissions**
+### **3.1 Admin**
+- Manage hackathons (create, update, delete events).
+- Approve/reject project submissions.
+- Assign and manage judges and mentors.
+- Monitor participant activity and statistics.
+- View real-time dashboard analytics.
+- Manage notifications and announcements.
+
+### **3.2 Organizers**
+- Manage event logistics.
+- Approve team formations.
+- Oversee participant and mentor activities.
+- Monitor real-time hackathon progress.
+- Send announcements and updates.
+
+### **3.3 Participants**
+- Register for hackathons.
+- Create and manage teams.
+- Submit projects.
+- Communicate with team members, mentors, and organizers.
+- View real-time leaderboard and scores.
+
+### **3.4 Judges**
+- Evaluate project submissions.
+- Provide scores and feedback.
+- View real-time judging analytics.
+
+### **3.5 Mentors**
+- Guide and support participants.
+- Provide feedback on projects.
+- Communicate with teams in real-time.
+- View participant progress and engagement.
+
+## **4. Functional Requirements**
+### **4.1 Hackathon Management**
+- Admins can create hackathons with details such as name, description, rules, start/end dates.
+- Registration portal for participants with email verification.
+- Team creation and management.
+- Submission portal for projects, including file uploads and description fields.
+
+### **4.2 Real-Time Dashboard**
+- **Admin Dashboard:**
+  - Total number of participants, teams, and submissions.
+  - Live event timeline and statistics.
+  - Real-time chat and notifications.
+  - Judge and mentor activity tracking.
+- **Organizer Dashboard:**
+  - Overview of all hackathons and logistics.
+  - Participant, mentor, and judge activity monitoring.
+  - Real-time team formation status.
+  - Direct announcements to participants.
+- **Participant Dashboard:**
+  - Hackathon details and progress.
+  - Team status and project submission tracker.
+  - Real-time leaderboard.
+- **Judge Dashboard:**
+  - Assigned projects for evaluation.
+  - Scoring and feedback submission.
+  - Live ranking and evaluation statistics.
+- **Mentor Dashboard:**
+  - Assigned teams and projects.
+  - Chat and communication tools for guiding participants.
+  - Feedback submission portal.
+  - Participant engagement tracker.
+
+### **4.3 Real-Time Judging & Results**
+- Judges can score projects using predefined criteria.
+- Real-time calculation of scores and automatic leaderboard updates.
+- Live result announcements at the event's conclusion.
+
+### **4.4 Communication System**
+- In-app chat for team members, mentors, and organizers.
+- Email and push notifications for important updates.
+- Discussion forums for participants.
+
+### **4.5 Security & Access Control**
+- Secure authentication (OAuth, JWT tokens).
+- Role-based access control (RBAC).
+- Data encryption for sensitive information.
+
+## **5. Non-Functional Requirements**
+- **Scalability:** Handle thousands of users simultaneously.
+- **Performance:** Real-time updates with minimal latency.
+- **Security:** Prevent unauthorized access and data breaches.
+- **Usability:** Intuitive and responsive UI across all devices.
+
+## **6. Technology Stack**
+- **Frontend:** React.js / Next.js
+- **Backend:** Node.js / Express / Java Spring Boot
+- **Database:** PostgreSQL / MongoDB
+- **Real-Time Processing:** WebSockets / Socket.IO
+- **Hosting:** AWS / Firebase / DigitalOcean
+
+## **7. Conclusion**
+The Hackathon Management Platform will revolutionize hackathon organization by offering real-time insights and a seamless participant experience. The system ensures transparency, efficiency, and engagement through real-time dashboards, live judging, and automated result processing.
+

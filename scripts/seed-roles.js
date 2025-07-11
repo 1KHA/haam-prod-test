@@ -19,8 +19,8 @@ try {
   
   console.log('\n✅ Role and permission seeding completed successfully!');
   console.log('\n📋 Summary:');
-  console.log('- Created 8 roles (ADMIN, PROGRAM_MANAGER, STARTUP, MENTOR, INVESTOR, JUDGE, PARTICIPANT, ACCELERATOR)');
-  console.log('- Created permissions for 20 categories with 4 actions each');
+  console.log('- Created 7 roles (ADMIN, PROGRAM_MANAGER, STARTUP, MENTOR, INVESTOR, PARTICIPANT, ACCELERATOR)');
+  console.log('- Created permissions for 18 categories with 4 actions each');
   console.log('- Assigned appropriate permissions to each role');
   console.log('\n🎉 Your RBAC system is ready to use!');
   

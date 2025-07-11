@@ -31,8 +31,6 @@
 - ✅ **Startup Dashboard**: Basic layout and navigation
 - ✅ **Mentor Dashboard**: Basic layout and navigation
 - ✅ **Investor Dashboard**: Basic layout and navigation
-- ✅ **Judge Dashboard**: Basic layout and navigation
-- ✅ **Participant Dashboard**: Basic layout and navigation
 - ✅ **Accelerator Dashboard**: Basic layout and navigation
 
 ### Documentation
@@ -87,15 +85,6 @@
 - ⬜ **Portfolio Management**: Manage startup portfolio
 - ⬜ **Performance Tracking**: Track startup performance metrics
 
-### Judge Dashboard
-- ⬜ **Evaluation Interface**: Evaluate startup applications and pitches
-- ⬜ **Scoring System**: Score startups based on criteria
-- ⬜ **Feedback Submission**: Provide feedback to startups
-
-### Participant Dashboard
-- ⬜ **Event Registration**: Register for program events
-- ⬜ **Resource Access**: Access program resources
-- ⬜ **Profile Management**: Manage participant profile
 
 ### Accelerator Dashboard
 - ⬜ **Program Management**: Manage accelerator programs
@@ -131,8 +120,6 @@
 | Startup Dashboard | 10% Complete | Medium | Basic structure only |
 | Mentor Dashboard | 10% Complete | Medium | Basic structure only |
 | Investor Dashboard | 10% Complete | Medium | Basic structure only |
-| Judge Dashboard | 10% Complete | Low | Basic structure only |
-| Participant Dashboard | 5% Complete | Low | Basic structure only |
 | Accelerator Dashboard | 10% Complete | Medium | Basic structure only |
 | Documentation | 60% Complete | High | Good progress on technical documentation |
 

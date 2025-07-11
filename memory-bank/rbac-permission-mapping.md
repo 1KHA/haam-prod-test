@@ -8,8 +8,6 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 - **PROGRAM_MANAGER** - مدير برنامج (Program Manager)
 - **MENTOR** - موجه (Mentor)
 - **INVESTOR** - مستثمر (Investor)
-- **JUDGE** - محكم (Judge)
-- **PARTICIPANT** - مشارك (Participant)
 - **ENTREPRENEUR** - رائد أعمال (Entrepreneur)
 
 ## Permission Categories
@@ -27,12 +25,10 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 - **cohorts** - الدفعات
 - **resources** - الموارد
 - **analytics** - التحليلات
-- **hackathons** - الهاكاثونات
 - **integrations** - التكاملات
 - **notifications** - الإشعارات
 - **discussions** - المناقشات
 - **portfolio** - المحفظة
-- **evaluation** - التقييم
 
 ## Permission Actions
 - **view** - عرض
@@ -55,7 +51,6 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 | /admin-dashboard/analytics | analytics/view | ADMIN |
 | /admin-dashboard/events | events/view, events/edit | ADMIN |
 | /admin-dashboard/funding | funding/view, funding/edit | ADMIN |
-| /admin-dashboard/hackathons | hackathons/view, hackathons/edit | ADMIN |
 | /admin-dashboard/integrations | integrations/view, integrations/edit | ADMIN |
 | /admin-dashboard/notifications | notifications/view, notifications/edit | ADMIN |
 | /admin-dashboard/payments | payments/view, payments/edit | ADMIN |
@@ -119,19 +114,6 @@ This document provides a comprehensive mapping of all routes, tabs, and function
 | /investor-dashboard/performance | portfolio/view | INVESTOR |
 | /investor-dashboard/profile | users/view, users/edit | INVESTOR |
 
-### Judge Dashboard Routes
-
-| Route/Tab/Function | Permission (Category/Action) | Roles Allowed |
-|-------------------|------------------------------|---------------|
-| /judge-dashboard | dashboard/view | JUDGE |
-| /judge-dashboard/evaluate | evaluation/view, evaluation/edit | JUDGE |
-| /judge-dashboard/evaluate (Score Submission) | evaluation/add | JUDGE |
-
-### Participant Dashboard Routes
-
-| Route/Tab/Function | Permission (Category/Action) | Roles Allowed |
-|-------------------|------------------------------|---------------|
-| /participant-dashboard | dashboard/view | PARTICIPANT |
 
 ### Entrepreneur Dashboard Routes
 

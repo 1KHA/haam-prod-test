@@ -16,9 +16,7 @@ The Accelerator & Incubator Management Platform is a comprehensive web applicati
 3. **Startups** - Founders and teams participating in accelerator programs
 4. **Mentors** - Industry experts providing guidance to startups
 5. **Investors** - Individuals or organizations looking to fund startups
-6. **Judges** - Evaluate startup pitches and applications
-7. **Participants** - Individual participants in programs
-8. **Accelerators** - Organizations running accelerator programs
+6. **Accelerators** - Organizations running accelerator programs
 
 ## Key Features
 1. **Role-Based Dashboards** - Customized interfaces for each user role

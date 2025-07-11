@@ -19,9 +19,7 @@ Alongside the RBAC implementation, work is being done to refine the role-specifi
 3. **Startup Dashboard**: Profile, team, and milestone management
 4. **Mentor Dashboard**: Availability, sessions, and feedback management
 5. **Investor Dashboard**: Startup discovery and portfolio management
-6. **Judge Dashboard**: Evaluation interface
-7. **Participant Dashboard**: Basic participation interface
-8. **Accelerator Dashboard**: Program and startup management
+6. **Accelerator Dashboard**: Program and startup management
 
 ## Recent Changes
 

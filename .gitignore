@@ -41,3 +41,5 @@ next-env.d.ts
 .mdc 
 /dev.db
 /prisma/dev.db
+
+apps

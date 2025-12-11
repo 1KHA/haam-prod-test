@@ -1,6 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { fetchWithAuth } from "@/lib/api-client"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
+import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -33,13 +37,309 @@ import {
 } from "lucide-react"
 
 export default function ReportsManagement() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [dateRange, setDateRange] = useState("month")
   const [selectedReports, setSelectedReports] = useState<string[]>([])
+  
+  // Added state for API data and loading
+  const [reports, setReports] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Modal states for upload and filter functionality
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [filterOptions, setFilterOptions] = useState({
+    category: "",
+    status: "",
+    format: "",
+    dateFrom: "",
+    dateTo: "",
+    createdBy: ""
+  })
+  
+  const [statistics, setStatistics] = useState({
+    totalReports: 0,
+    publishedReports: 0,
+    draftReports: 0,
+    scheduledReports: 0,
+    totalDownloads: 0,
+    mostDownloadedReport: null as any
+  })
 
-  // Sample reports data
-  const reports = [
+  // API functions to interact with the backend
+  const fetchReports = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // Build query parameters based on filters
+      let queryParams = new URLSearchParams()
+      
+      if (searchQuery) {
+        queryParams.append('search', searchQuery)
+      }
+      
+      // Map tab to appropriate filter with more inclusive status values
+      // Using both Arabic and English values to handle potential mismatches
+      if (activeTab === "published") queryParams.append('status', 'published,منشور')
+      if (activeTab === "draft") queryParams.append('status', 'draft,مسودة')
+      if (activeTab === "scheduled") queryParams.append('status', 'scheduled,مجدول')
+      if (activeTab === "financial") queryParams.append('category', 'مالي,التمويل')
+      if (activeTab === "programs") queryParams.append('category', 'أداء البرامج,التوجيه')
+      if (activeTab === "startups") queryParams.append('category', 'الشركات الناشئة')
+      
+      // Add debug logging for query parameters
+      console.log('Query parameters:', queryParams.toString())
+      
+      const response = await fetchWithAuth(`/api/admin/reports?${queryParams.toString()}`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch reports')
+      }
+      
+      const data = await response.json()
+      
+      // Add logging to debug response format
+      console.log('API Response:', data)
+      
+      // Check if data.reports exists and is an array
+      if (!data.reports || !Array.isArray(data.reports)) {
+        console.error('Invalid response format:', data)
+        throw new Error('Invalid response format')
+      }
+      
+      setReports(data.reports)
+      
+      // Update statistics
+      updateStatistics(data.reports)
+    } catch (error) {
+      console.error('Error fetching reports:', error)
+      setError('Failed to load reports. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Function to update statistics based on fetched reports
+  const updateStatistics = (reports: any[]) => {
+    // Ensure reports is an array and not empty
+    if (!Array.isArray(reports) || reports.length === 0) {
+      setStatistics({
+        totalReports: 0,
+        publishedReports: 0,
+        draftReports: 0,
+        scheduledReports: 0,
+        totalDownloads: 0,
+        mostDownloadedReport: null
+      })
+      return
+    }
+    
+    // Process reports with valid data
+    const validReports = reports.filter(r => r !== null && r !== undefined)
+    
+    const totalReports = validReports.length
+    const publishedReports = validReports.filter(r => r.status === 'published' || r.status === 'منشور').length
+    const draftReports = validReports.filter(r => r.status === 'draft' || r.status === 'مسودة').length
+    const scheduledReports = validReports.filter(r => r.status === 'scheduled' || r.status === 'مجدول').length
+    const totalDownloads = validReports.reduce((sum, r) => sum + (r.downloadCount || 0), 0)
+    
+    // Calculate mostDownloadedReport safely
+    let mostDownloadedReport = null
+    if (validReports.length > 0) {
+      // Find the report with the highest download count
+      mostDownloadedReport = validReports.reduce((prev, current) => {
+        // Handle missing downloadCount properties
+        const prevCount = prev.downloadCount || 0
+        const currentCount = current.downloadCount || 0
+        
+        return prevCount > currentCount ? prev : current
+      }, validReports[0])
+    }
+    
+    setStatistics({
+      totalReports,
+      publishedReports,
+      draftReports,
+      scheduledReports,
+      totalDownloads,
+      mostDownloadedReport
+    })
+  }
+  
+  // Function to handle exporting reports
+  const handleExport = () => {
+    // Determine which reports to export (all or selected)
+    let url = '/api/admin/reports/export'
+    
+    if (selectedReports.length > 0) {
+      const idsList = selectedReports.join(',')
+      url += `?ids=${idsList}`
+    }
+    
+    // Open in a new tab
+    window.open(url, '_blank')
+  }
+  
+  // Function to handle printing reports
+  const handlePrint = (reportId: string) => {
+    window.open(`/api/admin/reports/print?id=${reportId}`, '_blank')
+  }
+  
+  // Function to handle viewing a report
+  const handleView = (reportId: string) => {
+    window.open(`/api/admin/reports/view?id=${reportId}`, '_blank')
+  }
+  
+  // Function to handle file upload
+  const handleUpload = async () => {
+    if (!uploadFile) return
+    
+    try {
+      setUploadProgress(0)
+      const formData = new FormData()
+      formData.append('file', uploadFile)
+      formData.append('title', uploadFile.name.split('.')[0])
+      
+      // Create a mock progress update
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval)
+            return prev
+          }
+          return prev + 5
+        })
+      }, 200)
+      
+      const response = await fetchWithAuth('/api/admin/reports/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      clearInterval(progressInterval)
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload report')
+      }
+      
+      setUploadProgress(100)
+      
+      // Reset the form and close modal after successful upload
+      setTimeout(() => {
+        setUploadFile(null)
+        setUploadProgress(0)
+        setShowUploadModal(false)
+        // Refresh data
+        fetchReports()
+      }, 1000)
+      
+    } catch (error) {
+      console.error('Error uploading report:', error)
+      setError('Failed to upload report. Please try again.')
+      setUploadProgress(0)
+    }
+  }
+  
+  // Function to handle advanced filtering
+  const applyFilters = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // Build query parameters based on filter options
+      let queryParams = new URLSearchParams()
+      
+      if (filterOptions.category) queryParams.append('category', filterOptions.category)
+      if (filterOptions.status) queryParams.append('status', filterOptions.status)
+      if (filterOptions.format) queryParams.append('format', filterOptions.format)
+      if (filterOptions.dateFrom) queryParams.append('dateFrom', filterOptions.dateFrom)
+      if (filterOptions.dateTo) queryParams.append('dateTo', filterOptions.dateTo)
+      if (filterOptions.createdBy) queryParams.append('createdBy', filterOptions.createdBy)
+      
+      const response = await fetchWithAuth(`/api/admin/reports/filter?${queryParams.toString()}`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to filter reports')
+      }
+      
+      const data = await response.json()
+      setReports(data.reports)
+      
+      // Update statistics based on filtered reports
+      updateStatistics(data.reports)
+      
+      // Close the filter modal
+      setShowFilterModal(false)
+    } catch (error) {
+      console.error('Error filtering reports:', error)
+      setError('Failed to filter reports. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Function to handle report sharing
+  const handleShare = async (reportId: string, userIds: string[]) => {
+    try {
+      const response = await fetchWithAuth('/api/admin/reports/share', {
+        method: 'POST',
+        body: JSON.stringify({
+          reportId,
+          userIds,
+          message: 'تمت مشاركة هذا التقرير معك'
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to share report')
+      }
+      
+      // Optionally show success notification
+      alert('تمت مشاركة التقرير بنجاح')
+    } catch (error) {
+      console.error('Error sharing report:', error)
+      alert('حدث خطأ أثناء مشاركة التقرير')
+    }
+  }
+  
+  // Function to handle updating report data
+  const handleUpdate = async (reportId: string, newData: any) => {
+    try {
+      const response = await fetchWithAuth(`/api/admin/reports/${reportId}`, {
+        method: 'PUT',
+        body: JSON.stringify(newData)
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update report')
+      }
+      
+      // Refresh data
+      fetchReports()
+    } catch (error) {
+      console.error('Error updating report:', error)
+    }
+  }
+  
+  // Function to refresh data
+  const refreshData = () => {
+    fetchReports()
+  }
+  
+  // Fetch reports when tab, search query, or date range changes
+  useEffect(() => {
+    fetchReports()
+  }, [activeTab, searchQuery, dateRange])
+  
+  // Legacy sample data for comparison - to be removed
+  const sampleReports = [
     { 
       id: "1", 
       title: "تقرير أداء المسرعات - الربع الأول 2025", 
@@ -147,14 +447,31 @@ export default function ReportsManagement() {
   ]
 
   // Filter reports based on active tab, search query, and date range
-  const filteredReports = reports.filter(report => {
+  const filteredReports = isLoading ? [] : reports.filter(report => {
+    // Check if report is valid before filtering
+    if (!report) return false
+    
+    // Handle potential missing properties
+    const status = report.status || ""
+    const category = report.category || ""
+    
+    // Map API status values to display values if needed
+    const statusMapping: Record<string, string> = {
+      'published': 'منشور',
+      'draft': 'مسودة',
+      'scheduled': 'مجدول'
+    }
+    
+    // Use mapped status if available
+    const displayStatus = statusMapping[status] || status
+    
     // Filter by tab
-    if (activeTab === "published" && report.status !== "منشور") return false
-    if (activeTab === "draft" && report.status !== "مسودة") return false
-    if (activeTab === "scheduled" && report.status !== "مجدول") return false
-    if (activeTab === "financial" && report.category !== "مالي" && report.category !== "التمويل") return false
-    if (activeTab === "programs" && report.category !== "أداء البرامج" && report.category !== "التوجيه") return false
-    if (activeTab === "startups" && report.category !== "الشركات الناشئة") return false
+    if (activeTab === "published" && displayStatus !== "منشور") return false
+    if (activeTab === "draft" && displayStatus !== "مسودة") return false
+    if (activeTab === "scheduled" && displayStatus !== "مجدول") return false
+    if (activeTab === "financial" && category !== "مالي" && category !== "التمويل") return false
+    if (activeTab === "programs" && category !== "أداء البرامج" && category !== "التوجيه") return false
+    if (activeTab === "startups" && category !== "الشركات الناشئة") return false
 
     // Filter by search query
     if (searchQuery) {
@@ -185,32 +502,78 @@ export default function ReportsManagement() {
     }
   }
 
-  // Calculate statistics
-  const totalReports = reports.length
-  const publishedReports = reports.filter(r => r.status === "منشور").length
-  const totalDownloads = reports.reduce((sum, r) => sum + r.downloadCount, 0)
-  const mostDownloadedReport = reports.reduce((prev, current) => 
-    (prev.downloadCount > current.downloadCount) ? prev : current
-  )
+  // Statistics are already calculated and stored in the statistics state
+  // No need to recalculate here
 
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => setShowUploadModal(true)}
+            disabled={isLoading}
+          >
+            <FileText className="h-4 w-4" />
+            <span>تحميل</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleExport}
+            disabled={isLoading}
+          >
             <Download className="h-4 w-4" />
             <span>تصدير</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              if (selectedReports.length === 1) {
+                handlePrint(selectedReports[0])
+              } else {
+                alert('الرجاء تحديد تقرير واحد للطباعة')
+              }
+            }}
+            disabled={isLoading || selectedReports.length !== 1}
+          >
             <Printer className="h-4 w-4" />
             <span>طباعة</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              if (selectedReports.length === 1) {
+                // In a real implementation, we would show a sharing modal here
+                handleShare(selectedReports[0], ['user1', 'user2'])
+              } else {
+                alert('الرجاء تحديد تقرير واحد للمشاركة')
+              }
+            }}
+            disabled={isLoading || selectedReports.length !== 1}
+          >
             <Share2 className="h-4 w-4" />
             <span>مشاركة</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <RefreshCw className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={refreshData}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             <span>تحديث</span>
           </Button>
         </div>
@@ -226,10 +589,18 @@ export default function ReportsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalReports}</div>
-            <div className="text-sm text-muted-foreground mt-1">
-              {publishedReports} منشور • {reports.filter(r => r.status === "مسودة").length} مسودة • {reports.filter(r => r.status === "مجدول").length} مجدول
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl font-bold">{statistics.totalReports}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {statistics.publishedReports} منشور • {statistics.draftReports} مسودة • {statistics.scheduledReports} مجدول
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -241,11 +612,19 @@ export default function ReportsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalDownloads}</div>
-            <div className="flex items-center mt-2 text-green-600">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              <span>+15% من الشهر السابق</span>
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl font-bold">{statistics.totalDownloads}</div>
+                <div className="flex items-center mt-2 text-green-600">
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  <span>+15% من الشهر السابق</span>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -257,10 +636,21 @@ export default function ReportsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{reports.filter(r => r.status === "مجدول").length}</div>
-            <div className="text-sm text-muted-foreground mt-1">
-              التقرير التالي: {reports.find(r => r.status === "مجدول")?.date || "لا يوجد"}
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl font-bold">{statistics.scheduledReports}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {reports.find(r => r.status === "scheduled")?.publishDate 
+                    ? new Date(reports.find(r => r.status === "scheduled")?.publishDate).toLocaleDateString('ar-SA')
+                    : "لا يوجد"
+                  }
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -272,12 +662,22 @@ export default function ReportsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold truncate" title={mostDownloadedReport.title}>
-              {mostDownloadedReport.title}
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">
-              {mostDownloadedReport.downloadCount} تنزيل
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : statistics.mostDownloadedReport ? (
+              <>
+                <div className="text-lg font-bold truncate" title={statistics.mostDownloadedReport.title}>
+                  {statistics.mostDownloadedReport.title}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {statistics.mostDownloadedReport.downloadCount} تنزيل
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">لا توجد تقارير</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -293,35 +693,231 @@ export default function ReportsManagement() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
-        
-        <div className="flex gap-4">
-          <select 
-            className="p-2 border rounded-md"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-          >
-            <option value="week">آخر 7 أيام</option>
-            <option value="month">آخر 30 يوم</option>
-            <option value="quarter">آخر 3 أشهر</option>
-            <option value="year">آخر سنة</option>
-          </select>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-            <TabsList className="grid grid-cols-3 md:grid-cols-7">
-              <TabsTrigger value="startups">الشركات</TabsTrigger>
-              <TabsTrigger value="programs">البرامج</TabsTrigger>
-              <TabsTrigger value="financial">مالي</TabsTrigger>
-              <TabsTrigger value="scheduled">مجدول</TabsTrigger>
-              <TabsTrigger value="draft">مسودة</TabsTrigger>
-              <TabsTrigger value="published">منشور</TabsTrigger>
-              <TabsTrigger value="all">الكل</TabsTrigger>
-            </TabsList>
-          </Tabs>
+      </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full">
+            <h3 className="text-xl font-bold mb-4 text-right">تحميل تقرير جديد</h3>
+            
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50"
+                onClick={() => document.getElementById('fileUpload')?.click()}>
+                <input 
+                  type="file" 
+                  id="fileUpload" 
+                  className="hidden" 
+                  accept=".pdf,.xlsx,.pptx,.docx"
+                  onChange={(e) => e.target.files && setUploadFile(e.target.files[0])}
+                />
+                {uploadFile ? (
+                  <div className="space-y-2">
+                    <p>{uploadFile.name} ({(uploadFile.size / (1024 * 1024)).toFixed(2)} MB)</p>
+                    {uploadProgress > 0 && (
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <FileText className="h-12 w-12 mx-auto text-gray-400" />
+                    <p>انقر لتحديد ملف أو اسحبه وأفلته هنا</p>
+                    <p className="text-sm text-muted-foreground">PDF, XLSX, PPTX, DOCX (أقصى حجم: 10MB)</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUploadModal(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  onClick={handleUpload}
+                  disabled={!uploadFile || uploadProgress > 0}
+                >
+                  {uploadProgress > 0 ? 'جاري التحميل...' : 'تحميل'}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
+      
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-[500px] max-w-full">
+            <h3 className="text-xl font-bold mb-4 text-right">تصفية متقدمة</h3>
+            
+            <div className="space-y-4 text-right">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">التصنيف</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    value={filterOptions.category}
+                    onChange={(e) => setFilterOptions({...filterOptions, category: e.target.value})}
+                  >
+                    <option value="">الكل</option>
+                    <option value="أداء البرامج">أداء البرامج</option>
+                    <option value="التمويل">التمويل</option>
+                    <option value="الشركات الناشئة">الشركات الناشئة</option>
+                    <option value="المستخدمين">المستخدمين</option>
+                    <option value="الفعاليات">الفعاليات</option>
+                    <option value="تقني">تقني</option>
+                    <option value="التوجيه">التوجيه</option>
+                    <option value="مالي">مالي</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">الحالة</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    value={filterOptions.status}
+                    onChange={(e) => setFilterOptions({...filterOptions, status: e.target.value})}
+                  >
+                    <option value="">الكل</option>
+                    <option value="published">منشور</option>
+                    <option value="draft">مسودة</option>
+                    <option value="scheduled">مجدول</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">التنسيق</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    value={filterOptions.format}
+                    onChange={(e) => setFilterOptions({...filterOptions, format: e.target.value})}
+                  >
+                    <option value="">الكل</option>
+                    <option value="PDF">PDF</option>
+                    <option value="XLSX">XLSX</option>
+                    <option value="PPTX">PPTX</option>
+                    <option value="DOCX">DOCX</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">المنشئ</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-2 border rounded-md"
+                    value={filterOptions.createdBy}
+                    onChange={(e) => setFilterOptions({...filterOptions, createdBy: e.target.value})}
+                    placeholder="اسم المنشئ"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">من تاريخ</label>
+                  <input 
+                    type="date" 
+                    className="w-full p-2 border rounded-md"
+                    value={filterOptions.dateFrom}
+                    onChange={(e) => setFilterOptions({...filterOptions, dateFrom: e.target.value})}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">إلى تاريخ</label>
+                  <input 
+                    type="date" 
+                    className="w-full p-2 border rounded-md"
+                    value={filterOptions.dateTo}
+                    onChange={(e) => setFilterOptions({...filterOptions, dateTo: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-between pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilterModal(false)}
+                >
+                  إلغاء
+                </Button>
+                <div className="space-x-2 rtl:space-x-reverse">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFilterOptions({
+                        category: "",
+                        status: "",
+                        format: "",
+                        dateFrom: "",
+                        dateTo: "",
+                        createdBy: ""
+                      })
+                    }}
+                  >
+                    إعادة تعيين
+                  </Button>
+                  <Button
+                    onClick={applyFilters}
+                    disabled={isLoading}
+                  >
+                    تطبيق
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <div className="bg-red-50 p-4 rounded-md text-red-800 mb-4">
+          <p>{error}</p>
+          <button 
+            className="underline mt-2 text-sm"
+            onClick={refreshData}
+          >
+            محاولة مرة أخرى
+          </button>
+        </div>
+      )}
+      
+      <div className="flex gap-4">
+        <select 
+          className="p-2 border rounded-md"
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value)}
+        >
+          <option value="week">آخر 7 أيام</option>
+          <option value="month">آخر 30 يوم</option>
+          <option value="quarter">آخر 3 أشهر</option>
+          <option value="year">آخر سنة</option>
+        </select>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+          <TabsList className="grid grid-cols-3 md:grid-cols-7">
+            <TabsTrigger value="startups">الشركات</TabsTrigger>
+            <TabsTrigger value="programs">البرامج</TabsTrigger>
+            <TabsTrigger value="financial">مالي</TabsTrigger>
+            <TabsTrigger value="scheduled">مجدول</TabsTrigger>
+            <TabsTrigger value="draft">مسودة</TabsTrigger>
+            <TabsTrigger value="published">منشور</TabsTrigger>
+            <TabsTrigger value="all">الكل</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       <Card>
@@ -345,7 +941,12 @@ export default function ReportsManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md">
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="border rounded-md">
             <div className="grid grid-cols-8 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
               <div className="col-span-1 flex items-center">
                 <input 
@@ -374,10 +975,16 @@ export default function ReportsManagement() {
                       onChange={() => toggleReportSelection(report.id)}
                     />
                     <div className="flex gap-1">
-                      <button className="text-blue-500 hover:text-blue-700">
+                      <button 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={() => window.open(`/api/admin/reports/export?ids=${report.id}`, '_blank')}
+                      >
                         <Download className="h-4 w-4" />
                       </button>
-                      <button className="text-amber-500 hover:text-amber-700">
+                      <button 
+                        className="text-amber-500 hover:text-amber-700"
+                        onClick={() => handleView(report.id)}
+                      >
                         <FileText className="h-4 w-4" />
                       </button>
                     </div>
@@ -421,6 +1028,7 @@ export default function ReportsManagement() {
               </div>
             )}
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -449,7 +1057,7 @@ export default function ReportsManagement() {
                     <div 
                       className="h-3 rounded-full ml-2"
                       style={{ 
-                        width: `${(item.count / totalReports) * 100 / 3}rem`,
+                        width: `${(item.count / statistics.totalReports) * 100 / 3}rem`,
                         backgroundColor: item.color
                       }}
                     ></div>
@@ -457,7 +1065,7 @@ export default function ReportsManagement() {
                   </div>
                   <div className="flex items-center">
                     <span className="text-muted-foreground">{item.category}</span>
-                    <span className="text-xs text-muted-foreground mr-2">({Math.round((item.count / totalReports) * 100)}%)</span>
+                    <span className="text-xs text-muted-foreground mr-2">({Math.round((item.count / statistics.totalReports) * 100)}%)</span>
                   </div>
                 </div>
               ))}
@@ -497,25 +1105,46 @@ export default function ReportsManagement() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reports.filter(r => r.status === "مجدول").map((report) => (
-              <div key={report.id} className="flex items-center justify-between p-4 border rounded-md">
-                <div className="flex gap-4">
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>تعديل الجدولة</span>
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    <span>معاينة</span>
-                  </Button>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="font-medium">{report.title}</div>
-                  <div className="text-sm text-muted-foreground">{report.category} • {report.format}</div>
-                  <div className="text-xs text-muted-foreground">تاريخ النشر: {report.date} {report.time}</div>
-                </div>
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ))}
+            ) : (
+              reports.filter(r => r.status === "scheduled").map((report) => (
+                <div key={report.id} className="flex items-center justify-between p-4 border rounded-md">
+                  <div className="flex gap-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => {
+                        // In a real implementation, we would show a scheduling modal here
+                        alert('سيتم تنفيذ هذه الميزة قريبًا')
+                      }}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      <span>تعديل الجدولة</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => handleView(report.id)}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>معاينة</span>
+                    </Button>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="font-medium">{report.title}</div>
+                    <div className="text-sm text-muted-foreground">{report.category} • {report.format}</div>
+                    <div className="text-xs text-muted-foreground">
+                      تاريخ النشر: {report.publishDate ? new Date(report.publishDate).toLocaleDateString('ar-SA') : 'غير محدد'} {report.scheduledTime || ''}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

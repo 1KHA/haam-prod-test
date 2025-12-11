@@ -37,6 +37,13 @@ model User {
   companyMemberships CompanyMember[] @relation("UserToCompanyMember")
   invitationsReceived Invitation[] @relation("InviteeToInvitation") // Added for clarity, though not strictly required by error
   milestonesCreated Milestone[] @relation("UserToMilestone")
+  eventRegistrations EventRegistration[] // Relation to event registrations
+  createdEvents Event[] // Relation to events created by this user
+  createdFundings Funding[] @relation("UserToFunding") // Relation to funding created by this user
+  fundingOpportunities FundingOpportunity[] @relation("UserToFundingOpportunity") // Relation to funding opportunities
+  reports Report[] // Relation to reports created by this user
+  sharedReports ReportShare[] @relation("SharerToReportShare") // Reports shared by this user
+  receivedReports ReportShare[] @relation("ReceiverToReportShare") // Reports shared with this user
 }
 
 model Profile {
@@ -358,4 +365,117 @@ model CompanyMember {
   updatedAt    DateTime    @updatedAt
 
   @@unique([startupId, userId])
+}
+
+model Event {
+  id                  String            @id @default(uuid())
+  title               String
+  description         String
+  eventType           String            // e.g., "workshop", "conference", "hackathon", etc.
+  startDate           DateTime
+  endDate             DateTime
+  location            String
+  capacity            Int
+  status              String            @default("draft") // "draft", "published", "cancelled", "completed"
+  organizer           String
+  organizerId         String?           // Optional reference to the organizer's ID (could be admin, program manager, etc.)
+  registrationDeadline DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  registrations       EventRegistration[]
+  creatorId           String?
+  creator             User?             @relation(fields: [creatorId], references: [id])
+}
+
+model EventRegistration {
+  id              String    @id @default(uuid())
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          String    @default("confirmed") // "confirmed", "cancelled", "waitlist"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([eventId, userId])
+}
+
+// Funding models
+model Funding {
+  id              String    @id @default(uuid())
+  title           String
+  amount          String
+  startupId       String
+  startupName     String
+  status          String    // "مكتمل", "قيد المراجعة", "مرفوض"
+  date            DateTime
+  fundingType     String
+  investorName    String
+  description     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       String?
+  creator         User?     @relation("UserToFunding", fields: [createdBy], references: [id])
+}
+
+model FundingOpportunity {
+  id              String    @id @default(uuid())
+  title           String
+  description     String
+  fundingType     String    // "GRANT", "INVESTMENT", "LOAN"
+  amount          Int?
+  minAmount       Int?
+  maxAmount       Int?
+  currency        String    @default("SAR")
+  deadline        DateTime?
+  requirements    String?
+  applicationLink String?
+  contactEmail    String?
+  sectors         String?  // Comma-separated list of sectors
+  entrepreneurId  String?
+  entrepreneur    User?     @relation("UserToFundingOpportunity", fields: [entrepreneurId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Report model for system reports
+model Report {
+  id              String       @id @default(uuid())
+  title           String
+  description     String
+  category        String    // "أداء البرامج", "التمويل", "الشركات الناشئة", "المستخدمين", "الفعاليات", "تقني", "التوجيه", "مالي"
+  format          String    // "PDF", "XLSX", "PPTX", "CSV"
+  status          String    // "published", "draft", "scheduled", "archived"
+  publishDate     DateTime?
+  scheduledTime   String?
+  fileUrl         String?
+  filePath        String?
+  fileSize        Int?
+  downloadCount   Int       @default(0)
+  printCount      Int       @default(0)
+  viewCount       Int       @default(0)
+  shareCount      Int       @default(0)
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id])
+  shares          ReportShare[] // Relation to shared reports
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Model for report sharing
+model ReportShare {
+  id              String    @id @default(uuid())
+  reportId        String
+  report          Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  sharedById      String
+  sharedBy        User      @relation("SharerToReportShare", fields: [sharedById], references: [id], onDelete: Cascade)
+  sharedWithId    String
+  sharedWith      User      @relation("ReceiverToReportShare", fields: [sharedWithId], references: [id], onDelete: Cascade)
+  message         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([reportId])
+  @@index([sharedById])
+  @@index([sharedWithId])
 }

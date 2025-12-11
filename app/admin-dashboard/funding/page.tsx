@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -23,13 +23,19 @@ import {
   Briefcase,
   PieChart,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  AlertTriangle,
+  RefreshCw
 } from "lucide-react"
+import { toast } from "react-hot-toast"
 
 export default function FundingManagement() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFundings, setSelectedFundings] = useState<string[]>([])
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+  const [fundingToDelete, setFundingToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Sample funding data
   const fundings = [
@@ -187,6 +193,45 @@ export default function FundingManagement() {
     .reduce((sum, funding, _, arr) => {
       return sum + parseInt(funding.equity) / arr.length
     }, 0)
+    
+  // Confirm delete operation for a single funding
+  const confirmDelete = (id: string) => {
+    setFundingToDelete(id);
+    setShowDeleteConfirmation(true);
+  };
+  
+  // Cancel delete operation
+  const cancelDelete = () => {
+    setShowDeleteConfirmation(false);
+    setFundingToDelete(null);
+  };
+  
+  // Delete a funding opportunity
+  const deleteFunding = async () => {
+    if (!fundingToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      const token = localStorage.getItem('token');
+      
+      // In a real implementation, this would call the API
+      // For now, we'll just simulate a successful deletion
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success('تم حذف فرصة التمويل بنجاح');
+      
+      // Remove from selected fundings
+      setSelectedFundings(selectedFundings.filter(id => id !== fundingToDelete));
+      
+    } catch (error) {
+      console.error('Error deleting funding opportunity:', error);
+      toast.error('فشل في حذف فرصة التمويل');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirmation(false);
+      setFundingToDelete(null);
+    }
+  };
 
   return (
     <div className="space-y-6 text-right">
@@ -310,7 +355,12 @@ export default function FundingManagement() {
                     <CheckCircle className="h-4 w-4" />
                     <span>تغيير الحالة</span>
                   </Button>
-                  <Button variant="destructive" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => confirmDelete(selectedFundings[0])}
+                  >
                     <Trash2 className="h-4 w-4" />
                     <span>حذف</span>
                   </Button>
@@ -352,13 +402,22 @@ export default function FundingManagement() {
                       onChange={() => toggleFundingSelection(funding.id)}
                     />
                     <div className="flex gap-1">
-                      <button className="text-blue-500 hover:text-blue-700">
+                      <button 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={() => window.location.href = `/admin-dashboard/funding/${funding.id}`}
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="text-amber-500 hover:text-amber-700">
+                      <button 
+                        className="text-amber-500 hover:text-amber-700"
+                        onClick={() => window.location.href = `/admin-dashboard/funding/${funding.id}/edit`}
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="text-red-500 hover:text-red-700">
+                      <button 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => confirmDelete(funding.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -517,6 +576,45 @@ export default function FundingManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-right">
+            <h3 className="text-xl font-bold mb-4">تأكيد الحذف</h3>
+            <p className="mb-6">
+              هل أنت متأكد من رغبتك في حذف فرصة التمويل هذه؟ لا يمكن التراجع عن هذا الإجراء.
+            </p>
+            <div className="flex justify-start gap-4">
+              <Button 
+                variant="default" 
+                onClick={cancelDelete}
+                disabled={isDeleting}
+              >
+                إلغاء
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={deleteFunding}
+                disabled={isDeleting}
+                className="flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>جاري الحذف...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>تأكيد الحذف</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

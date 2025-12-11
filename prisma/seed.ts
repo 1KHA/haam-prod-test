@@ -13,6 +13,14 @@ async function main() {
     console.log('Seeding roles and permissions...');
     await import('./seed-roles');
     
+    // Create admin user if not exists
+    console.log('Ensuring admin user exists...');
+    await execPromise('node prisma/create-test-user.js');
+    
+    // Seed reports
+    console.log('Seeding sample reports...');
+    await execPromise('node prisma/seed-reports.js');
+    
     console.log('All seeding completed successfully!');
   } catch (error) {
     console.error('Error during seeding:', error);

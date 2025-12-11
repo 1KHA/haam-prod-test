@@ -74,6 +74,7 @@ export default function StartupsManagement() {
   const [error, setError] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
 
   // Get token from localStorage
   useEffect(() => {
@@ -163,6 +164,91 @@ export default function StartupsManagement() {
   // Handle search
   const handleSearch = () => {
     fetchStartups();
+  };
+
+  // Handle export
+  const handleExport = async () => {
+    if (!token) {
+      showAdminToast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setExportLoading(true);
+    
+    try {
+      // Build query parameters for filtering
+      let queryParams = new URLSearchParams();
+      
+      if (searchQuery) {
+        queryParams.append('search', searchQuery);
+      }
+      
+      // Map tab to status filter
+      if (activeTab === "active") {
+        queryParams.append('status', 'APPROVED');
+      } else if (activeTab === "pending") {
+        queryParams.append('status', 'PENDING');
+      } else if (activeTab === "rejected") {
+        queryParams.append('status', 'REJECTED');
+      }
+      
+      // Map tab to industry filter
+      if (activeTab === "fintech") {
+        queryParams.append('industry', 'التكنولوجيا المالية');
+      } else if (activeTab === "healthtech") {
+        queryParams.append('industry', 'التكنولوجيا الصحية');
+      } else if (activeTab === "greentech") {
+        queryParams.append('industry', 'التكنولوجيا الخضراء');
+      }
+      
+      // Create a temporary anchor element for file download
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      
+      // Fetch the CSV data
+      const response = await fetch(`/api/admin/startups/export?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to export startups');
+      }
+      
+      // Convert the response to a blob
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Set up the download
+      a.href = url;
+      a.download = `startups-export-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showAdminToast({
+        title: "تم بنجاح",
+        description: "تم تصدير بيانات الشركات الناشئة بنجاح"
+      });
+    } catch (err) {
+      console.error('Error exporting startups:', err);
+      showAdminToast({
+        title: "خطأ",
+        description: err instanceof Error ? err.message : 'حدث خطأ أثناء تصدير البيانات',
+        variant: "destructive"
+      });
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   // Toggle startup selection
@@ -363,9 +449,19 @@ export default function StartupsManagement() {
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <Download className="h-4 w-4" />
-            <span>تصدير</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleExport}
+            disabled={exportLoading}
+          >
+            {exportLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>{exportLoading ? "جاري التصدير..." : "تصدير"}</span>
           </Button>
           <PermissionGate
             requirement={{ category: 'startups', action: 'add' }}

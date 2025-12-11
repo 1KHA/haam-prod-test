@@ -485,7 +485,31 @@ export default function ProgramsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button variant="outline">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (token) {
+                // Build the export URL with filters
+                let exportUrl = '/api/admin/programs/export?';
+                const params = new URLSearchParams();
+                
+                if (searchQuery) {
+                  params.append('search', searchQuery);
+                }
+                
+                if (statusFilter && statusFilter !== 'ALL') {
+                  params.append('status', statusFilter);
+                }
+                
+                if (typeFilter && typeFilter !== 'ALL') {
+                  params.append('type', typeFilter);
+                }
+                
+                // Open export URL in new tab
+                window.open(`${exportUrl}${params.toString()}`, '_blank');
+              }
+            }}
+          >
             <Download className="h-4 w-4 ml-2" />
             <span>تصدير</span>
           </Button>

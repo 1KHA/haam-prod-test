@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 
 // GET /api/admin/users - Get all users
 export async function GET(req: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
         profile: true,
         mentorProfile: true,
         investorProfile: true,
-        judgeProfile: true,
+        startupProfile: true,
         adminProfile: true,
         programManagerProfile: true,
         entrepreneurProfile: true,
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Format the response
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = users.map((user: any) => ({
       id: user.id,
       email: user.email,
       name: user.name,
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       roleProfile: 
         user.mentorProfile || 
         user.investorProfile || 
-        user.judgeProfile || 
+        user.startupProfile || 
         user.adminProfile || 
         user.programManagerProfile || 
         user.entrepreneurProfile || 
@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
       'مدير برنامج': UserRole.PROGRAM_MANAGER,
       'موجه': UserRole.MENTOR,
       'مستثمر': UserRole.INVESTOR,
-      'محكم': UserRole.JUDGE,
       'مشارك': UserRole.PARTICIPANT,
       'رائد أعمال': UserRole.ENTREPRENEUR,
     };
@@ -181,7 +180,6 @@ export async function PUT(req: NextRequest) {
       'مدير برنامج': UserRole.PROGRAM_MANAGER,
       'موجه': UserRole.MENTOR,
       'مستثمر': UserRole.INVESTOR,
-      'محكم': UserRole.JUDGE,
       'مشارك': UserRole.PARTICIPANT,
       'رائد أعمال': UserRole.ENTREPRENEUR,
     };

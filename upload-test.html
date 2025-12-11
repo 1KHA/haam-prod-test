@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            border: 1px solid #ddd;
+            padding: 10px;
+            width: 100%;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #response {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Report Upload Test</h1>
+    
+    <div class="form-container">
+        <h2>Upload a Report File</h2>
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="token">Admin Token:</label>
+                <input type="text" id="token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJiZmU0ZWU1MS05MTI1LTQ5OTAtYmFmYi04YjJmNTI5NTQ3NzMiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY1NDQ0OTc3LCJleHAiOjE3NjYwNDk3Nzd9.1xiR19-k8o5SHbbMPN57cTwo1CyBD-y4Rv8HHHNxWsE">
+            </div>
+            
+            <div class="form-group">
+                <label for="file">Select File:</label>
+                <input type="file" id="file" required>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit">Upload File</button>
+            </div>
+        </form>
+    </div>
+    
+    <div>
+        <h2>Response</h2>
+        <div id="response">No response yet</div>
+    </div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const token = document.getElementById('token').value;
+            const file = document.getElementById('file').files[0];
+            const responseElement = document.getElementById('response');
+            
+            if (!file) {
+                responseElement.textContent = 'Please select a file to upload';
+                return;
+            }
+            
+            // Create FormData
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                responseElement.textContent = 'Uploading...';
+                
+                // Send request
+                const response = await fetch('/api/admin/reports/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                // Parse response
+                const result = await response.json();
+                
+                // Show response
+                responseElement.textContent = JSON.stringify(result, null, 2);
+                
+                if (response.ok) {
+                    responseElement.style.color = 'green';
+                } else {
+                    responseElement.style.color = 'red';
+                }
+            } catch (error) {
+                responseElement.textContent = 'Error: ' + error.message;
+                responseElement.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

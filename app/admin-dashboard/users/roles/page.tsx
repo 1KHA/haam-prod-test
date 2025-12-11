@@ -972,19 +972,126 @@ export default function RolesPermissions() {
                       "مدير برنامج": "PROGRAM_MANAGER",
                       "موجه": "MENTOR",
                       "مستثمر": "INVESTOR",
-"مشارك": "PARTICIPANT",
-"رائد أعمال": "ENTREPRENEUR"
+                      "مشارك": "PARTICIPANT",
+                      "رائد أعمال": "ENTREPRENEUR"
                     };
+                    
+                    // Try to find predefined categories for known roles
                     const internalKey = roleNameMap[role.name] || (role.name || "").toUpperCase().replace(/\s+/g, "_");
-                    const categories = rolePermissionMap[internalKey as keyof typeof rolePermissionMap];
-                    if (!categories || categories.length === 0) {
+                    const predefinedCategories = rolePermissionMap[internalKey as keyof typeof rolePermissionMap];
+                    
+                    // For custom roles, if no predefined categories exist
+                    // AND we have permissions data from the API, create categories from API data
+                    if ((!predefinedCategories || predefinedCategories.length === 0) && 
+                        role.permissions && Object.keys(role.permissions).length > 0) {
+                      
+                      // Convert the permissions object from API into compatible format for rendering
+                      const customCategories = Object.keys(role.permissions).map(categoryKey => {
+                        // Find display name from ADMIN categories if possible, otherwise use the key
+                        const displayName = rolePermissionMap.ADMIN?.find(cat => cat.category === categoryKey)?.displayName || categoryKey;
+                        
+                        // Create actions array from permissions object
+                        const actions = Object.keys(role.permissions[categoryKey])
+                          .filter(actionKey => role.permissions[categoryKey][actionKey]) // Only include true permissions
+                          .map(actionKey => ({
+                            action: actionKey,
+                            pages: [] // Empty pages array as we don't have specific pages for custom roles
+                          }));
+                        
+                        return {
+                          category: categoryKey,
+                          displayName,
+                          actions
+                        };
+                      });
+                      
+                      // Only proceed if we have permissions to display
+                      if (customCategories.length === 0) {
+                        return (
+                          <div className="text-sm text-muted-foreground py-4">
+                            لم يتم تعيين أي صلاحيات لهذا الدور
+                          </div>
+                        );
+                      }
+                      
+                      // Render custom categories
+                      return customCategories.map((category) => (
+                        <div key={category.category} className="border-b pb-2">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex gap-2">
+                              {editingRole === role.id && (
+                                <>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-6 text-xs"
+                                    onClick={() => grantAllPermissions(category.category)}
+                                  >
+                                    منح الكل
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-6 text-xs"
+                                    onClick={() => revokeAllPermissions(category.category)}
+                                  >
+                                    إلغاء الكل
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                            <h4 className="font-medium">{category.displayName}</h4>
+                          </div>
+                          <div className="space-y-2">
+                            {permissionActions.map((actionObj) => {
+                              const hasPermission = editingRole === role.id
+                                ? editedPermissions[category.category]?.[actionObj.id] || false
+                                : role.permissions[category.category]?.[actionObj.id] || false;
+                              
+                              // If not editing and permission is false, don't show it for cleaner UI
+                              if (!editingRole && !hasPermission) return null;
+                              
+                              return (
+                                <div key={actionObj.id} className="flex flex-col md:flex-row md:items-center md:gap-2">
+                                  <div className="flex items-center gap-2">
+                                    {editingRole === role.id ? (
+                                      <Checkbox 
+                                        id={`${role.id}-${category.category}-${actionObj.id}`} 
+                                        checked={hasPermission}
+                                        onCheckedChange={() => toggleEditedPermission(category.category, actionObj.id)}
+                                      />
+                                    ) : (
+                                      hasPermission ? (
+                                        <Check className="h-4 w-4 text-green-500" />
+                                      ) : (
+                                        <X className="h-4 w-4 text-red-500" />
+                                      )
+                                    )}
+                                    <label 
+                                      htmlFor={`${role.id}-${category.category}-${actionObj.id}`}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                                    >
+                                      <actionObj.icon className="h-3 w-3" />
+                                      {actionObj.name}
+                                    </label>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ));
+                    }
+                    
+                    // For predefined roles, continue with original rendering logic
+                    if (!predefinedCategories || predefinedCategories.length === 0) {
                       return (
-                        <div className="text-sm text-red-500 py-4">
-                          لا توجد صلاحيات معرفة لهذا الدور (<span dir="ltr">{role.name}</span>)
+                        <div className="text-sm text-muted-foreground py-4">
+                          لم يتم تعيين أي صلاحيات لهذا الدور (<span dir="ltr">{role.name}</span>)
                         </div>
                       );
                     }
-                    return categories.map((category: {
+                    return predefinedCategories.map((category: {
                       category: string;
                       displayName: string;
                       actions: { action: string; pages: string[] }[];

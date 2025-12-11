@@ -92,8 +92,11 @@ export default function UsersTable() {
       eventSource.close()
     }
     
-    // Create a new EventSource connection
-    const newEventSource = new EventSource('/api/admin/users/sse')
+    // Get token from localStorage
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    
+    // Create a new EventSource connection with token as URL parameter
+    const newEventSource = new EventSource(`/api/admin/users/sse${token ? `?token=${token}` : ''}`)
     setEventSource(newEventSource)
     
     // Handle incoming events
@@ -156,7 +159,14 @@ export default function UsersTable() {
         url += `&role=${encodeURIComponent(activeTab.toUpperCase())}`
       }
       
-      const response = await fetch(url)
+      // Get token from localStorage
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      })
       const data = await response.json()
       
       if (response.ok) {
@@ -371,6 +381,67 @@ export default function UsersTable() {
     })
   }
   
+  // Handle export users data
+  const handleExport = async () => {
+    try {
+      // Get token from localStorage (or context/provider if available)
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      
+      // Build URL with current filters
+      let exportUrl = '/api/admin/users/export?';
+      
+      if (searchQuery) {
+        exportUrl += `search=${encodeURIComponent(searchQuery)}&`;
+      }
+      
+      if (activeTab !== "all") {
+        exportUrl += `role=${encodeURIComponent(activeTab.toUpperCase())}`;
+      }
+      
+      // Create a temporary anchor element for download
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      
+      // Add auth header via fetch and download the blob
+      const response = await fetch(exportUrl, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to export users');
+      }
+      
+      // Get the blob data
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      link.href = url;
+      link.download = 'users-export.csv';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showAdminToast({
+        title: "تم التصدير بنجاح",
+        description: "تم تصدير بيانات المستخدمين بنجاح"
+      });
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      showAdminToast({
+        title: "خطأ",
+        description: "فشل في تصدير بيانات المستخدمين",
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -407,7 +478,12 @@ export default function UsersTable() {
           >
             <span>{isRealTimeEnabled ? "التحديثات المباشرة مفعلة" : "تفعيل التحديثات المباشرة"}</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleExport}
+          >
             <Download className="h-4 w-4" />
             <span>تصدير</span>
           </Button>

@@ -72,7 +72,7 @@ const navItems: NavItem[] = [
   },
   { 
     name: "التمويل", 
-    href: "/admin-dashboard/funding", 
+    href: "/admin-dashboard/financing", 
     icon: DollarSign,
     permission: { category: "funding", action: "view" }
   },
@@ -111,12 +111,6 @@ const navItems: NavItem[] = [
     href: "/admin-dashboard/integrations", 
     icon: Plug,
     permission: { category: "integrations", action: "view" }
-  },
-  { 
-    name: "المدفوعات", 
-    href: "/admin-dashboard/payments", 
-    icon: CreditCard,
-    permission: { category: "payments", action: "view" }
   },
 ]
 

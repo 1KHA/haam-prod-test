@@ -1,0 +1,310 @@
+import { NextRequest } from 'next/server';
+import { isAuthenticated } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+
+/**
+ * GET /api/admin/security/logs/export
+ * Export security logs as CSV based on filter criteria
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const user = await isAuthenticated(req.headers.get('Authorization') || undefined);
+    
+    if (!user || !user.isAdmin) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+    
+    // Parse query parameters
+    const url = new URL(req.url);
+    const status = url.searchParams.get('status');
+    const severity = url.searchParams.get('severity');
+    const type = url.searchParams.get('type');
+    const fromDate = url.searchParams.get('fromDate');
+    const toDate = url.searchParams.get('toDate');
+    const search = url.searchParams.get('search');
+    
+    // Build where clause
+    let where: any = {};
+    
+    if (status) {
+      where.status = status;
+    }
+    
+    if (severity) {
+      where.severity = severity;
+    }
+    
+    if (type) {
+      where.type = type;
+    }
+    
+    // Date filtering
+    if (fromDate || toDate) {
+      where.createdAt = {};
+      
+      if (fromDate) {
+        where.createdAt.gte = new Date(fromDate);
+      }
+      
+      if (toDate) {
+        // Add one day to include the end date
+        const endDate = new Date(toDate);
+        endDate.setDate(endDate.getDate() + 1);
+        where.createdAt.lte = endDate;
+      }
+    }
+    
+    // Search functionality
+    if (search) {
+      where.OR = [
+        { action: { contains: search, mode: 'insensitive' } },
+        { userName: { contains: search, mode: 'insensitive' } },
+        { details: { contains: search, mode: 'insensitive' } },
+        { ipAddress: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    
+    // For demonstration purposes, we'll use mock data similar to the front end
+    // In a real application, you would fetch from the database
+    const mockLogs = [
+      { 
+        id: "1", 
+        action: "تسجيل دخول", 
+        userName: "أحمد محمد", 
+        userRole: "مدير نظام", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-12T10:15:22').toISOString(),
+        ipAddress: "192.168.1.105",
+        userAgent: "Chrome 120.0.0.0 / Windows",
+        details: "تسجيل دخول ناجح من الرياض، المملكة العربية السعودية",
+        severity: "منخفض",
+        type: "user"
+      },
+      { 
+        id: "2", 
+        action: "تغيير كلمة المرور", 
+        userName: "سارة العتيبي", 
+        userRole: "مدير برنامج", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-12T09:45:10').toISOString(),
+        ipAddress: "192.168.1.110",
+        userAgent: "Firefox 115.0 / macOS",
+        details: "تم تغيير كلمة المرور بنجاح",
+        severity: "منخفض",
+        type: "user"
+      },
+      { 
+        id: "3", 
+        action: "محاولة تسجيل دخول", 
+        userName: "خالد العمري", 
+        userRole: "مستثمر", 
+        status: "فشل", 
+        timestamp: new Date('2025-03-12T08:30:45').toISOString(),
+        ipAddress: "192.168.1.120",
+        userAgent: "Safari 17.0 / iOS",
+        details: "فشل تسجيل الدخول: كلمة مرور غير صحيحة (المحاولة الثالثة)",
+        severity: "متوسط",
+        type: "user"
+      },
+      { 
+        id: "4", 
+        action: "تعديل صلاحيات المستخدم", 
+        userName: "محمد القحطاني", 
+        userRole: "مدير نظام", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-11T16:20:33').toISOString(),
+        ipAddress: "192.168.1.105",
+        userAgent: "Chrome 120.0.0.0 / Windows",
+        details: "تم تعديل صلاحيات المستخدم 'فاطمة الزهراء' من 'موجه' إلى 'مدير برنامج'",
+        severity: "متوسط",
+        type: "user"
+      },
+      { 
+        id: "5", 
+        action: "محاولة وصول غير مصرح", 
+        userName: "مجهول", 
+        userRole: "غير معروف", 
+        status: "فشل", 
+        timestamp: new Date('2025-03-11T14:55:18').toISOString(),
+        ipAddress: "203.0.113.42",
+        userAgent: "Mozilla/5.0 (compatible; Bot/1.0)",
+        details: "محاولة وصول غير مصرح بها إلى واجهة برمجة التطبيقات للإدارة",
+        severity: "عالي",
+        type: "security"
+      },
+      { 
+        id: "6", 
+        action: "تصدير بيانات", 
+        userName: "نورة السعيد", 
+        userRole: "مدير برنامج", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-11T11:10:05').toISOString(),
+        ipAddress: "192.168.1.115",
+        userAgent: "Edge 120.0.0.0 / Windows",
+        details: "تم تصدير بيانات الشركات الناشئة (120 سجل)",
+        severity: "منخفض",
+        type: "data"
+      },
+      { 
+        id: "7", 
+        action: "تغيير إعدادات النظام", 
+        userName: "أحمد محمد", 
+        userRole: "مدير نظام", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-11T10:05:30').toISOString(),
+        ipAddress: "192.168.1.105",
+        userAgent: "Chrome 120.0.0.0 / Windows",
+        details: "تم تغيير إعدادات البريد الإلكتروني للنظام",
+        severity: "متوسط",
+        type: "system"
+      },
+      { 
+        id: "8", 
+        action: "محاولة اختراق", 
+        userName: "مجهول", 
+        userRole: "غير معروف", 
+        status: "فشل", 
+        timestamp: new Date('2025-03-10T23:45:12').toISOString(),
+        ipAddress: "198.51.100.77",
+        userAgent: "Mozilla/5.0 (compatible; Bot/2.0)",
+        details: "محاولة هجوم حقن SQL على نموذج تسجيل الدخول",
+        severity: "عالي",
+        type: "security"
+      },
+      { 
+        id: "9", 
+        action: "إنشاء مستخدم جديد", 
+        userName: "محمد القحطاني", 
+        userRole: "مدير نظام", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-10T15:30:22').toISOString(),
+        ipAddress: "192.168.1.105",
+        userAgent: "Chrome 120.0.0.0 / Windows",
+        details: "تم إنشاء حساب مستخدم جديد: 'عبدالله الغامدي' بدور 'موجه'",
+        severity: "منخفض",
+        type: "user"
+      },
+      { 
+        id: "10", 
+        action: "نسخ احتياطي للنظام", 
+        userName: "النظام", 
+        userRole: "نظام", 
+        status: "نجاح", 
+        timestamp: new Date('2025-03-10T03:00:00').toISOString(),
+        ipAddress: "127.0.0.1",
+        userAgent: "System Task",
+        details: "تم إنشاء نسخة احتياطية مجدولة لقاعدة البيانات",
+        severity: "منخفض",
+        type: "system"
+      }
+    ];
+
+    // Filter logs based on criteria
+    let filteredLogs = [...mockLogs];
+    
+    if (status) {
+      const statusMap: Record<string, string> = {
+        'success': 'نجاح',
+        'failure': 'فشل'
+      };
+      filteredLogs = filteredLogs.filter(log => log.status === statusMap[status]);
+    }
+    
+    if (severity) {
+      const severityMap: Record<string, string> = {
+        'high': 'عالي',
+        'medium': 'متوسط',
+        'low': 'منخفض'
+      };
+      filteredLogs = filteredLogs.filter(log => log.severity === severityMap[severity]);
+    }
+    
+    if (type) {
+      filteredLogs = filteredLogs.filter(log => log.type === type);
+    }
+    
+    if (fromDate) {
+      const fromDateTime = new Date(fromDate).getTime();
+      filteredLogs = filteredLogs.filter(log => new Date(log.timestamp).getTime() >= fromDateTime);
+    }
+    
+    if (toDate) {
+      // Add one day to include the end date
+      const endDate = new Date(toDate);
+      endDate.setDate(endDate.getDate() + 1);
+      const toDateTime = endDate.getTime();
+      filteredLogs = filteredLogs.filter(log => new Date(log.timestamp).getTime() <= toDateTime);
+    }
+    
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredLogs = filteredLogs.filter(log => 
+        log.action.toLowerCase().includes(searchLower) ||
+        log.userName.toLowerCase().includes(searchLower) ||
+        log.details.toLowerCase().includes(searchLower) ||
+        log.ipAddress.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Generate CSV header
+    const csvHeader = [
+      "الرقم التعريفي",
+      "الإجراء",
+      "المستخدم",
+      "الدور",
+      "الحالة",
+      "التوقيت",
+      "عنوان IP",
+      "متصفح المستخدم",
+      "التفاصيل",
+      "مستوى الخطورة",
+      "النوع"
+    ].join(',');
+    
+    // Generate CSV rows
+    const csvRows = filteredLogs.map(log => [
+      `"${log.id}"`,
+      `"${log.action}"`,
+      `"${log.userName}"`,
+      `"${log.userRole}"`,
+      `"${log.status}"`,
+      `"${new Date(log.timestamp).toLocaleString('ar-SA')}"`,
+      `"${log.ipAddress}"`,
+      `"${log.userAgent}"`,
+      `"${log.details.replace(/"/g, '""')}"`,
+      `"${log.severity}"`,
+      `"${log.type}"`
+    ].join(','));
+    
+    // Combine header and rows
+    const csv = [csvHeader, ...csvRows].join('\n');
+    
+    // Set the response headers for CSV download
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv;charset=utf-8',
+        'Content-Disposition': 'attachment; filename="security-logs-export.csv"'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error exporting security logs:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: 'Internal server error' }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  }
+}

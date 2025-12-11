@@ -1,7 +1,8 @@
 "use client"
 
-import { Bell, User } from "lucide-react"
+import { User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { NotificationDropdown } from "./NotificationDropdown"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +20,7 @@ export default function Header() {
     <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4">
       <div className="flex-1"></div>
       <div className="flex items-center space-x-4">
-        <Button variant="outline" size="icon">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationDropdown />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -44,4 +43,3 @@ export default function Header() {
     </header>
   )
 }
-

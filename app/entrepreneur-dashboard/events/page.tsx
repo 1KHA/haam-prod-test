@@ -1,461 +1,557 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { fetchWithAuth } from "@/lib/api-client"
+import { toast } from "react-hot-toast"
 import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
   Search, 
-  Filter, 
-  CheckCircle, 
-  XCircle,
-  Wrench,
-  Megaphone,
-  Handshake,
-  CalendarDays,
-  ArrowRight
+  Calendar, 
+  MapPin, 
+  Clock, 
+  User, 
+  Calendar as CalendarIcon,
+  Filter,
+  CheckCircle,
+  XCircle
 } from "lucide-react"
 
+// Interface for event data
 interface Event {
-  id: string
-  name: string
-  description: string
-  date: string
-  time: string
-  location: string
-  type: "workshop" | "info" | "networking" | "demo" | "other"
-  capacity: number
-  registered: number
-  status: "upcoming" | "past" | "ongoing"
-  isRegistered: boolean
+  id: string;
+  title: string;
+  eventType: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  organizer: string;
+  registrationDeadline: string | null;
+  isRegistered?: boolean;
+  registrationStatus?: string;
 }
 
-export default function EventsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("upcoming")
-  const [selectedType, setSelectedType] = useState<string | null>(null)
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+export default function EntrepreneurEvents() {
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [events, setEvents] = useState<any[]>([]);
+  const [myEvents, setMyEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ar-SA', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  // Format time for display
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ar-SA', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: true 
+    });
+  };
+
+  // Check if registration deadline has passed
+  const isRegistrationClosed = (deadline: string | null, startDate: string) => {
+    const now = new Date();
+    const deadlineDate = deadline ? new Date(deadline) : new Date(startDate);
+    return now > deadlineDate;
+  };
+
+  // Check if event date has passed
+  const isEventPassed = (endDate: string) => {
+    const now = new Date();
+    const eventEndDate = new Date(endDate);
+    return now > eventEndDate;
+  };
+
+  // Process event data for display
+  const processEvent = (event: Event, isRegistered: boolean, registrationStatus: string | null = null) => {
+    const startDate = new Date(event.startDate);
+    const endDate = new Date(event.endDate);
+
+    // Determine if event is upcoming, ongoing, or past
+    const now = new Date();
+    let status = "upcoming";
+    if (now > endDate) {
+      status = "past";
+    } else if (now >= startDate && now <= endDate) {
+      status = "ongoing";
+    }
+
+    return {
+      ...event,
+      formattedStartDate: formatDate(event.startDate),
+      formattedEndDate: formatDate(event.endDate),
+      startTime: formatTime(event.startDate),
+      endTime: formatTime(event.endDate),
+      status,
+      isRegistrationClosed: isRegistrationClosed(event.registrationDeadline, event.startDate),
+      isPassed: isEventPassed(event.endDate),
+      isRegistered: isRegistered,
+      registrationStatus: registrationStatus
+    };
+  };
+
+  // Fetch all events
+  useEffect(() => {
+    async function fetchEvents() {
+      setLoading(true);
+      try {
+        const eventsResponse = await fetchWithAuth('/api/events');
+        
+        if (!eventsResponse.ok) {
+          throw new Error('Failed to fetch events');
+        }
+        
+        const eventsData = await eventsResponse.json();
+        
+        // Now check registration status for each event
+        const registrationPromises = eventsData.events.map(async (event: Event) => {
+          try {
+            const regResponse = await fetchWithAuth(`/api/events/${event.id}/register`);
+            if (regResponse.ok) {
+              const regData = await regResponse.json();
+              return processEvent(event, regData.registered, regData.status);
+            }
+          } catch (err) {
+            console.error(`Failed to fetch registration status for event ${event.id}`, err);
+          }
+          return processEvent(event, false);
+        });
+        
+        const processedEvents = await Promise.all(registrationPromises);
+        
+        setEvents(processedEvents);
+        setMyEvents(processedEvents.filter((event) => event.isRegistered));
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+        setError('Failed to load events. Please try again later.');
+        
+        // For demo purposes, use sample data if API fails
+        const sampleEvents = [
+          {
+            id: "1",
+            title: "هاكاثون الذكاء الاصطناعي",
+            eventType: "هاكاثون",
+            description: "انضم إلينا في هذا الهاكاثون المثير لتطوير حلول مبتكرة باستخدام تقنيات الذكاء الاصطناعي.",
+            startDate: "2025-04-15T09:00:00.000Z",
+            endDate: "2025-04-15T18:00:00.000Z",
+            location: "مركز الابتكار، الرياض",
+            organizer: "إدارة المنصة",
+            registrationDeadline: "2025-04-10T23:59:59.000Z",
+            isRegistered: false
+          },
+          {
+            id: "2",
+            title: "ورشة عمل: تطوير نموذج العمل",
+            eventType: "ورشة عمل",
+            description: "ورشة عمل متخصصة لمساعدة الشركات الناشئة في تطوير وتحسين نماذج أعمالها.",
+            startDate: "2025-04-25T10:00:00.000Z",
+            endDate: "2025-04-25T14:00:00.000Z",
+            location: "مقر المسرع، الرياض",
+            organizer: "مسرع التقنية المالية",
+            registrationDeadline: "2025-04-20T23:59:59.000Z",
+            isRegistered: true,
+            registrationStatus: "confirmed"
+          }
+        ];
+        
+        const processedSampleEvents = sampleEvents.map((event) => {
+          return processEvent(event, event.isRegistered, event.isRegistered ? "confirmed" : null);
+        });
+        
+        setEvents(processedSampleEvents);
+        setMyEvents(processedSampleEvents.filter((event) => event.isRegistered));
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchEvents();
+  }, []);
+
+  // Register for an event
+  const registerForEvent = async (eventId: string) => {
+    try {
+      const response = await fetchWithAuth(`/api/events/${eventId}/register`, {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to register for event');
+      }
+      
+      const data = await response.json();
+      
+      // Update events list with new registration status
+      setEvents(events.map(event => {
+        if (event.id === eventId) {
+          return {
+            ...event,
+            isRegistered: true,
+            registrationStatus: data.registration.status
+          };
+        }
+        return event;
+      }));
+      
+      // Update my events list
+      setMyEvents(current => {
+        const eventToAdd = events.find(e => e.id === eventId);
+        if (eventToAdd && !current.some(e => e.id === eventId)) {
+          return [...current, {
+            ...eventToAdd,
+            isRegistered: true,
+            registrationStatus: data.registration.status
+          }];
+        }
+        return current;
+      });
+      
+      toast.success('تم تسجيلك بنجاح في الفعالية!');
+    } catch (error) {
+      console.error('Error registering for event:', error);
+      toast.error(`فشل التسجيل: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
+    }
+  };
   
-  // Mock data for events
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: "1",
-      name: "ورشة عمل: كيفية بناء نموذج أعمال",
-      description: "ورشة عمل تفاعلية لتعلم كيفية بناء نموذج أعمال قوي لشركتك الناشئة. ستتعلم كيفية تحديد القيمة المقترحة، وشرائح العملاء، وقنوات التوزيع، ومصادر الإيرادات، والتكاليف الرئيسية.",
-      date: "15 مارس 2025",
-      time: "10:00 صباحاً - 12:00 ظهراً",
-      location: "مركز الابتكار، الرياض",
-      type: "workshop",
-      capacity: 30,
-      registered: 18,
-      status: "upcoming",
-      isRegistered: false
-    },
-    {
-      id: "2",
-      name: "جلسة تعريفية: برنامج مسرع الأعمال",
-      description: "جلسة تعريفية حول برنامج مسرع الأعمال الصيفي 2025. ستتعرف على تفاصيل البرنامج، والفوائد، وعملية التقديم، والجدول الزمني.",
-      date: "20 مارس 2025",
-      time: "2:00 مساءً - 3:30 مساءً",
-      location: "عبر الإنترنت (زوم)",
-      type: "info",
-      capacity: 100,
-      registered: 45,
-      status: "upcoming",
-      isRegistered: true
-    },
-    {
-      id: "3",
-      name: "لقاء مع المستثمرين",
-      description: "فرصة للقاء مع مستثمرين محتملين وعرض شركتك الناشئة. سيكون هناك وقت للعروض التقديمية والتواصل.",
-      date: "25 مارس 2025",
-      time: "4:00 مساءً - 7:00 مساءً",
-      location: "فندق الفيصلية، الرياض",
-      type: "networking",
-      capacity: 50,
-      registered: 32,
-      status: "upcoming",
-      isRegistered: false
-    },
-    {
-      id: "4",
-      name: "يوم العرض: الدفعة الثالثة",
-      description: "يوم العرض للشركات الناشئة في الدفعة الثالثة من برنامج مسرع الأعمال. ستقوم الشركات الناشئة بعرض منتجاتها وخدماتها أمام المستثمرين والإعلام.",
-      date: "10 فبراير 2025",
-      time: "1:00 مساءً - 5:00 مساءً",
-      location: "مركز الملك عبدالله المالي، الرياض",
-      type: "demo",
-      capacity: 200,
-      registered: 180,
-      status: "past",
-      isRegistered: true
-    },
-    {
-      id: "5",
-      name: "ورشة عمل: استراتيجيات التسويق للشركات الناشئة",
-      description: "ورشة عمل حول استراتيجيات التسويق الفعالة للشركات الناشئة. ستتعلم كيفية بناء علامة تجارية قوية، واستخدام وسائل التواصل الاجتماعي، وتحسين محركات البحث.",
-      date: "5 فبراير 2025",
-      time: "10:00 صباحاً - 1:00 مساءً",
-      location: "مركز الابتكار، الرياض",
-      type: "workshop",
-      capacity: 30,
-      registered: 30,
-      status: "past",
-      isRegistered: true
-    },
-    {
-      id: "6",
-      name: "ورشة عمل: التمويل والاستثمار",
-      description: "ورشة عمل حول كيفية الحصول على التمويل والاستثمار لشركتك الناشئة. ستتعلم كيفية إعداد عرض استثماري قوي، والتفاوض مع المستثمرين، وتقييم شركتك الناشئة.",
-      date: "5 أبريل 2025",
-      time: "10:00 صباحاً - 1:00 مساءً",
-      location: "مركز الابتكار، الرياض",
-      type: "workshop",
-      capacity: 30,
-      registered: 10,
-      status: "upcoming",
-      isRegistered: false
+  // Cancel registration for an event
+  const cancelRegistration = async (eventId: string) => {
+    if (!window.confirm('هل أنت متأكد من إلغاء تسجيلك في هذه الفعالية؟')) {
+      return;
     }
-  ])
+    
+    try {
+      const response = await fetchWithAuth(`/api/events/${eventId}/register`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to cancel registration');
+      }
+      
+      // Update events list with new registration status
+      setEvents(events.map(event => {
+        if (event.id === eventId) {
+          return {
+            ...event,
+            isRegistered: false,
+            registrationStatus: null
+          };
+        }
+        return event;
+      }));
+      
+      // Update my events list
+      setMyEvents(current => current.filter(event => event.id !== eventId));
+      
+      toast.success('تم إلغاء تسجيلك بنجاح!');
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+      toast.error(`فشل إلغاء التسجيل: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
+    }
+  };
 
-  // Filter events based on search query, selected type, and active tab
+  // Filter events based on active tab and search query
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name.includes(searchQuery) || 
-                          event.description.includes(searchQuery) || 
-                          event.location.includes(searchQuery)
+    // Filter by tab
+    if (activeTab === "upcoming" && event.status !== "upcoming") return false;
+    if (activeTab === "ongoing" && event.status !== "ongoing") return false;
+    if (activeTab === "past" && event.status !== "past") return false;
+    if (activeTab === "registered" && !event.isRegistered) return false;
+    if (activeTab === "hackathons" && event.eventType !== "هاكاثون") return false;
+    if (activeTab === "workshops" && event.eventType !== "ورشة عمل") return false;
     
-    const matchesType = selectedType === null || event.type === selectedType
-    
-    if (activeTab === "upcoming") return matchesSearch && matchesType && event.status === "upcoming"
-    if (activeTab === "past") return matchesSearch && matchesType && event.status === "past"
-    if (activeTab === "registered") return matchesSearch && matchesType && event.isRegistered
-    
-    return matchesSearch && matchesType
-  })
-
-  const handleRegister = (eventId: string) => {
-    setEvents(events.map(event => 
-      event.id === eventId 
-        ? { ...event, isRegistered: true, registered: event.registered + 1 } 
-        : event
-    ))
-  }
-
-  const handleCancelRegistration = (eventId: string) => {
-    setEvents(events.map(event => 
-      event.id === eventId 
-        ? { ...event, isRegistered: false, registered: event.registered - 1 } 
-        : event
-    ))
-  }
-
-  const getEventTypeIcon = (type: string) => {
-    switch (type) {
-      case "workshop":
-        return <Wrench className="h-5 w-5 text-blue-500" />
-      case "info":
-        return <Megaphone className="h-5 w-5 text-green-500" />
-      case "networking":
-        return <Handshake className="h-5 w-5 text-amber-500" />
-      case "demo":
-        return <CalendarDays className="h-5 w-5 text-purple-500" />
-      default:
-        return <Calendar className="h-5 w-5 text-gray-500" />
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        event.title.toLowerCase().includes(query) ||
+        event.eventType.toLowerCase().includes(query) ||
+        event.description.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query) ||
+        event.organizer.toLowerCase().includes(query)
+      );
     }
-  }
+    
+    return true;
+  });
 
-  const getEventTypeText = (type: string) => {
-    switch (type) {
-      case "workshop":
-        return "ورشة عمل"
-      case "info":
-        return "جلسة تعريفية"
-      case "networking":
-        return "لقاء تواصل"
-      case "demo":
-        return "يوم عرض"
-      default:
-        return "فعالية"
+  // Get status badge based on event status
+  const getStatusBadge = (event: any) => {
+    if (event.isPassed) {
+      return <Badge variant="outline" className="bg-gray-100 text-gray-800">انتهى</Badge>;
     }
-  }
+    if (event.status === "ongoing") {
+      return <Badge variant="outline" className="bg-green-100 text-green-800">جاري</Badge>;
+    }
+    return <Badge variant="outline" className="bg-blue-100 text-blue-800">قادم</Badge>;
+  };
+
+  // Get registration status badge
+  const getRegistrationBadge = (event: any) => {
+    if (!event.isRegistered) return null;
+    
+    if (event.registrationStatus === "confirmed") {
+      return <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+        <CheckCircle className="h-3 w-3" />
+        <span>مسجل</span>
+      </Badge>;
+    }
+    
+    if (event.registrationStatus === "waitlist") {
+      return <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
+        <Clock className="h-3 w-3" />
+        <span>قائمة الانتظار</span>
+      </Badge>;
+    }
+    
+    return <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1">
+      <XCircle className="h-3 w-3" />
+      <span>ملغي</span>
+    </Badge>;
+  };
+
+  // Get registration button based on event status
+  const getRegistrationButton = (event: any) => {
+    if (event.isPassed) {
+      return <Button disabled variant="outline">انتهى الفعالية</Button>;
+    }
+    
+    if (event.isRegistrationClosed) {
+      return <Button disabled variant="outline">التسجيل مغلق</Button>;
+    }
+    
+    if (event.isRegistered) {
+      return <Button 
+        variant="outline" 
+        className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+        onClick={() => cancelRegistration(event.id)}
+      >
+        إلغاء التسجيل
+      </Button>;
+    }
+    
+    return <Button 
+      variant="default"
+      onClick={() => registerForEvent(event.id)}
+    >
+      التسجيل
+    </Button>;
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div></div>
-        <h1 className="text-3xl font-bold">الفعاليات</h1>
+    <div className="space-y-6 text-right">
+      <h1 className="text-3xl font-bold">الفعاليات</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-end gap-2">
+              <span>الفعاليات القادمة</span>
+              <Calendar className="h-5 w-5 text-primary" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {events.filter(event => event.status === "upcoming").length}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">فعالية</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-end gap-2">
+              <span>فعالياتي</span>
+              <User className="h-5 w-5 text-primary" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {events.filter(event => event.isRegistered).length}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">مسجل فيها</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-end gap-2">
+              <span>الفعاليات الجارية</span>
+              <Clock className="h-5 w-5 text-primary" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {events.filter(event => event.status === "ongoing").length}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">حالياً</div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="justify-end">
-          <TabsTrigger value="registered">فعالياتي</TabsTrigger>
-          <TabsTrigger value="past">الفعاليات السابقة</TabsTrigger>
-          <TabsTrigger value="upcoming">الفعاليات القادمة</TabsTrigger>
-        </TabsList>
-
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="بحث..." 
-              className="pr-8" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-wrap gap-2 justify-end">
-            <Button 
-              variant={selectedType === null ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setSelectedType(null)}
-            >
-              الكل
-            </Button>
-            <Button 
-              variant={selectedType === "workshop" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setSelectedType("workshop")}
-            >
-              ورش عمل
-            </Button>
-            <Button 
-              variant={selectedType === "info" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setSelectedType("info")}
-            >
-              جلسات تعريفية
-            </Button>
-            <Button 
-              variant={selectedType === "networking" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setSelectedType("networking")}
-            >
-              لقاءات تواصل
-            </Button>
-            <Button 
-              variant={selectedType === "demo" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setSelectedType("demo")}
-            >
-              أيام عرض
-            </Button>
-          </div>
+      {/* Search and tabs */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+          <Input 
+            placeholder="البحث عن فعالية..." 
+            className="pl-3 pr-10" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6">
+            <TabsTrigger value="registered">فعالياتي</TabsTrigger>
+            <TabsTrigger value="workshops">ورش عمل</TabsTrigger>
+            <TabsTrigger value="hackathons">هاكاثونات</TabsTrigger>
+            <TabsTrigger value="past">المنتهية</TabsTrigger>
+            <TabsTrigger value="ongoing">الجارية</TabsTrigger>
+            <TabsTrigger value="all">الكل</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-        <TabsContent value={activeTab}>
-          {selectedEvent ? (
-            <Card>
+      {/* Events list */}
+      {loading ? (
+        <div className="text-center p-12">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="mt-4">جاري تحميل الفعاليات...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center p-12 text-red-500">
+          <p>{error}</p>
+        </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="text-center p-12 bg-muted rounded-md">
+          <p className="text-muted-foreground">لا توجد فعاليات مطابقة للبحث</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event) => (
+            <Card key={event.id} className="overflow-hidden">
+              <div className={`h-2 w-full ${event.status === 'upcoming' ? 'bg-blue-500' : event.status === 'ongoing' ? 'bg-green-500' : 'bg-gray-500'}`}></div>
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setSelectedEvent(null)}
-                  >
-                    العودة للقائمة
-                  </Button>
-                  <div className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {getEventTypeIcon(selectedEvent.type)}
-                      <CardTitle>{selectedEvent.name}</CardTitle>
-                    </div>
-                    <CardDescription className="mt-1">{getEventTypeText(selectedEvent.type)}</CardDescription>
-                  </div>
+                <div className="flex justify-between items-start mb-2">
+                  {getStatusBadge(event)}
+                  {getRegistrationBadge(event)}
                 </div>
+                <CardTitle className="line-clamp-1">{event.title}</CardTitle>
+                <div className="text-sm text-muted-foreground">{event.eventType}</div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2 text-right">وصف الفعالية</h3>
-                    <p className="text-right">{selectedEvent.description}</p>
+              
+              <CardContent className="space-y-4">
+                <p className="text-sm line-clamp-2">{event.description}</p>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-end gap-2">
+                    <div>
+                      <div>{event.formattedStartDate}</div>
+                      {event.formattedStartDate !== event.formattedEndDate && (
+                        <div>{event.formattedEndDate}</div>
+                      )}
+                    </div>
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">التاريخ</p>
-                          <p className="text-sm text-muted-foreground">{selectedEvent.date}</p>
-                        </div>
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">الوقت</p>
-                          <p className="text-sm text-muted-foreground">{selectedEvent.time}</p>
-                        </div>
-                        <Clock className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">المكان</p>
-                          <p className="text-sm text-muted-foreground">{selectedEvent.location}</p>
-                        </div>
-                        <MapPin className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">السعة</p>
-                          <p className="text-sm text-muted-foreground">{selectedEvent.registered} / {selectedEvent.capacity}</p>
-                        </div>
-                        <Users className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">الحالة</p>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedEvent.status === "upcoming" ? "قادمة" : 
-                             selectedEvent.status === "ongoing" ? "جارية" : "منتهية"}
-                          </p>
-                        </div>
-                        {selectedEvent.status === "upcoming" ? 
-                          <Clock className="h-5 w-5 text-blue-500" /> : 
-                          selectedEvent.status === "ongoing" ? 
-                          <CheckCircle className="h-5 w-5 text-green-500" /> : 
-                          <XCircle className="h-5 w-5 text-red-500" />}
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">حالة التسجيل</p>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedEvent.isRegistered ? "مسجل" : "غير مسجل"}
-                          </p>
-                        </div>
-                        {selectedEvent.isRegistered ? 
-                          <CheckCircle className="h-5 w-5 text-green-500" /> : 
-                          <XCircle className="h-5 w-5 text-red-500" />}
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <div>{event.startTime} - {event.endTime}</div>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                   </div>
+                  
+                  <div className="flex items-center justify-end gap-2">
+                    <div>{event.location}</div>
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  
+                  {event.registrationDeadline && (
+                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                      <span>الموعد النهائي للتسجيل: {formatDate(event.registrationDeadline)}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-end">
-                {selectedEvent.status === "upcoming" ? (
-                  selectedEvent.isRegistered ? (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => handleCancelRegistration(selectedEvent.id)}
-                    >
-                      إلغاء التسجيل
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={() => handleRegister(selectedEvent.id)}
-                      disabled={selectedEvent.registered >= selectedEvent.capacity}
-                    >
-                      التسجيل في الفعالية
-                    </Button>
-                  )
-                ) : (
-                  <Button variant="outline" disabled>
-                    انتهت الفعالية
-                  </Button>
-                )}
+              
+              <CardFooter className="flex justify-end gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = `/entrepreneur-dashboard/events/${event.id}`}
+                >
+                  التفاصيل
+                </Button>
+                {getRegistrationButton(event)}
               </CardFooter>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {filteredEvents.map((event) => (
-                <Card key={event.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
-                        {event.isRegistered && (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">مسجل</span>
-                        )}
-                        {event.status === "past" && (
-                          <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">منتهية</span>
-                        )}
-                        {event.registered >= event.capacity && event.status !== "past" && (
-                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">مكتملة</span>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {getEventTypeIcon(event.type)}
-                          <CardTitle className="text-lg">{event.name}</CardTitle>
-                        </div>
-                        <CardDescription className="mt-1">{getEventTypeText(event.type)}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">التاريخ</p>
-                          <p className="text-sm text-muted-foreground">{event.date}</p>
-                        </div>
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">الوقت</p>
-                          <p className="text-sm text-muted-foreground">{event.time}</p>
-                        </div>
-                        <Clock className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">المكان</p>
-                          <p className="text-sm text-muted-foreground">{event.location}</p>
-                        </div>
-                        <MapPin className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-sm text-right line-clamp-2">{event.description}</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      {event.registered} / {event.capacity} مسجل
-                    </div>
-                    <div className="flex gap-2">
-                      {event.status === "upcoming" && !event.isRegistered && (
-                        <Button 
-                          onClick={() => handleRegister(event.id)}
-                          disabled={event.registered >= event.capacity}
-                        >
-                          التسجيل
-                        </Button>
-                      )}
-                      {event.status === "upcoming" && event.isRegistered && (
+          ))}
+        </div>
+      )}
+
+      {/* My upcoming events section */}
+      {activeTab === "all" && myEvents.filter(e => e.status !== "past").length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-6">فعالياتي القادمة</h2>
+          <div className="space-y-4">
+            {myEvents
+              .filter(event => event.status !== "past")
+              .map(event => (
+                <Card key={`my-${event.id}`} className="relative overflow-hidden">
+                  <div className="flex p-6">
+                    <div className="flex-1">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
                         <Button 
                           variant="outline" 
-                          onClick={() => handleCancelRegistration(event.id)}
+                          className="md:order-last"
+                          onClick={() => window.location.href = `/entrepreneur-dashboard/events/${event.id}`}
                         >
-                          إلغاء التسجيل
+                          التفاصيل
                         </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setSelectedEvent(event)}
-                      >
-                        التفاصيل
-                        <ArrowRight className="h-4 w-4 mr-2" />
-                      </Button>
+                        <div className="space-y-1 text-right">
+                          <div className="font-medium text-lg">{event.title}</div>
+                          <div className="flex flex-col text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <span>{event.formattedStartDate} • {event.startTime} - {event.endTime}</span>
+                              <CalendarIcon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span>{event.location}</span>
+                              <MapPin className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </CardFooter>
+                    <div className="hidden md:flex items-center justify-center min-w-24">
+                      {getRegistrationBadge(event)}
+                    </div>
+                  </div>
+                  <div className={`h-1 w-full absolute bottom-0 left-0 ${
+                    event.status === 'upcoming' ? 'bg-blue-500' : 'bg-green-500'
+                  }`}></div>
                 </Card>
-              ))}
-
-              {filteredEvents.length === 0 && (
-                <div className="text-center py-10">
-                  <p className="text-muted-foreground">لا توجد فعاليات متطابقة مع البحث</p>
-                </div>
-              )}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+              ))
+            }
+          </div>
+        </div>
+      )}
     </div>
   )
 }

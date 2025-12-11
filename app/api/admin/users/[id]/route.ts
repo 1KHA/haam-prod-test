@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hash } from 'bcrypt';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 
 // GET /api/admin/users/[id] - Get a single user by ID
 export async function GET(
@@ -28,7 +28,7 @@ export async function GET(
         participantProfile: true,
         adminProfile: true,
         programManagerProfile: true,
-        judgeProfile: true,
+        startupProfile: true,
         startups: {
           select: {
             id: true,
@@ -60,7 +60,7 @@ export async function GET(
     const hasProfile = user.mentorProfile || 
                        user.investorProfile || user.entrepreneurProfile ||
                        user.participantProfile || user.adminProfile ||
-                       user.programManagerProfile || user.judgeProfile;
+                       user.programManagerProfile || user.startupProfile;
     
     // Add virtual status field
     const userWithStatus = {

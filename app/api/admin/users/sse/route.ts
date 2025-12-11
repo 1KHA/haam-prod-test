@@ -1,143 +1,167 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkPermission } from '@/lib/permissions';
+import { isAuthenticated } from '@/lib/auth';
 
-// This is a Server-Sent Events (SSE) endpoint for real-time user updates
-export async function GET(request: NextRequest) {
-  const encoder = new TextEncoder();
-  const customReadable = new ReadableStream({
-    async start(controller) {
-      // Send initial heartbeat
-      controller.enqueue(encoder.encode('event: ping\ndata: heartbeat\n\n'));
-      
-      // Track the last known user count to detect changes
-      let lastUserCount = 0;
-      let lastUserUpdateTime = new Date();
-      
-      // Function to fetch and send users
-      const sendUsers = async () => {
-        try {
-          // Get users
-          const users = await prisma.user.findMany({
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              createdAt: true,
-              updatedAt: true,
-              specialization: true,
-              startupProfile: {
-                select: {
-                  companyName: true,
-                  industry: true,
-                  stage: true
-                }
+// GET /api/admin/users/sse - Server-Sent Events endpoint for real-time user updates
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const tokenParam = url.searchParams.get('token');
+    let authHeader = req.headers.get('Authorization');
+    
+    // If token is provided as URL parameter, use it to build the Authorization header
+    if (tokenParam && !authHeader) {
+      authHeader = `Bearer ${tokenParam}`;
+    }
+    
+    // Authenticate user
+    const user = await isAuthenticated(authHeader || undefined);
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+    
+    // Instead of creating a new Request, add the Authorization header to the
+    // original NextRequest headers for permission checking
+    if (authHeader) {
+      req.headers.set('Authorization', authHeader);
+    }
+    
+    const permissionCheck = await checkPermission(req, { category: 'users', action: 'view' });
+    
+    if (!permissionCheck.authorized) {
+      return new Response(
+        JSON.stringify({ error: permissionCheck.error }),
+        { 
+          status: permissionCheck.error === 'Unauthorized' ? 401 : 403,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+
+    // Set up SSE headers
+    const headers = {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    };
+
+    // Create a new ReadableStream to send SSE events
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        
+        // Initial data fetch function
+        const fetchData = async () => {
+          try {
+            // Fetch users with their profiles
+            const users = await prisma.user.findMany({
+              include: {
+                profile: true,
+                mentorProfile: true,
+                investorProfile: true,
+                startupProfile: true,
+                adminProfile: true,
+                programManagerProfile: true,
+                entrepreneurProfile: true,
+                participantProfile: true,
               },
-              mentorProfile: {
-                select: {
-                  expertise: true,
-                  experience: true
-                }
+              orderBy: {
+                createdAt: 'desc',
               },
-              investorProfile: {
-                select: {
-                  companyName: true,
-                  investmentFocus: true
-                }
-              },
-              entrepreneurProfile: {
-                select: {
-                  organizationName: true,
-                  industry: true,
-                  focusAreas: true
-                }
-              }
-            },
-            orderBy: { createdAt: 'desc' }
-          });
-          
-          // Get total count
-          const total = await prisma.user.count();
-          
-          // Check if there are any changes
-          const hasNewUsers = total !== lastUserCount;
-          
-          // Check if any users were updated recently
-          const mostRecentUpdate = users.reduce((latest, user) => {
-            return user.updatedAt > latest ? user.updatedAt : latest;
-          }, new Date(0));
-          
-          const hasUpdatedUsers = mostRecentUpdate > lastUserUpdateTime;
-          
-          // Only send updates if there are changes
-          if (hasNewUsers || hasUpdatedUsers || lastUserCount === 0) {
-            // Update tracking variables
-            lastUserCount = total;
-            lastUserUpdateTime = mostRecentUpdate;
-            
-            // Transform the users to include a virtual status field
-            const transformedUsers = users.map(user => {
-              // Determine if the user has completed their profile
-              const hasProfile = user.startupProfile || user.mentorProfile || 
-                                user.investorProfile || user.entrepreneurProfile;
-              
+              take: 100, // Limit to 100 users for performance
+            });
+
+            // Get total count
+            const totalCount = await prisma.user.count();
+
+            // Format the data for client
+            const formattedUsers = users.map((user: any) => {
+              // Determine profile data
+              const roleProfile = 
+                user.mentorProfile || 
+                user.investorProfile || 
+                user.startupProfile || 
+                user.adminProfile || 
+                user.programManagerProfile || 
+                user.entrepreneurProfile || 
+                user.participantProfile;
+
+              // Determine status
+              const status = roleProfile ? 'ACTIVE' : 'PENDING';
+
               return {
-                ...user,
-                // Virtual status field
-                status: hasProfile ? 'ACTIVE' : 'PENDING',
-                // Add a program field based on profile data
-                program: user.startupProfile?.companyName || 
-                        user.entrepreneurProfile?.organizationName || 
-                        user.mentorProfile?.expertise || 
-                        user.investorProfile?.companyName || '-'
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                status: status,
+                createdAt: user.createdAt,
+                specialization: user.specialization,
               };
             });
-            
-            // Send the data as a server-sent event
-            const data = {
-              users: transformedUsers,
-              pagination: {
-                total,
-                page: 1,
-                limit: users.length,
-                totalPages: Math.ceil(total / users.length)
-              }
+
+            // Calculate pagination
+            const pagination = {
+              total: totalCount,
+              limit: 100,
+              totalPages: Math.ceil(totalCount / 100),
+              currentPage: 1
             };
-            
-            controller.enqueue(encoder.encode(`event: users\ndata: ${JSON.stringify(data)}\n\n`));
+
+            // Send the data as SSE
+            controller.enqueue(
+              encoder.encode(`event: users\ndata: ${JSON.stringify({ users: formattedUsers, pagination })}\n\n`)
+            );
+          } catch (error) {
+            console.error('Error in SSE stream:', error);
+            controller.enqueue(
+              encoder.encode(`event: error\ndata: ${JSON.stringify({ error: 'Failed to fetch users' })}\n\n`)
+            );
           }
-        } catch (error) {
-          console.error('Error fetching users for SSE:', error);
-          controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: 'Failed to fetch users' })}\n\n`));
+        };
+
+        // Send initial data
+        await fetchData();
+
+        // Set up interval to send data every 15 seconds
+        const intervalId = setInterval(fetchData, 15000);
+
+        // Keep connection alive with periodic heartbeats
+        const heartbeatId = setInterval(() => {
+          controller.enqueue(encoder.encode(`:heartbeat\n\n`));
+        }, 30000);
+
+        // Clean up on close
+        req.signal.addEventListener('abort', () => {
+          clearInterval(intervalId);
+          clearInterval(heartbeatId);
+          controller.close();
+        });
+      }
+    });
+
+    return new Response(stream, { headers });
+  } catch (error) {
+    console.error('Error setting up SSE:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
         }
-      };
-      
-      // Send initial users data
-      await sendUsers();
-      
-      // Set up interval to send heartbeats and check for new users
-      // Using a 5-second interval as requested
-      // The smart change detection ensures updates are only sent when needed
-      const intervalId = setInterval(async () => {
-        // Send heartbeat
-        controller.enqueue(encoder.encode('event: ping\ndata: heartbeat\n\n'));
-        
-        // Send updated users data
-        await sendUsers();
-      }, 5000); // Check for updates every 5 seconds
-      
-      // Clean up on close
-      request.signal.addEventListener('abort', () => {
-        clearInterval(intervalId);
-      });
-    }
-  });
-  
-  return new NextResponse(customReadable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive'
-    }
-  });
+      }
+    );
+  }
 }

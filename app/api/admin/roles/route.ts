@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Count users for each role
     const rolesWithUserCount = await Promise.all(
-      roles.map(async (role) => {
+      roles.map(async (role: any) => {
         const userCount = await prisma.user.count({
           where: {
             rolePermissions: {
@@ -132,8 +132,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Add permissions to role if provided
+    const permissionsMap: Record<string, Record<string, boolean>> = {};
+    
     if (permissions && Object.keys(permissions).length > 0) {
       for (const category of Object.keys(permissions)) {
+        permissionsMap[category] = {};
+        
         for (const action of Object.keys(permissions[category])) {
           if (permissions[category][action]) {
             // Find or create permission
@@ -162,12 +166,30 @@ export async function POST(request: NextRequest) {
                 permissionId: permission.id,
               },
             });
+            
+            // Add to permissions map
+            if (!permissionsMap[category]) {
+              permissionsMap[category] = {};
+            }
+            permissionsMap[category][action] = true;
           }
         }
       }
     }
+    
+    // Count users (will be 0 for new role)
+    const userCount = 0;
 
-    return NextResponse.json(role);
+    // Return complete role object with permissions
+    return NextResponse.json({
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      usersCount: userCount,
+      permissions: permissionsMap,
+      createdAt: role.createdAt,
+      updatedAt: role.updatedAt,
+    });
   } catch (error) {
     console.error('Error creating role:', error);
     return NextResponse.json(

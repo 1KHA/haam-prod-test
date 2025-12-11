@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { toast } from "react-hot-toast"
+import { fetchWithAuth } from "@/lib/api-client"
 import { 
   Search, 
   Filter, 
@@ -22,21 +24,117 @@ import {
   Tag,
   Link,
   Share2,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from "lucide-react"
+
+// Interface for event data
+interface Event {
+  id: string;
+  title: string;
+  eventType: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  organizer: string;
+  capacity: number;
+  description: string;
+  registrationDeadline: string | null;
+  registrationCount?: number;
+}
+
+// Convert API event to display format
+function formatEventForDisplay(event: any) {
+  const startDate = new Date(event.startDate);
+  const endDate = new Date(event.endDate);
+  
+  const formattedStartDate = startDate.toLocaleDateString('ar-SA', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  const formattedEndDate = endDate.toLocaleDateString('ar-SA', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  const startTime = startDate.toLocaleTimeString('ar-SA', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: true 
+  });
+  
+  const endTime = endDate.toLocaleTimeString('ar-SA', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: true 
+  });
+
+  // Format the date range
+  let dateStr = formattedStartDate;
+  if (formattedStartDate !== formattedEndDate) {
+    dateStr += ` - ${formattedEndDate}`;
+  }
+  
+  // Format the time range
+  const timeStr = `${startTime} - ${endTime}`;
+
+  // Convert status to Arabic
+  let statusArabic = event.status;
+  if (event.status === 'published') statusArabic = 'منشور';
+  if (event.status === 'draft') statusArabic = 'مسودة';
+  if (event.status === 'completed') statusArabic = 'مكتمل';
+  if (event.status === 'cancelled') statusArabic = 'ملغي';
+  
+  // Determine actual status for display (قادم, جاري, مكتمل)
+  let displayStatus = 'قادم';  // Upcoming
+  const now = new Date();
+  if (startDate <= now && endDate >= now) {
+    displayStatus = 'جاري';    // Ongoing
+  } else if (endDate < now) {
+    displayStatus = 'مكتمل';   // Completed
+  }
+
+  return {
+    id: event.id,
+    title: event.title,
+    type: event.eventType,
+    status: displayStatus,
+    apiStatus: event.status,
+    date: dateStr,
+    time: timeStr,
+    location: event.location,
+    organizer: event.organizer,
+    attendees: event.registrationCount || 0,
+    description: event.description,
+    registrationDeadline: event.registrationDeadline 
+      ? new Date(event.registrationDeadline).toLocaleDateString('ar-SA', {
+          year: 'numeric', month: 'long', day: 'numeric'
+        })
+      : null
+  };
+}
 
 export default function EventsManagement() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
+  const [events, setEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<boolean>(false)
 
-  // Sample events data
-  const events = [
+  // Sample events data for fallback
+  const sampleEvents = [
     { 
       id: "1", 
       title: "هاكاثون الذكاء الاصطناعي", 
       type: "هاكاثون", 
       status: "قادم", 
+      apiStatus: "published",
       date: "15 أبريل 2025",
       time: "09:00 صباحًا - 06:00 مساءً",
       location: "مركز الابتكار، الرياض",
@@ -50,6 +148,7 @@ export default function EventsManagement() {
       title: "يوم المستثمر", 
       type: "عرض تقديمي", 
       status: "قادم", 
+      apiStatus: "published",
       date: "20 أبريل 2025",
       time: "02:00 مساءً - 06:00 مساءً",
       location: "فندق الفيصلية، الرياض",
@@ -63,6 +162,7 @@ export default function EventsManagement() {
       title: "ورشة عمل: تطوير نموذج العمل", 
       type: "ورشة عمل", 
       status: "قادم", 
+      apiStatus: "published",
       date: "25 أبريل 2025",
       time: "10:00 صباحًا - 02:00 مساءً",
       location: "مقر المسرع، الرياض",
@@ -74,9 +174,6 @@ export default function EventsManagement() {
     { 
       id: "4", 
       title: "مؤتمر التقنيات الناشئة", 
-      type: "مؤتمر", 
-      status: "جاري", 
-      date: "12 مارس 2025 - 14 مارس 2025",
       time: "09:00 صباحًا - 05:00 مساءً",
       location: "مركز الملك عبدالله المالي، الرياض",
       organizer: "وزارة الاتصالات وتقنية المعلومات",
@@ -89,6 +186,7 @@ export default function EventsManagement() {
       title: "لقاء الموجهين والشركات الناشئة", 
       type: "شبكات", 
       status: "جاري", 
+      apiStatus: "published",
       date: "13 مارس 2025",
       time: "06:00 مساءً - 09:00 مساءً",
       location: "مقر الحاضنة، جدة",
@@ -102,6 +200,7 @@ export default function EventsManagement() {
       title: "ورشة عمل: التسويق الرقمي", 
       type: "ورشة عمل", 
       status: "مكتمل", 
+      apiStatus: "completed",
       date: "5 مارس 2025",
       time: "01:00 مساءً - 04:00 مساءً",
       location: "مقر المسرع، الرياض",
@@ -115,6 +214,7 @@ export default function EventsManagement() {
       title: "هاكاثون التقنيات المالية", 
       type: "هاكاثون", 
       status: "مكتمل", 
+      apiStatus: "completed",
       date: "20 فبراير 2025 - 22 فبراير 2025",
       time: "09:00 صباحًا - 09:00 مساءً",
       location: "مركز الابتكار، الرياض",
@@ -123,7 +223,144 @@ export default function EventsManagement() {
       description: "هاكاثون لتطوير حلول مبتكرة في مجال التقنيات المالية",
       registrationDeadline: "15 فبراير 2025"
     }
-  ]
+  ];
+
+  // Fetch events from API
+  useEffect(() => {
+    async function fetchEvents() {
+      setLoading(true);
+      try {
+        // Import and use fetchWithAuth for authenticated request
+        const { fetchWithAuth } = await import('@/lib/api-client');
+        const response = await fetchWithAuth('/api/admin/events');
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching events: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const formattedEvents = data.events.map(formatEventForDisplay);
+        setEvents(formattedEvents);
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch events');
+        // Fall back to sample data for demo purposes
+        setEvents(sampleEvents);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchEvents();
+  }, []);
+  
+  // Delete selected events
+  const deleteSelectedEvents = async () => {
+    if (window.confirm('هل أنت متأكد من رغبتك في حذف الفعاليات المحددة؟')) {
+      setActionLoading(true);
+      try {
+        const response = await fetchWithAuth('/api/admin/events', {
+          method: 'DELETE',
+          body: JSON.stringify({ ids: selectedEvents })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error deleting events: ${response.statusText}`);
+        }
+        
+        // Refresh events list
+        const updatedEvents = events.filter(event => !selectedEvents.includes(event.id));
+        setEvents(updatedEvents);
+        setSelectedEvents([]);
+        toast.success("تم حذف الفعاليات بنجاح");
+      } catch (err) {
+        console.error('Failed to delete events:', err);
+        toast.error(`فشل في حذف الفعاليات: ${err instanceof Error ? err.message : 'خطأ غير معروف'}`);
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  };
+
+  // Export events
+  const exportEvents = async () => {
+    try {
+      setActionLoading(true);
+      const format = 'csv'; // Default format
+      const includeRegistrations = selectedEvents.length > 0;
+      const query = new URLSearchParams();
+      
+      query.append('format', format);
+      query.append('includeRegistrations', String(includeRegistrations));
+      
+      if (selectedEvents.length > 0) {
+        // Include only selected events in export if any are selected
+        selectedEvents.forEach(id => query.append('ids', id));
+      }
+      
+      // Use fetchWithAuth instead of direct redirection
+      const response = await fetchWithAuth(`/api/admin/events/export?${query.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error exporting events: ${response.statusText}`);
+      }
+      
+      // Get the filename from the Content-Disposition header if available
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+      const filename = filenameMatch ? filenameMatch[1] : 'events.csv';
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      
+      // Append to the document, click it, and remove it
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("تم تنزيل ملف التصدير بنجاح");
+    } catch (err) {
+      console.error("Error exporting events:", err);
+      toast.error(`فشل في تصدير البيانات: ${err instanceof Error ? err.message : 'خطأ غير معروف'}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Delete single event
+  const deleteSingleEvent = async (eventId: string, eventTitle: string) => {
+    if (window.confirm(`هل أنت متأكد من حذف "${eventTitle}"؟`)) {
+      setActionLoading(true);
+      try {
+        const response = await fetchWithAuth(`/api/admin/events/${eventId}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error deleting event: ${response.statusText}`);
+        }
+        
+        // Update events list
+        setEvents(events.filter(e => e.id !== eventId));
+        toast.success("تم حذف الفعالية بنجاح");
+      } catch (err) {
+        console.error("Error deleting event:", err);
+        toast.error(`فشل في حذف الفعالية: ${err instanceof Error ? err.message : 'خطأ غير معروف'}`);
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  };
 
   // Filter events based on active tab and search query
   const filteredEvents = events.filter(event => {
@@ -134,6 +371,8 @@ export default function EventsManagement() {
     if (activeTab === "hackathons" && event.type !== "هاكاثون") return false
     if (activeTab === "workshops" && event.type !== "ورشة عمل") return false
     if (activeTab === "networking" && event.type !== "شبكات") return false
+    if (activeTab === "draft" && event.apiStatus !== "draft") return false
+    if (activeTab === "published" && event.apiStatus !== "published") return false
 
     // Filter by search query
     if (searchQuery) {
@@ -169,11 +408,22 @@ export default function EventsManagement() {
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={exportEvents}
+            disabled={loading || actionLoading}
+          >
             <Download className="h-4 w-4" />
             <span>تصدير</span>
           </Button>
-          <Button variant="default" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => window.location.href = "/admin-dashboard/events/create"}
+          >
             <Plus className="h-4 w-4" />
             <span>إضافة فعالية</span>
           </Button>
@@ -256,11 +506,12 @@ export default function EventsManagement() {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-          <TabsList className="grid grid-cols-3 md:grid-cols-6">
+          <TabsList className="grid grid-cols-3 md:grid-cols-7">
+            <TabsTrigger value="draft">مسودة</TabsTrigger>
+            <TabsTrigger value="published">منشورة</TabsTrigger>
             <TabsTrigger value="networking">شبكات</TabsTrigger>
             <TabsTrigger value="workshops">ورش عمل</TabsTrigger>
             <TabsTrigger value="hackathons">هاكاثونات</TabsTrigger>
-            <TabsTrigger value="completed">مكتملة</TabsTrigger>
             <TabsTrigger value="ongoing">جارية</TabsTrigger>
             <TabsTrigger value="all">الكل</TabsTrigger>
           </TabsList>
@@ -281,8 +532,18 @@ export default function EventsManagement() {
                     <Share2 className="h-4 w-4" />
                     <span>مشاركة</span>
                   </Button>
-                  <Button variant="destructive" size="sm" className="flex items-center gap-1">
-                    <Trash2 className="h-4 w-4" />
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={deleteSelectedEvents}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                     <span>حذف</span>
                   </Button>
                 </>
@@ -292,76 +553,99 @@ export default function EventsManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md">
-            <div className="grid grid-cols-8 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
-              <div className="col-span-1 flex items-center">
-                <input 
-                  type="checkbox" 
-                  className="ml-2"
-                  checked={selectedEvents.length === filteredEvents.length && filteredEvents.length > 0}
-                  onChange={selectAllEvents}
-                />
-                <span>الإجراءات</span>
-              </div>
-              <div className="col-span-1">الحالة</div>
-              <div className="col-span-1">النوع</div>
-              <div className="col-span-1">المشاركون</div>
-              <div className="col-span-1">المنظم</div>
-              <div className="col-span-1">الموقع</div>
-              <div className="col-span-1">التاريخ</div>
-              <div className="col-span-1">العنوان</div>
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+              <p className="mt-4">جاري تحميل البيانات...</p>
             </div>
-            
-            {filteredEvents.length > 0 ? (
-              filteredEvents.map((event) => (
-                <div key={event.id} className="grid grid-cols-8 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
-                  <div className="col-span-1 flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedEvents.includes(event.id)}
-                      onChange={() => toggleEventSelection(event.id)}
-                    />
-                    <div className="flex gap-1">
-                      <button className="text-blue-500 hover:text-blue-700">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="text-amber-500 hover:text-amber-700">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="text-red-500 hover:text-red-700">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="col-span-1">
-                    {event.status === "قادم" ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        قادم
-                      </span>
-                    ) : event.status === "جاري" ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        جاري
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        مكتمل
-                      </span>
-                    )}
-                  </div>
-                  <div className="col-span-1">{event.type}</div>
-                  <div className="col-span-1">{event.attendees}</div>
-                  <div className="col-span-1">{event.organizer}</div>
-                  <div className="col-span-1">{event.location.split('،')[0]}</div>
-                  <div className="col-span-1">{event.date.split(' - ')[0]}</div>
-                  <div className="col-span-1">{event.title}</div>
+          ) : error ? (
+            <div className="p-8 text-center text-red-500">
+              حدث خطأ أثناء تحميل البيانات: {error}
+            </div>
+          ) : (
+            <div className="border rounded-md">
+              <div className="grid grid-cols-8 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
+                <div className="col-span-1 flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="ml-2"
+                    checked={selectedEvents.length === filteredEvents.length && filteredEvents.length > 0}
+                    onChange={selectAllEvents}
+                  />
+                  <span>الإجراءات</span>
                 </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                لا توجد نتائج مطابقة لبحثك
+                <div className="col-span-1">الحالة</div>
+                <div className="col-span-1">النوع</div>
+                <div className="col-span-1">المشاركون</div>
+                <div className="col-span-1">المنظم</div>
+                <div className="col-span-1">الموقع</div>
+                <div className="col-span-1">التاريخ</div>
+                <div className="col-span-1">العنوان</div>
               </div>
-            )}
-          </div>
+              
+              {filteredEvents.length > 0 ? (
+                filteredEvents.map((event) => (
+                  <div key={event.id} className="grid grid-cols-8 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
+                    <div className="col-span-1 flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedEvents.includes(event.id)}
+                        onChange={() => toggleEventSelection(event.id)}
+                      />
+                      <div className="flex gap-1">
+                        <button 
+                          className="text-blue-500 hover:text-blue-700"
+                          onClick={() => window.location.href = `/admin-dashboard/events/${event.id}`}
+                          disabled={actionLoading}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button 
+                          className="text-amber-500 hover:text-amber-700"
+                          onClick={() => window.location.href = `/admin-dashboard/events/${event.id}/edit`}
+                          disabled={actionLoading}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button 
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => deleteSingleEvent(event.id, event.title)}
+                          disabled={actionLoading}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      {event.status === "قادم" ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          قادم
+                        </span>
+                      ) : event.status === "جاري" ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          جاري
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          مكتمل
+                        </span>
+                      )}
+                    </div>
+                    <div className="col-span-1">{event.type}</div>
+                    <div className="col-span-1">{event.attendees}</div>
+                    <div className="col-span-1">{event.organizer}</div>
+                    <div className="col-span-1">{event.location.split('،')[0]}</div>
+                    <div className="col-span-1">{event.date.split(' - ')[0]}</div>
+                    <div className="col-span-1">{event.title}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-muted-foreground">
+                  لا توجد نتائج مطابقة لبحثك
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -375,11 +659,24 @@ export default function EventsManagement() {
               {filteredEvents.map((event) => (
                 <div key={event.id} className="flex items-center justify-between p-4 border rounded-md">
                   <div className="flex gap-4">
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/events/${event.id}`);
+                        toast.success("تم نسخ الرابط");
+                      }}
+                    >
                       <Link className="h-4 w-4" />
                       <span>رابط التسجيل</span>
                     </Button>
-                    <Button variant="default" size="sm" className="flex items-center gap-1">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => window.location.href = `/admin-dashboard/events/${event.id}`}
+                    >
                       <Eye className="h-4 w-4" />
                       <span>التفاصيل</span>
                     </Button>

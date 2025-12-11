@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #007bff;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            width: 250px;
+        }
+        .response {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            min-height: 50px;
+            max-height: 200px;
+            overflow: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .token-input {
+            width: 500px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        .auth-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reports API Test</h1>
+    
+    <div class="auth-section">
+        <h3>Authentication</h3>
+        <label for="authToken">JWT Token (from localStorage):</label>
+        <input type="text" id="authToken" class="token-input" placeholder="Paste JWT token here">
+        <button id="saveToken">Save Token</button>
+        <div class="status" id="tokenStatus"></div>
+    </div>
+    
+    <div class="section">
+        <h2>1. List Reports</h2>
+        <button id="listReports">List All Reports</button>
+        <div class="status" id="listStatus"></div>
+        <div class="response" id="listResponse"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Download Report</h2>
+        <label for="downloadId">Report ID:</label>
+        <input type="text" id="downloadId" placeholder="Enter report ID">
+        <button id="downloadReport">Download Report</button>
+        <div class="status" id="downloadStatus"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. Export Reports</h2>
+        <label for="exportFormat">Export Format:</label>
+        <select id="exportFormat">
+            <option value="csv">CSV</option>
+            <option value="xlsx">XLSX</option>
+        </select>
+        <button id="exportReports">Export Reports</button>
+        <div class="status" id="exportStatus"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. Print Report</h2>
+        <label for="printId">Report ID:</label>
+        <input type="text" id="printId" placeholder="Enter report ID">
+        <button id="printReport">Print Report</button>
+        <div class="status" id="printStatus"></div>
+    </div>
+    
+    <div class="section">
+        <h2>5. Share Report</h2>
+        <label for="shareId">Report ID:</label>
+        <input type="text" id="shareId" placeholder="Enter report ID">
+        <label for="shareUsers">User IDs (comma separated):</label>
+        <input type="text" id="shareUsers" placeholder="e.g. user1,user2,user3">
+        <label for="shareMessage">Message (optional):</label>
+        <input type="text" id="shareMessage" placeholder="Enter message">
+        <button id="shareReport">Share Report</button>
+        <div class="status" id="shareStatus"></div>
+        <div class="response" id="shareResponse"></div>
+    </div>
+    
+    <div class="section">
+        <h2>6. View Report History</h2>
+        <label for="historyId">Report ID:</label>
+        <input type="text" id="historyId" placeholder="Enter report ID">
+        <button id="viewHistory">View Share History</button>
+        <div class="status" id="historyStatus"></div>
+        <div class="response" id="historyResponse"></div>
+    </div>
+
+    <script>
+        // Get token from localStorage or input field
+        let token = localStorage.getItem('authToken') || '';
+        const tokenInput = document.getElementById('authToken');
+        tokenInput.value = token;
+        
+        // Save token to localStorage
+        document.getElementById('saveToken').addEventListener('click', () => {
+            token = tokenInput.value.trim();
+            if (token) {
+                localStorage.setItem('authToken', token);
+                document.getElementById('tokenStatus').textContent = 'Token saved to localStorage';
+                document.getElementById('tokenStatus').className = 'status success';
+            } else {
+                document.getElementById('tokenStatus').textContent = 'Error: Token cannot be empty';
+                document.getElementById('tokenStatus').className = 'status error';
+            }
+        });
+
+        // Utility function to format JSON responses
+        function formatResponse(data) {
+            return JSON.stringify(data, null, 2);
+        }
+
+        // Add authentication header to fetch requests
+        function fetchWithAuth(url, options = {}) {
+            const headers = options.headers || {};
+            return fetch(url, {
+                ...options,
+                headers: {
+                    ...headers,
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+
+        // List all reports
+        document.getElementById('listReports').addEventListener('click', async () => {
+            const statusEl = document.getElementById('listStatus');
+            const responseEl = document.getElementById('listResponse');
+            
+            try {
+                statusEl.textContent = 'Loading...';
+                statusEl.className = 'status';
+                
+                const response = await fetchWithAuth('/api/admin/reports');
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusEl.textContent = 'Success!';
+                    statusEl.className = 'status success';
+                    responseEl.textContent = formatResponse(data);
+                    
+                    // Automatically populate report IDs from the response
+                    if (data.reports && data.reports.length > 0) {
+                        const firstReportId = data.reports[0].id;
+                        document.getElementById('downloadId').value = firstReportId;
+                        document.getElementById('printId').value = firstReportId;
+                        document.getElementById('shareId').value = firstReportId;
+                        document.getElementById('historyId').value = firstReportId;
+                    }
+                } else {
+                    throw new Error(`${response.status}: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+                responseEl.textContent = '';
+            }
+        });
+        
+        // Download report
+        document.getElementById('downloadReport').addEventListener('click', async () => {
+            const reportId = document.getElementById('downloadId').value.trim();
+            const statusEl = document.getElementById('downloadStatus');
+            
+            if (!reportId) {
+                statusEl.textContent = 'Error: Report ID is required';
+                statusEl.className = 'status error';
+                return;
+            }
+            
+            try {
+                statusEl.textContent = 'Downloading...';
+                statusEl.className = 'status';
+                
+                // Open download in a new tab with auth token
+                window.open(`/api/admin/reports/download?id=${reportId}&token=${encodeURIComponent(token)}`);
+                
+                statusEl.textContent = 'Download initiated!';
+                statusEl.className = 'status success';
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        });
+        
+        // Export reports
+        document.getElementById('exportReports').addEventListener('click', async () => {
+            const format = document.getElementById('exportFormat').value;
+            const statusEl = document.getElementById('exportStatus');
+            
+            try {
+                statusEl.textContent = 'Exporting...';
+                statusEl.className = 'status';
+                
+                // Open export in a new tab with auth token
+                window.open(`/api/admin/reports/export?exportFormat=${format}&token=${encodeURIComponent(token)}`);
+                
+                statusEl.textContent = 'Export initiated!';
+                statusEl.className = 'status success';
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        });
+        
+        // Print report
+        document.getElementById('printReport').addEventListener('click', async () => {
+            const reportId = document.getElementById('printId').value.trim();
+            const statusEl = document.getElementById('printStatus');
+            
+            if (!reportId) {
+                statusEl.textContent = 'Error: Report ID is required';
+                statusEl.className = 'status error';
+                return;
+            }
+            
+            try {
+                statusEl.textContent = 'Opening print view...';
+                statusEl.className = 'status';
+                
+                // Open print view in a new tab with auth token
+                window.open(`/api/admin/reports/print?id=${reportId}&token=${encodeURIComponent(token)}`);
+                
+                statusEl.textContent = 'Print view opened!';
+                statusEl.className = 'status success';
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+            }
+        });
+        
+        // Share report
+        document.getElementById('shareReport').addEventListener('click', async () => {
+            const reportId = document.getElementById('shareId').value.trim();
+            const userIdsInput = document.getElementById('shareUsers').value.trim();
+            const message = document.getElementById('shareMessage').value;
+            const statusEl = document.getElementById('shareStatus');
+            const responseEl = document.getElementById('shareResponse');
+            
+            if (!reportId) {
+                statusEl.textContent = 'Error: Report ID is required';
+                statusEl.className = 'status error';
+                return;
+            }
+            
+            if (!userIdsInput) {
+                statusEl.textContent = 'Error: At least one user ID is required';
+                statusEl.className = 'status error';
+                return;
+            }
+            
+            const userIds = userIdsInput.split(',').map(id => id.trim()).filter(id => id);
+            
+            try {
+                statusEl.textContent = 'Sharing...';
+                statusEl.className = 'status';
+                
+                const response = await fetchWithAuth('/api/admin/reports/share', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        reportId,
+                        userIds,
+                        message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusEl.textContent = 'Success!';
+                    statusEl.className = 'status success';
+                    responseEl.textContent = formatResponse(data);
+                } else {
+                    throw new Error(`${response.status}: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+                responseEl.textContent = '';
+            }
+        });
+        
+        // View share history
+        document.getElementById('viewHistory').addEventListener('click', async () => {
+            const reportId = document.getElementById('historyId').value.trim();
+            const statusEl = document.getElementById('historyStatus');
+            const responseEl = document.getElementById('historyResponse');
+            
+            if (!reportId) {
+                statusEl.textContent = 'Error: Report ID is required';
+                statusEl.className = 'status error';
+                return;
+            }
+            
+            try {
+                statusEl.textContent = 'Loading...';
+                statusEl.className = 'status';
+                
+                const response = await fetchWithAuth(`/api/admin/reports/share?reportId=${reportId}`);
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusEl.textContent = 'Success!';
+                    statusEl.className = 'status success';
+                    responseEl.textContent = formatResponse(data);
+                } else {
+                    throw new Error(`${response.status}: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.className = 'status error';
+                responseEl.textContent = '';
+            }
+        });
+
+        // Check if we have an auth token
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) {
+                document.getElementById('tokenStatus').textContent = 'Warning: No auth token found. Please add one.';
+                document.getElementById('tokenStatus').className = 'status error';
+            } else {
+                document.getElementById('tokenStatus').textContent = 'Auth token loaded from localStorage';
+                document.getElementById('tokenStatus').className = 'status success';
+            }
+        });
+    </script>
+</body>
+</html>

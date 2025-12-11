@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { toast } from "react-hot-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -26,113 +27,227 @@ import {
   Receipt
 } from "lucide-react"
 
+interface Payment {
+  id: string;
+  referenceNumber: string;
+  paymentDate: string;
+  amount: number;
+  currency: string;
+  status: string;
+  type: string;
+  description: string;
+  payerName: string;
+  payerEmail?: string;
+  paymentMethod: string;
+  metadata?: {
+    programId?: string;
+    startupId?: string;
+    invoiceId?: string;
+  };
+}
+
+interface PaginationInfo {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 export default function PaymentsManagement() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [dateRange, setDateRange] = useState("month")
   const [selectedPayments, setSelectedPayments] = useState<string[]>([])
-
-  // Sample payments data
-  const payments = [
-    { 
-      id: "1", 
-      reference: "INV-2025-001", 
-      amount: "5,000 ريال", 
-      type: "رسوم اشتراك", 
-      status: "مكتمل", 
-      date: "12 مارس 2025",
-      time: "10:15:22",
-      paymentMethod: "بطاقة ائتمان",
-      entity: "شركة تك سمارت",
-      entityType: "شركة ناشئة",
-      program: "مسرع التقنية المالية",
-      description: "رسوم الاشتراك السنوي في برنامج المسرع"
-    },
-    { 
-      id: "2", 
-      reference: "INV-2025-002", 
-      amount: "3,500 ريال", 
-      type: "رسوم خدمات", 
-      status: "مكتمل", 
-      date: "10 مارس 2025",
-      time: "14:30:45",
-      paymentMethod: "تحويل بنكي",
-      entity: "شركة هيلث تك",
-      entityType: "شركة ناشئة",
-      program: "مسرع التقنيات الصحية",
-      description: "رسوم خدمات استشارية"
-    },
-    { 
-      id: "3", 
-      reference: "INV-2025-003", 
-      amount: "7,500 ريال", 
-      type: "رسوم اشتراك", 
-      status: "معلق", 
-      date: "9 مارس 2025",
-      time: "09:20:15",
-      paymentMethod: "تحويل بنكي",
-      entity: "شركة إيكو سمارت",
-      entityType: "شركة ناشئة",
-      program: "حاضنة التقنيات الناشئة",
-      description: "رسوم الاشتراك السنوي في برنامج الحاضنة"
-    },
-    { 
-      id: "4", 
-      reference: "INV-2025-004", 
-      amount: "2,000 ريال", 
-      type: "رسوم فعالية", 
-      status: "معلق", 
-      date: "8 مارس 2025",
-      time: "16:45:30",
-      paymentMethod: "بطاقة ائتمان",
-      entity: "شركة فود تك",
-      entityType: "شركة ناشئة",
-      program: "مسرع الذكاء الاصطناعي",
-      description: "رسوم المشاركة في هاكاثون الذكاء الاصطناعي"
-    },
-    { 
-      id: "5", 
-      reference: "INV-2025-005", 
-      amount: "4,500 ريال", 
-      type: "رسوم خدمات", 
-      status: "مرفوض", 
-      date: "7 مارس 2025",
-      time: "11:10:05",
-      paymentMethod: "بطاقة ائتمان",
-      entity: "شركة إيدو تك",
-      entityType: "شركة ناشئة",
-      program: "حاضنة التقنيات الناشئة",
-      description: "رسوم خدمات تسويقية - فشل الدفع بسبب رفض البطاقة"
-    }
-  ]
-
-  // Filter payments based on active tab, search query, and date range
-  const filteredPayments = payments.filter(payment => {
-    // Filter by tab
-    if (activeTab === "completed" && payment.status !== "مكتمل") return false
-    if (activeTab === "pending" && payment.status !== "معلق") return false
-    if (activeTab === "rejected" && payment.status !== "مرفوض") return false
-    if (activeTab === "subscription" && payment.type !== "رسوم اشتراك") return false
-    if (activeTab === "services" && payment.type !== "رسوم خدمات") return false
-    if (activeTab === "events" && payment.type !== "رسوم فعالية") return false
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        payment.reference.toLowerCase().includes(query) ||
-        payment.entity.toLowerCase().includes(query) ||
-        payment.program.toLowerCase().includes(query) ||
-        payment.description.toLowerCase().includes(query)
-      )
-    }
-
-    // Filter by date range (simplified for demo)
-    if (dateRange === "week" && !payment.date.includes("مارس")) return false
-    if (dateRange === "today" && payment.date !== "12 مارس 2025") return false
-
-    return true
+  const [isLoading, setIsLoading] = useState(false)
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0
   })
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    pendingRevenue: 0,
+    completedCount: 0,
+    rejectedCount: 0
+  })
+
+  // Fetch payments on component mount and when filters change
+  useEffect(() => {
+    fetchPayments();
+  }, [activeTab, dateRange, pagination.page]); // Re-fetch when filters or page changes
+
+  // Fetch payments from API
+  const fetchPayments = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append("page", pagination.page.toString());
+      params.append("pageSize", pagination.pageSize.toString());
+      
+      // Map activeTab to API parameters
+      if (activeTab === "completed") params.append("status", "completed");
+      if (activeTab === "pending") params.append("status", "pending");
+      if (activeTab === "rejected") params.append("status", "failed");
+      if (activeTab === "subscription") params.append("type", "program_fee");
+      if (activeTab === "services") params.append("type", "service_fee");
+      if (activeTab === "events") params.append("type", "event_registration");
+      
+      // Map dateRange to API parameters
+      if (dateRange === "today") {
+        const today = new Date();
+        params.append("startDate", today.toISOString().split('T')[0]);
+      } else if (dateRange === "week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        params.append("startDate", weekAgo.toISOString().split('T')[0]);
+      } else if (dateRange === "month") {
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        params.append("startDate", monthAgo.toISOString().split('T')[0]);
+      } else if (dateRange === "quarter") {
+        const quarterAgo = new Date();
+        quarterAgo.setDate(quarterAgo.getDate() - 90);
+        params.append("startDate", quarterAgo.toISOString().split('T')[0]);
+      }
+      
+      // Add search parameter if provided
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+      
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      // Fetch payments from API
+      const response = await fetch(`/api/admin/payments?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch payments');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setPayments(data.data.payments);
+        setPagination(data.data.pagination);
+        
+        // Calculate stats
+        const totalRevenue = data.data.payments
+          .filter((p: Payment) => p.status === 'completed')
+          .reduce((sum: number, p: Payment) => sum + p.amount, 0);
+          
+        const pendingRevenue = data.data.payments
+          .filter((p: Payment) => p.status === 'pending')
+          .reduce((sum: number, p: Payment) => sum + p.amount, 0);
+          
+        setStats({
+          totalRevenue,
+          pendingRevenue,
+          completedCount: data.data.payments.filter((p: Payment) => p.status === 'completed').length,
+          rejectedCount: data.data.payments.filter((p: Payment) => p.status === 'failed' || p.status === 'rejected').length
+        });
+      } else {
+        console.error('Error fetching payments:', data.error);
+        toast.error(data.error || 'Failed to fetch payments');
+        
+        // Use empty array as fallback
+        setPayments([]);
+        setPagination({
+          page: 1,
+          pageSize: 10,
+          totalItems: 0,
+          totalPages: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast.error('Failed to fetch payments');
+      
+      // Use empty array as fallback
+      setPayments([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Filter payments based on search query (server handles status and date filtering)
+  const filteredPayments = searchQuery 
+    ? payments.filter(payment => {
+        const query = searchQuery.toLowerCase();
+        return (
+          payment.referenceNumber.toLowerCase().includes(query) ||
+          payment.payerName.toLowerCase().includes(query) ||
+          payment.description.toLowerCase().includes(query) ||
+          (payment.payerEmail && payment.payerEmail.toLowerCase().includes(query))
+        );
+      })
+    : payments;
+
+  // Format date from ISO string
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('ar-SA', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }).format(date);
+  }
+  
+  // Format time from ISO string
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('ar-SA', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    }).format(date);
+  }
+  
+  // Format currency
+  const formatCurrency = (amount: number, currency: string = 'SAR') => {
+    return `${amount.toLocaleString('ar-SA')} ${currency === 'SAR' ? 'ريال' : currency}`;
+  }
+  
+  // Map payment type to Arabic
+  const getPaymentTypeArabic = (type: string) => {
+    switch(type) {
+      case 'program_fee': return 'رسوم اشتراك';
+      case 'mentorship_fee': return 'رسوم إرشاد';
+      case 'event_registration': return 'رسوم فعالية';
+      case 'service_fee': return 'رسوم خدمات';
+      default: return type;
+    }
+  }
+  
+  // Map payment status to Arabic
+  const getPaymentStatusArabic = (status: string) => {
+    switch(status) {
+      case 'completed': return 'مكتمل';
+      case 'pending': return 'معلق';
+      case 'failed': return 'فشل';
+      case 'rejected': return 'مرفوض';
+      case 'refunded': return 'مسترجع';
+      default: return status;
+    }
+  }
+  
+  // Map payment method to Arabic
+  const getPaymentMethodArabic = (method: string) => {
+    switch(method) {
+      case 'credit_card': return 'بطاقة ائتمان';
+      case 'bank_transfer': return 'تحويل بنكي';
+      default: return method;
+    }
+  }
 
   const togglePaymentSelection = (paymentId: string) => {
     if (selectedPayments.includes(paymentId)) {
@@ -149,36 +264,92 @@ export default function PaymentsManagement() {
       setSelectedPayments(filteredPayments.map(payment => payment.id))
     }
   }
-
-  // Calculate total revenue
-  const totalRevenue = payments
-    .filter(p => p.status === "مكتمل")
-    .reduce((sum, payment) => {
-      const amount = parseInt(payment.amount.replace(/[^\d]/g, ''))
-      return sum + amount
-    }, 0)
-
-  // Calculate pending revenue
-  const pendingRevenue = payments
-    .filter(p => p.status === "معلق")
-    .reduce((sum, payment) => {
-      const amount = parseInt(payment.amount.replace(/[^\d]/g, ''))
-      return sum + amount
-    }, 0)
+  
+  // Handle refresh button click
+  const handleRefresh = () => {
+    fetchPayments();
+  }
+  
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+  }
+  
+  // Navigate to payment details
+  const navigateToPaymentDetails = (id: string) => {
+    window.location.href = `/admin-dashboard/payments/${id}`;
+  }
 
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              // Build export URL with current filters
+              const params = new URLSearchParams();
+              
+              // Map activeTab to API parameters
+              if (activeTab === "completed") params.append("status", "completed");
+              if (activeTab === "pending") params.append("status", "pending");
+              if (activeTab === "rejected") params.append("status", "failed");
+              if (activeTab === "subscription") params.append("type", "program_fee");
+              if (activeTab === "services") params.append("type", "service_fee");
+              if (activeTab === "events") params.append("type", "event_registration");
+              
+              // Map dateRange to API parameters
+              if (dateRange === "today") {
+                const today = new Date();
+                params.append("startDate", today.toISOString().split('T')[0]);
+              } else if (dateRange === "week") {
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                params.append("startDate", weekAgo.toISOString().split('T')[0]);
+              } else if (dateRange === "month") {
+                const monthAgo = new Date();
+                monthAgo.setDate(monthAgo.getDate() - 30);
+                params.append("startDate", monthAgo.toISOString().split('T')[0]);
+              } else if (dateRange === "quarter") {
+                const quarterAgo = new Date();
+                quarterAgo.setDate(quarterAgo.getDate() - 90);
+                params.append("startDate", quarterAgo.toISOString().split('T')[0]);
+              }
+              
+              // Add search parameter if provided
+              if (searchQuery) {
+                params.append("search", searchQuery);
+              }
+              
+              // Open export URL in new tab
+              window.open(`/api/admin/payments/export?${params.toString()}`, '_blank');
+            }}
+          >
             <Download className="h-4 w-4" />
             <span>تصدير</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
-            <RefreshCw className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             <span>تحديث</span>
           </Button>
-          <Button variant="default" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => window.location.href = '/admin-dashboard/payments/create'}
+          >
             <Plus className="h-4 w-4" />
             <span>إنشاء فاتورة</span>
           </Button>
@@ -195,7 +366,7 @@ export default function PaymentsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalRevenue.toLocaleString()} ريال</div>
+            <div className="text-3xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
             <div className="flex items-center mt-2 text-green-600">
               <ArrowUpRight className="h-4 w-4 mr-1" />
               <span>+12% من الشهر السابق</span>
@@ -211,8 +382,8 @@ export default function PaymentsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{pendingRevenue.toLocaleString()} ريال</div>
-            <div className="text-sm text-muted-foreground mt-1">{payments.filter(p => p.status === "معلق").length} معاملات</div>
+            <div className="text-3xl font-bold">{formatCurrency(stats.pendingRevenue)}</div>
+            <div className="text-sm text-muted-foreground mt-1">{payments.filter(p => p.status === 'pending').length} معاملات</div>
           </CardContent>
         </Card>
 
@@ -224,7 +395,7 @@ export default function PaymentsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{payments.filter(p => p.status === "مكتمل").length}</div>
+            <div className="text-3xl font-bold">{stats.completedCount}</div>
             <div className="flex items-center mt-2 text-green-600">
               <ArrowUpRight className="h-4 w-4 mr-1" />
               <span>+8% من الشهر السابق</span>
@@ -240,7 +411,7 @@ export default function PaymentsManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{payments.filter(p => p.status === "مرفوض").length}</div>
+            <div className="text-3xl font-bold">{stats.rejectedCount}</div>
             <div className="flex items-center mt-2 text-amber-600">
               <ArrowDownRight className="h-4 w-4 mr-1" />
               <span>-5% من الشهر السابق</span>
@@ -258,9 +429,18 @@ export default function PaymentsManagement() {
               className="pl-3 pr-10 w-full" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  fetchPayments();
+                }
+              }}
             />
           </div>
-          <Button variant="outline" size="icon">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => fetchPayments()}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
@@ -300,14 +480,34 @@ export default function PaymentsManagement() {
                     <Receipt className="h-4 w-4" />
                     <span>إعادة إرسال الإيصال</span>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => {
+                      // Get token from localStorage
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      
+                      // Export only selected payments
+                      const params = new URLSearchParams();
+                      
+                      // Join selected payment IDs with commas
+                      if (selectedPayments.length > 0) {
+                        params.append("ids", selectedPayments.join(','));
+                      }
+                      
+                      // Open export URL in new tab
+                      window.open(`/api/admin/payments/export?${params.toString()}`, '_blank');
+                    }}
+                  >
                     <Download className="h-4 w-4" />
                     <span>تصدير المحدد</span>
                   </Button>
                 </>
               )}
             </div>
-            <CardTitle>سجل المدفوعات ({filteredPayments.length})</CardTitle>
+            <CardTitle>سجل المدفوعات ({pagination.totalItems})</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -331,7 +531,12 @@ export default function PaymentsManagement() {
               <div className="col-span-1">رقم المرجع</div>
             </div>
             
-            {filteredPayments.length > 0 ? (
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground">جاري تحميل المدفوعات...</p>
+              </div>
+            ) : filteredPayments.length > 0 ? (
               filteredPayments.map((payment) => (
                 <div key={payment.id} className="grid grid-cols-8 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
                   <div className="col-span-1 flex items-center gap-2">
@@ -341,10 +546,16 @@ export default function PaymentsManagement() {
                       onChange={() => togglePaymentSelection(payment.id)}
                     />
                     <div className="flex gap-1">
-                      <button className="text-blue-500 hover:text-blue-700">
+                      <button 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={() => navigateToPaymentDetails(payment.id)}
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="text-amber-500 hover:text-amber-700">
+                      <button 
+                        className="text-amber-500 hover:text-amber-700"
+                        onClick={() => window.location.href = `/admin-dashboard/payments/${payment.id}/edit`}
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button className="text-red-500 hover:text-red-700">
@@ -353,26 +564,26 @@ export default function PaymentsManagement() {
                     </div>
                   </div>
                   <div className="col-span-1">
-                    {payment.status === "مكتمل" ? (
+                    {payment.status === 'completed' ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        مكتمل
+                        {getPaymentStatusArabic(payment.status)}
                       </span>
-                    ) : payment.status === "معلق" ? (
+                    ) : payment.status === 'pending' ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        معلق
+                        {getPaymentStatusArabic(payment.status)}
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        مرفوض
+                        {getPaymentStatusArabic(payment.status)}
                       </span>
                     )}
                   </div>
-                  <div className="col-span-1">{payment.paymentMethod}</div>
-                  <div className="col-span-1">{payment.amount}</div>
-                  <div className="col-span-1">{payment.type}</div>
-                  <div className="col-span-1">{payment.entity}</div>
-                  <div className="col-span-1">{payment.date}</div>
-                  <div className="col-span-1">{payment.reference}</div>
+                  <div className="col-span-1">{getPaymentMethodArabic(payment.paymentMethod)}</div>
+                  <div className="col-span-1">{formatCurrency(payment.amount, payment.currency)}</div>
+                  <div className="col-span-1">{getPaymentTypeArabic(payment.type)}</div>
+                  <div className="col-span-1">{payment.payerName}</div>
+                  <div className="col-span-1">{formatDate(payment.paymentDate)}</div>
+                  <div className="col-span-1">{payment.referenceNumber}</div>
                 </div>
               ))
             ) : (
@@ -398,21 +609,69 @@ export default function PaymentsManagement() {
                       <XCircle className="h-4 w-4 text-red-500" />
                       <span>إلغاء</span>
                     </Button>
-                    <Button variant="default" size="sm" className="flex items-center gap-1">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => window.location.href = `/admin-dashboard/payments/${payment.id}/process`}
+                    >
                       <RefreshCw className="h-4 w-4" />
-                      <span>إعادة محاولة</span>
+                      <span>معالجة الدفع</span>
                     </Button>
                   </div>
                   <div className="flex flex-col items-end">
-                    <div className="font-medium">{payment.reference} - {payment.amount}</div>
-                    <div className="text-sm text-muted-foreground">{payment.entity} • {payment.type}</div>
-                    <div className="text-xs text-muted-foreground">تاريخ الطلب: {payment.date} {payment.time}</div>
+                    <div className="font-medium">{payment.referenceNumber} - {formatCurrency(payment.amount, payment.currency)}</div>
+                    <div className="text-sm text-muted-foreground">{payment.payerName} • {getPaymentTypeArabic(payment.type)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      تاريخ الطلب: {formatDate(payment.paymentDate)} {formatTime(payment.paymentDate)}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={pagination.page === 1 || isLoading}
+          >
+            الأول
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={pagination.page === 1 || isLoading}
+          >
+            السابق
+          </Button>
+          <span className="px-3 py-2 mx-1 rounded-md bg-muted">
+            صفحة {pagination.page} من {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={pagination.page === pagination.totalPages || isLoading}
+          >
+            التالي
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(pagination.totalPages)}
+            disabled={pagination.page === pagination.totalPages || isLoading}
+          >
+            الأخير
+          </Button>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

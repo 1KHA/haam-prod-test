@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { usePermissions } from "@/hooks/usePermissions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -54,6 +55,7 @@ export default function RolesPermissions() {
   const [newRolePermissions, setNewRolePermissions] = useState<Record<string, Record<string, boolean>>>({})
   const [editedPermissions, setEditedPermissions] = useState<Record<string, Record<string, boolean>>>({})
   const [token, setToken] = useState<string | null>(null)
+  const { refreshPermissions } = usePermissions()
 
   // Dynamic role-permission mapping based on docs/rbac-permission-mapping.md
   // If the RBAC mapping changes, update this object accordingly.
@@ -587,6 +589,9 @@ export default function RolesPermissions() {
           description: "تم إضافة الدور بنجاح"
         });
         
+        // Refresh permissions to ensure all clients get updated permissions
+        refreshPermissions();
+        
         setShowAddRole(false);
         setNewRoleName("");
         setNewRoleDescription("");
@@ -646,6 +651,9 @@ export default function RolesPermissions() {
             title: "تم بنجاح",
             description: "تم حذف الدور بنجاح"
           });
+          
+          // Refresh permissions to ensure all clients get updated permissions
+          refreshPermissions();
           
           // Refresh roles
           fetchRoles();
@@ -712,6 +720,9 @@ export default function RolesPermissions() {
           title: "تم بنجاح",
           description: "تم تحديث الدور بنجاح"
         });
+        
+        // Refresh permissions to ensure all clients get updated permissions
+        refreshPermissions();
         
         setEditingRole(null);
         

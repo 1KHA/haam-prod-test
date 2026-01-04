@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { usePermissions } from "@/hooks/usePermissions"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +23,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   
   const router = useRouter()
   const { toast } = useToast()
+  const { refreshPermissions } = usePermissions()
   const userId = params.id
   
   // Fetch user data
@@ -102,6 +104,9 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
           title: "تم تحديث المستخدم بنجاح",
           description: `تم تحديث بيانات المستخدم ${data.name} بنجاح`
         })
+        
+        // Refresh permissions if role changed
+        await refreshPermissions()
         
         // Redirect to users list
         router.push('/admin-dashboard/users')

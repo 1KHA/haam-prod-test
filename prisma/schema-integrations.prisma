@@ -1,0 +1,63 @@
+// Integration models to be added to schema.prisma
+
+// Model for system integrations (e.g., Stripe, Google Calendar, Slack, etc.)
+model Integration {
+  id                String            @id @default(uuid())
+  name              String            // Name of the integration (e.g., "Stripe")
+  description       String?           // Description of the integration
+  category          String            // Category (e.g., "المدفوعات", "الجدولة", "التواصل")
+  provider          String            // Provider identifier (e.g., "stripe", "google", "slack")
+  icon              String?           // Icon identifier for UI
+  status            String            @default("غير متصل") // "متصل", "غير متصل", "معلق"
+  apiKey            String?           // Encrypted API key (should be securely stored)
+  webhookUrl        String?           // Webhook URL for this integration
+  webhookSecret     String?           // Secret for validating incoming webhooks
+  oauthClientId     String?           // OAuth client ID if using OAuth
+  oauthClientSecret String?           // OAuth client secret if using OAuth
+  oauthRefreshToken String?           // OAuth refresh token
+  oauthAccessToken  String?           // OAuth access token
+  oauthTokenExpiry  DateTime?         // OAuth token expiry date
+  syncFrequency     String?           // How often to sync (e.g., "hourly", "daily", "weekly")
+  lastSync          DateTime?         // Last time the integration was synced
+  dataAccess        String?           // JSON string of data access permissions
+  settings          String?           // JSON string of integration-specific settings
+  connectedById     String?           // User who connected this integration
+  connectedBy       User?             @relation(fields: [connectedById], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  syncs             IntegrationSync[] // Relation to sync history
+  webhooks          IntegrationWebhook[] // Relation to webhook logs
+}
+
+// Model for integration sync history
+model IntegrationSync {
+  id              String      @id @default(uuid())
+  integrationId   String
+  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  status          String      // "completed", "failed", "in_progress"
+  startTime       DateTime
+  endTime         DateTime?
+  itemsProcessed  Int         @default(0)
+  itemsCreated    Int         @default(0)
+  itemsUpdated    Int         @default(0)
+  itemsDeleted    Int         @default(0)
+  itemsFailed     Int         @default(0)
+  error           String?     // Error message if sync failed
+  triggeredById   String?     // User who triggered the sync, null for automatic syncs
+  triggeredBy     User?       @relation(fields: [triggeredById], references: [id])
+  createdAt       DateTime    @default(now())
+}
+
+// Model for integration webhook logs
+model IntegrationWebhook {
+  id              String      @id @default(uuid())
+  integrationId   String
+  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  provider        String      // Provider identifier (e.g., "stripe", "github")
+  eventType       String      // Event type (e.g., "payment.succeeded", "push")
+  status          String      // "success", "error", "pending"
+  payload         String      // JSON string of the webhook payload
+  processedAt     DateTime?   // When the webhook was processed
+  error           String?     // Error message if processing failed
+  createdAt       DateTime    @default(now())
+}

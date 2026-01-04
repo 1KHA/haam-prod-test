@@ -34,24 +34,91 @@ export async function hasPermission(
     // Admin has all permissions
     if (user.role === UserRole.ADMIN) return true;
 
-    // Get role-based permissions
-    const rolePermissions = await prisma.rolePermission.findMany({
+    // Try multiple strategies to find role permissions
+    
+    // Strategy 1: Try with Arabic role name mapping
+    const arabicRoleName = getRoleNameInArabic(user.role);
+    
+    let hasRolePermission = false;
+    
+    // Strategy 2: Find the role record in the database
+    const userRoleRecord = await prisma.role.findFirst({
       where: {
-        role: {
-          name: getRoleNameInArabic(user.role),
-        },
-        permission: {
-          category: requirement.category,
-          action: requirement.action,
-        },
-      },
-      include: {
-        permission: true,
-      },
+        OR: [
+          { name: arabicRoleName },
+          { name: user.role.toString() } // Also try with the enum value directly
+        ]
+      }
     });
-
-    // Check if user has the required permission through their role
-    if (rolePermissions.length > 0) return true;
+    
+    if (userRoleRecord) {
+      // Try lookup by role ID (most reliable)
+      const permissionsByRoleId = await prisma.rolePermission.findMany({
+        where: {
+          roleId: userRoleRecord.id,
+          userId: null,
+          permission: {
+            category: requirement.category,
+            action: requirement.action,
+          },
+        },
+        include: {
+          permission: true,
+        },
+      });
+      
+      if (permissionsByRoleId.length > 0) {
+        hasRolePermission = true;
+      }
+    }
+    
+    // Strategy 3: Try by name if not found yet
+    if (!hasRolePermission) {
+      const permissionsByName = await prisma.rolePermission.findMany({
+        where: {
+          role: {
+            name: arabicRoleName,
+          },
+          permission: {
+            category: requirement.category,
+            action: requirement.action,
+          },
+          userId: null,
+        },
+        include: {
+          permission: true,
+        },
+      });
+      
+      if (permissionsByName.length > 0) {
+        hasRolePermission = true;
+      }
+    }
+    
+    // Strategy 4: Try with the raw role name
+    if (!hasRolePermission) {
+      const permissionsByRawName = await prisma.rolePermission.findMany({
+        where: {
+          role: {
+            name: user.role.toString(),
+          },
+          permission: {
+            category: requirement.category,
+            action: requirement.action,
+          },
+          userId: null,
+        },
+        include: {
+          permission: true,
+        },
+      });
+      
+      if (permissionsByRawName.length > 0) {
+        hasRolePermission = true;
+      }
+    }
+    
+    if (hasRolePermission) return true;
 
     // Check user-specific permissions
     const userSpecificPermission = user.rolePermissions.find(
@@ -132,58 +199,78 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
       }));
     }
 
-    // Get role name in Arabic
+    // Find the role in the database - try multiple strategies
+    let rolePermissions: any[] = [];
+    
+    // Strategy 1: Try with Arabic role name mapping
     const arabicRoleName = getRoleNameInArabic(user.role);
     console.log(`Role mapped to Arabic: ${user.role} -> ${arabicRoleName}`);
-
-    // Get role-based permissions
-    const rolePermissions = await prisma.rolePermission.findMany({
-      where: {
-        role: {
-          name: arabicRoleName,
-        },
-        userId: null, // Role-level permissions
-      },
-      include: {
-        permission: true,
-        role: true,
-      },
-    });
-
-    console.log(`Found ${rolePermissions.length} role-based permissions for role: ${arabicRoleName}`);
     
-    if (rolePermissions.length === 0) {
-      // Fallback: try to find by roleId instead of name
-      const role = await prisma.role.findFirst({
+    // Strategy 2: Find the role record in the database
+    const userRoleRecord = await prisma.role.findFirst({
+      where: {
+        OR: [
+          { name: arabicRoleName },
+          { name: user.role.toString() } // Also try with the enum value directly
+        ]
+      }
+    });
+    
+    if (userRoleRecord) {
+      console.log(`Found role in database: ${userRoleRecord.name} (ID: ${userRoleRecord.id})`);
+      
+      // Try lookup by role ID (most reliable)
+      const permissionsByRoleId = await prisma.rolePermission.findMany({
         where: {
-          name: arabicRoleName
-        }
+          roleId: userRoleRecord.id,
+          userId: null,
+        },
+        include: {
+          permission: true,
+          role: true,
+        },
       });
       
-      if (role) {
-        console.log(`Found role by name: ${role.name}, ID: ${role.id}`);
-        
-        // Try again with role ID
-        const permissionsByRoleId = await prisma.rolePermission.findMany({
-          where: {
-            roleId: role.id,
-            userId: null,
+      console.log(`Found ${permissionsByRoleId.length} permissions using roleId lookup`);
+      rolePermissions = [...permissionsByRoleId];
+    }
+    
+    // Strategy 3: If no permissions found yet, try by name
+    if (rolePermissions.length === 0) {
+      const permissionsByName = await prisma.rolePermission.findMany({
+        where: {
+          role: {
+            name: arabicRoleName,
           },
-          include: {
-            permission: true,
-            role: true, // Include the role information to match the type
+          userId: null,
+        },
+        include: {
+          permission: true,
+          role: true,
+        },
+      });
+      
+      console.log(`Found ${permissionsByName.length} role-based permissions by name: ${arabicRoleName}`);
+      rolePermissions = [...permissionsByName];
+    }
+    
+    // Strategy 4: Try with the raw role name
+    if (rolePermissions.length === 0) {
+      const permissionsByRawName = await prisma.rolePermission.findMany({
+        where: {
+          role: {
+            name: user.role.toString(),
           },
-        });
-        
-        console.log(`Found ${permissionsByRoleId.length} permissions using roleId lookup`);
-        
-        if (permissionsByRoleId.length > 0) {
-          // Replace rolePermissions with results from ID lookup
-          rolePermissions.push(...permissionsByRoleId);
-        }
-      } else {
-        console.warn(`No role found with name: ${arabicRoleName}`);
-      }
+          userId: null,
+        },
+        include: {
+          permission: true,
+          role: true,
+        },
+      });
+      
+      console.log(`Found ${permissionsByRawName.length} permissions using raw role name: ${user.role.toString()}`);
+      rolePermissions = [...rolePermissions, ...permissionsByRawName];
     }
 
     // Get user-specific permissions

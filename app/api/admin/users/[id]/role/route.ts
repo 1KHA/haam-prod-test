@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { UserRole } from '@prisma/client';
 
-// PUT /api/admin/users/[id]/role - Change a single user's role
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+// PUT /api/admin/users/[id]/role - Update a user's role
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    // Authenticate and check permission
-    const permissionCheck = await checkPermission(req, { category: 'users', action: 'edit' });
+    // Check permission
+    const permissionCheck = await checkPermission(request, { 
+      category: 'users', 
+      action: 'edit' 
+    });
+    
     if (!permissionCheck.authorized) {
       return NextResponse.json(
         { error: permissionCheck.error },
@@ -14,36 +22,80 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       );
     }
 
-    const { id } = params;
-    if (!id) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
-
-    const body = await req.json();
+    const userId = params.id;
+    const body = await request.json();
     const { role } = body;
-
+    
     if (!role) {
-      return NextResponse.json({ error: 'Role is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Role is required' },
+        { status: 400 }
+      );
     }
-
-    // Update the user's role
-    const user = await prisma.user.update({
-      where: { id },
-      data: { role },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        updatedAt: true,
-      },
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId }
     });
-
-    return NextResponse.json({ user, message: 'User role updated successfully' });
+    
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Validate role value against UserRole enum from auth.ts
+    const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    
+    if (!validRoles.includes(role)) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' 
+        },
+        { status: 400 }
+      );
+    }
+    
+    try {
+      // Update the user's role
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          role: role as UserRole
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true
+        }
+      });
+      
+      return NextResponse.json({
+        success: true,
+        message: 'User role updated successfully',
+        user: updatedUser
+      });
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      
+      // Check if it's an enum validation error
+      if (error.code === 'P2006' || error.message.includes('enum')) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' 
+          },
+          { status: 400 }
+        );
+      }
+      
+      throw error; // rethrow for the general error handler
+    }
   } catch (error) {
     console.error('Error updating user role:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update user role' },
       { status: 500 }
     );
   }

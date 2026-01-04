@@ -8,18 +8,41 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const tokenParam = url.searchParams.get('token');
+    // Extract query parameters for filtering
+    const searchQuery = url.searchParams.get('search') || '';
+    const roleFilter = url.searchParams.get('role') || '';
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    
     let authHeader = req.headers.get('Authorization');
     
+    console.log('[SSE] Received token param:', tokenParam ? 'Present (value hidden)' : 'None');
+    console.log('[SSE] Original auth header:', authHeader ? 'Present (value hidden)' : 'None');
+    
     // If token is provided as URL parameter, use it to build the Authorization header
+    // Ensure we're handling different token formats correctly
     if (tokenParam && !authHeader) {
-      authHeader = `Bearer ${tokenParam}`;
+      // Check if token already includes "Bearer" prefix
+      authHeader = tokenParam.startsWith('Bearer ') 
+        ? tokenParam 
+        : `Bearer ${tokenParam}`;
+      console.log('[SSE] Using token from URL parameter');
     }
     
-    // Authenticate user
-    const user = await isAuthenticated(authHeader || undefined);
+    // Authenticate user with proper error handling
+    console.log('[SSE] Authenticating with header:', authHeader ? 'Present (value hidden)' : 'None');
+    let user = null;
+    try {
+      user = await isAuthenticated(authHeader || undefined);
+    } catch (authError) {
+      console.error('[SSE] Authentication error:', authError);
+    }
+    console.log('[SSE] Authentication result:', user ? 'Successful' : 'Failed');
+    
     if (!user) {
+      console.error('[SSE] Authentication failed - no valid user found');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - Invalid or missing authentication token' }),
         { 
           status: 401,
           headers: {
@@ -29,19 +52,65 @@ export async function GET(req: NextRequest) {
       );
     }
     
-    // Instead of creating a new Request, add the Authorization header to the
-    // original NextRequest headers for permission checking
-    if (authHeader) {
-      req.headers.set('Authorization', authHeader);
+    // Check permissions directly with the user ID instead of creating a new request
+    let permissionGranted = false;
+    
+    // First check if user is admin (admins get all permissions)
+    const userRecord = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { role: true }
+    });
+    
+    if (userRecord && userRecord.role === 'ADMIN') {
+      permissionGranted = true;
+      console.log('[SSE] User is admin, granting permissions automatically');
+    } else {
+      // For non-admins, check permissions manually
+      // Since we can't directly modify the original request headers, we'll check the permission directly
+      // Create an array of role names, filtering out undefined values
+      const roleNames: string[] = ['مدير النظام', 'مدير برنامج']; // Include common admin roles
+      
+      // Only add the user's role if it exists
+      if (userRecord?.role) {
+        roleNames.push(userRecord.role);
+      }
+      
+      const hasPermission = await prisma.rolePermission.findFirst({
+        where: {
+          OR: [
+            {
+              // Check role-based permissions
+              role: {
+                name: {
+                  in: roleNames
+                }
+              },
+              permission: {
+                category: 'users',
+                action: 'view'
+              }
+            },
+            {
+              // Check user-specific permissions
+              userId: user.userId,
+              permission: {
+                category: 'users',
+                action: 'view'
+              }
+            }
+          ]
+        }
+      });
+      
+      permissionGranted = !!hasPermission;
+      console.log('[SSE] Permission check result:', permissionGranted ? 'Granted' : 'Denied');
     }
     
-    const permissionCheck = await checkPermission(req, { category: 'users', action: 'view' });
-    
-    if (!permissionCheck.authorized) {
+    if (!permissionGranted) {
       return new Response(
-        JSON.stringify({ error: permissionCheck.error }),
+        JSON.stringify({ error: 'Forbidden - Insufficient permissions' }),
         { 
-          status: permissionCheck.error === 'Unauthorized' ? 401 : 403,
+          status: 403,
           headers: {
             'Content-Type': 'application/json'
           }
@@ -49,11 +118,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Set up SSE headers
+    // Set up SSE headers with CORS support
     const headers = {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     };
 
     // Create a new ReadableStream to send SSE events
@@ -64,8 +136,28 @@ export async function GET(req: NextRequest) {
         // Initial data fetch function
         const fetchData = async () => {
           try {
+            // Build filter conditions
+            const where: any = {};
+            
+            // Apply search filter
+            if (searchQuery) {
+              where.OR = [
+                { name: { contains: searchQuery, mode: 'insensitive' } },
+                { email: { contains: searchQuery, mode: 'insensitive' } }
+              ];
+            }
+            
+            // Apply role filter
+            if (roleFilter && roleFilter.toUpperCase() !== 'ALL') {
+              where.role = roleFilter.toUpperCase();
+            }
+            
+            // Calculate pagination
+            const skip = (page - 1) * limit;
+            
             // Fetch users with their profiles
             const users = await prisma.user.findMany({
+              where,
               include: {
                 profile: true,
                 mentorProfile: true,
@@ -79,11 +171,12 @@ export async function GET(req: NextRequest) {
               orderBy: {
                 createdAt: 'desc',
               },
-              take: 100, // Limit to 100 users for performance
+              skip: skip,
+              take: limit,
             });
 
-            // Get total count
-            const totalCount = await prisma.user.count();
+            // Get total count with filters
+            const totalCount = await prisma.user.count({ where });
 
             // Format the data for client
             const formattedUsers = users.map((user: any) => {
@@ -100,6 +193,12 @@ export async function GET(req: NextRequest) {
               // Determine status
               const status = roleProfile ? 'ACTIVE' : 'PENDING';
 
+              // Get program information if available
+              let programName = '-';
+              if (user.programManagerProfile?.programs) {
+                programName = user.programManagerProfile.programs;
+              }
+
               return {
                 id: user.id,
                 name: user.name,
@@ -108,15 +207,16 @@ export async function GET(req: NextRequest) {
                 status: status,
                 createdAt: user.createdAt,
                 specialization: user.specialization,
+                program: programName
               };
             });
 
             // Calculate pagination
             const pagination = {
               total: totalCount,
-              limit: 100,
-              totalPages: Math.ceil(totalCount / 100),
-              currentPage: 1
+              limit: limit,
+              totalPages: Math.ceil(totalCount / limit),
+              currentPage: page
             };
 
             // Send the data as SSE
@@ -134,24 +234,29 @@ export async function GET(req: NextRequest) {
         // Send initial data
         await fetchData();
 
-        // Set up interval to send data every 15 seconds
-        const intervalId = setInterval(fetchData, 15000);
+        // Set up interval to send data every 10 seconds
+        const intervalId = setInterval(fetchData, 10000);
 
-        // Keep connection alive with periodic heartbeats
+        // Keep connection alive with more frequent heartbeats
         const heartbeatId = setInterval(() => {
-          controller.enqueue(encoder.encode(`:heartbeat\n\n`));
-        }, 30000);
+          controller.enqueue(encoder.encode(`event: heartbeat\ndata: ${new Date().toISOString()}\n\n`));
+        }, 20000);
 
-        // Clean up on close
+        // Clean up on close with better error handling
         req.signal.addEventListener('abort', () => {
-          clearInterval(intervalId);
-          clearInterval(heartbeatId);
-          controller.close();
+          try {
+            clearInterval(intervalId);
+            clearInterval(heartbeatId);
+            controller.close();
+            console.log('SSE connection closed properly');
+          } catch (error) {
+            console.error('Error during SSE connection cleanup:', error);
+          }
         });
       }
     });
 
-    return new Response(stream, { headers });
+    return new Response(stream, { headers, status: 200 });
   } catch (error) {
     console.error('Error setting up SSE:', error);
     return new Response(

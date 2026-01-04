@@ -33,6 +33,7 @@ interface UserProfile {
   adminProfile?: any
   programManagerProfile?: any
   judgeProfile?: any
+  entrepreneurProfile?: any  // Added missing profile
   startups?: any[]
   teamMembers?: any[]
 }
@@ -130,17 +131,20 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     }).format(date)
   }
   
-  // Get role display name
+  // Get role display name - standardized with auth.ts and permissions.ts
   const getRoleDisplayName = (role: string) => {
     const roleMap: Record<string, string> = {
-      'ADMIN': 'مدير',
+      'ADMIN': 'مدير النظام',
       'PROGRAM_MANAGER': 'مدير برنامج',
-      'STARTUP': 'شركة ناشئة',
       'MENTOR': 'موجه',
       'INVESTOR': 'مستثمر',
-      'JUDGE': 'محكم',
       'PARTICIPANT': 'مشارك',
-'ACCELERATOR': 'رائد أعمال'
+      'ENTREPRENEUR': 'رائد أعمال'
+    }
+    
+    // If the role is not in the map, log a warning and return the role as-is
+    if (!roleMap[role]) {
+      console.warn(`Warning: No Arabic mapping found for role "${role}". Using the role value directly.`);
     }
     
     return roleMap[role] || role
@@ -327,6 +331,36 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                   </div>
                 </div>
               </div>
+            ) : user.role === 'ENTREPRENEUR' && user.entrepreneurProfile ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">معلومات رائد الأعمال</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">اسم المنظمة</p>
+                    <p>{user.entrepreneurProfile.organizationName || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">المجال</p>
+                    <p>{user.entrepreneurProfile.industry || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">مجالات التركيز</p>
+                    <p>{user.entrepreneurProfile.focusAreas || '-'}</p>
+                  </div>
+                  {user.entrepreneurProfile.website && (
+                    <div>
+                      <p className="text-sm font-medium">الموقع الإلكتروني</p>
+                      <p>{user.entrepreneurProfile.website}</p>
+                    </div>
+                  )}
+                </div>
+                {user.entrepreneurProfile.description && (
+                  <div>
+                    <p className="text-sm font-medium">الوصف</p>
+                    <p>{user.entrepreneurProfile.description}</p>
+                  </div>
+                )}
+              </div>
             ) : user.role === 'ACCELERATOR' && user.acceleratorProfile ? (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">معلومات مسرع الأعمال</h3>
@@ -354,6 +388,67 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                     <p>{user.acceleratorProfile.description}</p>
                   </div>
                 )}
+              </div>
+            ) : user.role === 'PROGRAM_MANAGER' && user.programManagerProfile ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">معلومات مدير البرنامج</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">البرامج</p>
+                    <p>{user.programManagerProfile.programs || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">المسؤوليات</p>
+                    <p>{user.programManagerProfile.responsibilities || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            ) : user.role === 'ADMIN' && user.adminProfile ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">معلومات المدير</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">القسم</p>
+                    <p>{user.adminProfile.department || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">الصلاحيات</p>
+                    <p>{user.adminProfile.permissions || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            ) : user.role === 'PARTICIPANT' && user.participantProfile ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">معلومات المشارك</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">المهارات</p>
+                    <p>{user.participantProfile.skills || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">الاهتمامات</p>
+                    <p>{user.participantProfile.interests || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">التعليم</p>
+                    <p>{user.participantProfile.education || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">الخبرة</p>
+                    <p>{user.participantProfile.experience || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            ) : user.role === 'JUDGE' && user.judgeProfile ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">معلومات المحكم</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Display judge profile fields if they exist in the schema */}
+                  <div>
+                    <p className="text-sm font-medium">التخصص</p>
+                    <p>{user.specialization || '-'}</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <p className="text-muted-foreground">لم يتم إكمال الملف الشخصي بعد.</p>

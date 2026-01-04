@@ -11,28 +11,61 @@ export async function GET(req: NextRequest) {
     
     // If token is provided as URL parameter, use it to build the Authorization header
     if (tokenParam && !authHeader) {
-      authHeader = `Bearer ${tokenParam}`;
+      // First try to decode the token in case it's URL encoded
+      try {
+        const decodedToken = decodeURIComponent(tokenParam);
+        // Check if the token already has the Bearer prefix
+        authHeader = decodedToken.startsWith('Bearer ') 
+          ? decodedToken 
+          : `Bearer ${decodedToken}`;
+        
+        console.log('[Notifications SSE] Using token from URL parameter');
+      } catch (error) {
+        console.error('[Notifications SSE] Error decoding token:', error);
+        // Fall back to the original token if decoding fails
+        authHeader = tokenParam.startsWith('Bearer ') 
+          ? tokenParam 
+          : `Bearer ${tokenParam}`;
+      }
     }
     
-    // Authenticate user
-    const user = await isAuthenticated(authHeader || undefined);
+    // Log the authorization process for debugging
+    console.log('[Notifications SSE] Authenticating user with token');
+    
+    // Authenticate user with better error handling
+    let user;
+    try {
+      user = await isAuthenticated(authHeader || undefined);
+      console.log('[Notifications SSE] Authentication result:', user ? 'Success' : 'Failed');
+    } catch (authError) {
+      console.error('[Notifications SSE] Authentication error:', authError);
+      user = null;
+    }
+    
     if (!user) {
+      console.error('[Notifications SSE] Authentication failed - Invalid or expired token');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - Invalid or expired token' }),
         { 
           status: 401,
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
           }
         }
       );
     }
     
-    // Set up SSE headers
+    // Set up SSE headers with CORS support
     const headers = {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     };
 
     // Create a new ReadableStream to send SSE events

@@ -115,10 +115,16 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
       },
     });
 
-    if (!user) return [];
+    if (!user) {
+      console.warn(`No user found with ID: ${userId}`);
+      return [];
+    }
+
+    console.log(`Getting permissions for user: ${userId}, role: ${user.role}`);
 
     // Admin has all permissions
     if (user.role === UserRole.ADMIN) {
+      console.log(`User is an admin, granting all permissions`);
       const allPermissions = await prisma.permission.findMany();
       return allPermissions.map((p) => ({
         category: p.category,
@@ -126,23 +132,66 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
       }));
     }
 
+    // Get role name in Arabic
+    const arabicRoleName = getRoleNameInArabic(user.role);
+    console.log(`Role mapped to Arabic: ${user.role} -> ${arabicRoleName}`);
+
     // Get role-based permissions
     const rolePermissions = await prisma.rolePermission.findMany({
       where: {
         role: {
-          name: getRoleNameInArabic(user.role),
+          name: arabicRoleName,
         },
         userId: null, // Role-level permissions
       },
       include: {
         permission: true,
+        role: true,
       },
     });
+
+    console.log(`Found ${rolePermissions.length} role-based permissions for role: ${arabicRoleName}`);
+    
+    if (rolePermissions.length === 0) {
+      // Fallback: try to find by roleId instead of name
+      const role = await prisma.role.findFirst({
+        where: {
+          name: arabicRoleName
+        }
+      });
+      
+      if (role) {
+        console.log(`Found role by name: ${role.name}, ID: ${role.id}`);
+        
+        // Try again with role ID
+        const permissionsByRoleId = await prisma.rolePermission.findMany({
+          where: {
+            roleId: role.id,
+            userId: null,
+          },
+          include: {
+            permission: true,
+            role: true, // Include the role information to match the type
+          },
+        });
+        
+        console.log(`Found ${permissionsByRoleId.length} permissions using roleId lookup`);
+        
+        if (permissionsByRoleId.length > 0) {
+          // Replace rolePermissions with results from ID lookup
+          rolePermissions.push(...permissionsByRoleId);
+        }
+      } else {
+        console.warn(`No role found with name: ${arabicRoleName}`);
+      }
+    }
 
     // Get user-specific permissions
     const userSpecificPermissions = user.rolePermissions.filter(
       (rp) => rp.userId === userId
     );
+
+    console.log(`Found ${userSpecificPermissions.length} user-specific permissions`);
 
     // Combine and deduplicate permissions
     const allPermissions = [
@@ -165,6 +214,7 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
         )
     );
 
+    console.log(`Returning ${uniquePermissions.length} unique permissions for user ${userId}`);
     return uniquePermissions;
   } catch (error) {
     console.error('Error getting user permissions:', error);
@@ -245,15 +295,25 @@ export async function checkPermission(
  * Helper function to get role name in Arabic
  */
 function getRoleNameInArabic(role: UserRole): string {
-  const roleMap: Record<UserRole, string> = {
-    [UserRole.ADMIN]: 'مدير النظام',
-    [UserRole.PROGRAM_MANAGER]: 'مدير برنامج',
-    [UserRole.MENTOR]: 'موجه',
-    [UserRole.INVESTOR]: 'مستثمر',
-    [UserRole.PARTICIPANT]: 'مشارك',
-    [UserRole.ENTREPRENEUR]: 'رائد أعمال',
+  const roleMap: Record<string, string> = {
+    'ADMIN': 'مدير النظام',
+    'PROGRAM_MANAGER': 'مدير برنامج',
+    'MENTOR': 'موجه',
+    'INVESTOR': 'مستثمر',
+    'PARTICIPANT': 'مشارك',
+    'ENTREPRENEUR': 'رائد أعمال',
+    'STARTUP': 'شركة ناشئة',
+    'JUDGE': 'محكم',
+    'ACCELERATOR': 'مسرع أعمال'
   };
-  return roleMap[role] || role;
+  
+  // If the role is not in the map, log a warning and return the role as-is
+  if (!roleMap[role]) {
+    console.warn(`Warning: No Arabic mapping found for role "${role}". Using the role value directly.`);
+    return String(role);
+  }
+  
+  return roleMap[role];
 }
 
 /**

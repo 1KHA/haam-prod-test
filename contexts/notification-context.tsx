@@ -68,8 +68,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       eventSource.close();
     }
     
+    // Properly encode the token to prevent issues with special characters
+    const encodedToken = encodeURIComponent(token);
+    
     // Create a new SSE connection
-    const sse = new EventSource(`/api/admin/notifications/sse?token=${token}`);
+    const sse = new EventSource(`/api/admin/notifications/sse?token=${encodedToken}`);
     
     sse.addEventListener('notifications', (event) => {
       try {

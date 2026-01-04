@@ -12,6 +12,121 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+
+// Custom EventSource with Authentication
+class EventSourceWithAuth {
+  private eventSource: EventSource | null = null;
+  private listeners: Record<string, ((event: MessageEvent) => void)[]> = {};
+  private url: string;
+  private token: string;
+  
+  constructor(url: string, token: string) {
+    this.url = url;
+    this.token = token;
+    this.connect();
+  }
+  
+  private connect() {
+    const headers = new Headers();
+    headers.append('Authorization', `Bearer ${this.token}`);
+    
+    // Use fetch to create a readable stream with proper auth headers
+    fetch(this.url, { headers })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`SSE connection failed: ${response.status}`);
+        }
+        
+        // Handle the response body as a stream
+        const reader = response.body!.getReader();
+        let buffer = '';
+        
+        // Process the stream data
+        const processStream = () => {
+          reader.read().then(({ done, value }) => {
+            if (done) {
+              console.log('SSE stream completed');
+              return;
+            }
+            
+            // Decode the received data
+            buffer += new TextDecoder().decode(value);
+            
+            // Process complete events (separated by double newlines)
+            const events = buffer.split('\n\n');
+            buffer = events.pop() || ''; // Keep last potentially incomplete event
+            
+            // Process each complete event
+            events.forEach(eventText => {
+              if (!eventText.trim()) return;
+              
+              // Parse event type and data
+              const lines = eventText.split('\n');
+              let eventType = 'message';
+              let data = '';
+              
+              lines.forEach(line => {
+                if (line.startsWith('event:')) {
+                  eventType = line.slice(6).trim();
+                } else if (line.startsWith('data:')) {
+                  data = line.slice(5).trim();
+                }
+              });
+              
+              // Create a message event
+              const event = new MessageEvent(eventType, { data });
+              
+              // Dispatch to listeners
+              if (this.listeners[eventType]) {
+                this.listeners[eventType].forEach(listener => listener(event));
+              }
+            });
+            
+            // Continue reading
+            processStream();
+          }).catch(error => {
+            console.error('SSE read error:', error);
+            this.dispatchEvent(new Event('error'));
+          });
+        };
+        
+        processStream();
+      })
+      .catch(error => {
+        console.error('SSE connection error:', error);
+        this.dispatchEvent(new Event('error'));
+      });
+  }
+  
+  addEventListener(type: string, callback: (event: MessageEvent) => void) {
+    if (!this.listeners[type]) {
+      this.listeners[type] = [];
+    }
+    this.listeners[type].push(callback);
+  }
+  
+  removeEventListener(type: string, callback: (event: MessageEvent) => void) {
+    if (this.listeners[type]) {
+      this.listeners[type] = this.listeners[type].filter(cb => cb !== callback);
+    }
+  }
+  
+  dispatchEvent(event: Event) {
+    if (event.type === 'error' && this.listeners['error']) {
+      this.listeners['error'].forEach(listener => listener(new MessageEvent('error')));
+    }
+    return true;
+  }
+  
+  close() {
+    // Clear all listeners
+    this.listeners = {};
+  }
+  
+  get readyState() {
+    return this.eventSource?.readyState || EventSource.CLOSED;
+  }
+}
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -78,12 +193,12 @@ export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalUsers, setTotalUsers] = useState(0)
-  const [eventSource, setEventSource] = useState<EventSource | null>(null)
+  const [eventSource, setEventSource] = useState<EventSourceWithAuth | null>(null)
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true)
   
   const router = useRouter()
   
-  // Set up SSE connection for real-time updates
+    // Set up SSE connection for real-time updates
   useEffect(() => {
     if (!isRealTimeEnabled) return
     
@@ -95,55 +210,81 @@ export default function UsersTable() {
     // Get token from localStorage
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     
-    // Create a new EventSource connection with token as URL parameter
-    const newEventSource = new EventSource(`/api/admin/users/sse${token ? `?token=${token}` : ''}`)
-    setEventSource(newEventSource)
+    if (!token) {
+      console.error("No authentication token found in localStorage");
+      showAdminToast({
+        title: "خطأ في المصادقة",
+        description: "لم يتم العثور على رمز المصادقة. يرجى تسجيل الدخول مرة أخرى.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Build URL with query parameters for filtering
+    let sseUrl = `/api/admin/users/sse?page=${currentPage}&limit=10`;
+    if (searchQuery) {
+      sseUrl += `&search=${encodeURIComponent(searchQuery)}`;
+    }
+    if (activeTab !== "all") {
+      sseUrl += `&role=${encodeURIComponent(activeTab.toUpperCase())}`;
+    }
+    
+    // Create a new EventSource connection with Authorization header using fetch API
+    // This creates a properly authenticated SSE connection
+    const newEventSource = new EventSourceWithAuth(sseUrl, token);
+    setEventSource(newEventSource);
+    
+    console.log("Connecting to authenticated SSE endpoint");
     
     // Handle incoming events
     newEventSource.addEventListener('users', (event) => {
       try {
-        const data = JSON.parse(event.data)
+        const data = JSON.parse(event.data);
         
-        // Apply filters to the received data
-        let filteredUsers = data.users
-        
-        if (searchQuery) {
-          filteredUsers = filteredUsers.filter((user: User) => 
-            user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-            user.email.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        }
-        
-        if (activeTab !== "all") {
-          filteredUsers = filteredUsers.filter((user: User) => 
-            user.role.toLowerCase() === activeTab.toLowerCase()
-          )
-        }
-        
-        // Update state with the filtered data
-        setUsers(filteredUsers)
-        setTotalUsers(data.pagination.total)
-        setTotalPages(data.pagination.totalPages)
-        setLoading(false)
+        // Update state with the data from server (already filtered)
+        setUsers(data.users);
+        setTotalUsers(data.pagination.total);
+        setTotalPages(data.pagination.totalPages || Math.ceil(data.pagination.total / data.pagination.limit));
+        setCurrentPage(data.pagination.currentPage || 1);
+        setLoading(false);
       } catch (error) {
-        console.error('Error parsing SSE data:', error)
+        console.error('Error parsing SSE data:', error);
+        showAdminToast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء تحديث البيانات",
+          variant: "destructive"
+        });
       }
-    })
+    });
     
-    newEventSource.addEventListener('error', () => {
-      console.error('SSE connection error')
+    // Handle heartbeat events to keep connection alive
+    newEventSource.addEventListener('heartbeat', () => {
+      // Connection is still active
+      console.log('SSE heartbeat received');
+    });
+    
+    newEventSource.addEventListener('error', (error) => {
+      console.error('SSE connection error:', error);
+      showAdminToast({
+        title: "تنبيه",
+        description: "تم فقد الاتصال بالخادم. جاري المحاولة مرة أخرى...",
+        variant: "destructive"
+      });
+      
       // Attempt to reconnect after a delay
       setTimeout(() => {
-        newEventSource.close()
-        setEventSource(null)
-      }, 5000)
-    })
+        if (newEventSource.readyState === EventSource.CLOSED) {
+          newEventSource.close();
+          setEventSource(null);
+        }
+      }, 5000);
+    });
     
-    // Clean up on unmount
+    // Clean up on unmount or when dependencies change
     return () => {
-      newEventSource.close()
+      newEventSource.close();
     }
-  }, [isRealTimeEnabled, activeTab, searchQuery])
+  }, [isRealTimeEnabled, activeTab, searchQuery, currentPage]);
   
   // Fetch users (for initial load and manual refresh)
   const fetchUsers = async () => {
@@ -171,13 +312,14 @@ export default function UsersTable() {
       
       if (response.ok) {
         setUsers(data.users)
-        setTotalPages(data.pagination.totalPages)
+        setTotalPages(data.pagination.pages || Math.ceil(data.pagination.total / data.pagination.limit))
         setTotalUsers(data.pagination.total)
+        // Don't update currentPage here to avoid infinite loop
       } else {
         console.error('Failed to fetch users:', data.error)
         showAdminToast({
           title: "خطأ",
-          description: "فشل في جلب المستخدمين",
+          description: "فشل في جلب المستخدمين: " + (data.error || "خطأ غير معروف"),
           variant: "destructive"
         })
       }
@@ -185,7 +327,7 @@ export default function UsersTable() {
       console.error('Error fetching users:', error)
       showAdminToast({
         title: "خطأ",
-        description: "فشل في جلب المستخدمين",
+        description: "فشل في جلب المستخدمين. تأكد من الاتصال بالخادم.",
         variant: "destructive"
       })
     } finally {
@@ -290,47 +432,61 @@ export default function UsersTable() {
     if (selectedUsers.length === 0) return
     
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userIds: selectedUsers,
-          action: 'delete'
-        })
-      })
+      // Get token from localStorage
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       
-      const data = await response.json()
+      // Delete users one by one (since our API doesn't support batch delete)
+      let successCount = 0;
+      let failCount = 0;
       
-      if (response.ok) {
+      for (const userId of selectedUsers) {
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+          const errorData = await response.json();
+          console.error(`Failed to delete user ${userId}:`, errorData.error);
+        }
+      }
+      
+      if (successCount > 0) {
         showAdminToast({
           title: "تم بنجاح",
-          description: `تم حذف ${data.count} مستخدمين`,
-        })
-        setSelectedUsers([])
-        setIsDeleteDialogOpen(false)
-        
-        // If real-time is disabled, manually refresh the data
-        if (!isRealTimeEnabled) {
-          fetchUsers()
-        }
-      } else {
+          description: `تم حذف ${successCount} مستخدمين`,
+        });
+      }
+      
+      if (failCount > 0) {
         showAdminToast({
-          title: "خطأ",
-          description: data.error || "فشل في حذف المستخدمين",
+          title: "تحذير",
+          description: `فشل في حذف ${failCount} مستخدمين`,
           variant: "destructive"
-        })
+        });
+      }
+      
+      setSelectedUsers([]);
+      setIsDeleteDialogOpen(false);
+      
+      // If real-time is disabled, manually refresh the data
+      if (!isRealTimeEnabled) {
+        fetchUsers();
       }
     } catch (error) {
-      console.error('Error deleting users:', error)
+      console.error('Error deleting users:', error);
       showAdminToast({
         title: "خطأ",
         description: "فشل في حذف المستخدمين",
         variant: "destructive"
-      })
+      });
     }
-  }
+  };
   
   // Format date
   const formatDate = (dateString: string) => {
@@ -342,17 +498,20 @@ export default function UsersTable() {
     }).format(date)
   }
   
-  // Get role display name
+  // Get role display name - standardized with auth.ts and Prisma schema
   const getRoleDisplayName = (role: string) => {
     const roleMap: Record<string, string> = {
-      'ADMIN': 'مدير',
+      'ADMIN': 'مدير النظام',
       'PROGRAM_MANAGER': 'مدير برنامج',
-      'STARTUP': 'شركة ناشئة',
       'MENTOR': 'موجه',
       'INVESTOR': 'مستثمر',
-      'JUDGE': 'محكم',
       'PARTICIPANT': 'مشارك',
-'ACCELERATOR': 'رائد أعمال'
+      'ENTREPRENEUR': 'رائد أعمال'
+    }
+    
+    // If the role is not in the map, log a warning and return the role as-is
+    if (!roleMap[role]) {
+      console.warn(`Warning: No Arabic mapping found for role "${role}". Using the role value directly.`);
     }
     
     return roleMap[role] || role
@@ -534,12 +693,10 @@ export default function UsersTable() {
               <SelectItem value="all">جميع المستخدمين</SelectItem>
               <SelectItem value="admin">المديرون</SelectItem>
               <SelectItem value="program_manager">مديرو البرامج</SelectItem>
-              <SelectItem value="startup">الشركات الناشئة</SelectItem>
               <SelectItem value="mentor">الموجهون</SelectItem>
               <SelectItem value="investor">المستثمرون</SelectItem>
-              <SelectItem value="judge">المحكمون</SelectItem>
               <SelectItem value="participant">المشاركون</SelectItem>
-              <SelectItem value="accelerator">مسرعات الأعمال</SelectItem>
+              <SelectItem value="entrepreneur">رواد الأعمال</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -700,14 +857,12 @@ export default function UsersTable() {
               <SelectValue placeholder="اختر الدور" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ADMIN">مدير</SelectItem>
+              <SelectItem value="ADMIN">مدير النظام</SelectItem>
               <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
-              <SelectItem value="STARTUP">شركة ناشئة</SelectItem>
               <SelectItem value="MENTOR">موجه</SelectItem>
               <SelectItem value="INVESTOR">مستثمر</SelectItem>
-              <SelectItem value="JUDGE">محكم</SelectItem>
               <SelectItem value="PARTICIPANT">مشارك</SelectItem>
-              <SelectItem value="ACCELERATOR">مسرع أعمال</SelectItem>
+              <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
             </SelectContent>
           </Select>
           

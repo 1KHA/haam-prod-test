@@ -1,23 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { UserRole } from '@/lib/auth';
+import { UserRole } from '@prisma/client';
 
-// GET /api/admin/users - Get all users
+// GET /api/admin/users - Get all users with pagination, search, and filtering
 export async function GET(req: NextRequest) {
   try {
-    // Check permission
+    console.log('[Users API] Processing GET request');
+    
+    // Extract auth header for logging
+    const authHeader = req.headers.get('Authorization');
+    console.log('[Users API] Auth header present:', !!authHeader);
+    
+    // Check permission with enhanced logging
     const permissionCheck = await checkPermission(req, { category: 'users', action: 'view' });
+    console.log('[Users API] Permission check result:', permissionCheck);
     
     if (!permissionCheck.authorized) {
+      console.error(`[Users API] Permission denied: ${permissionCheck.error}`);
       return NextResponse.json(
         { error: permissionCheck.error },
         { status: permissionCheck.error === 'Unauthorized' ? 401 : 403 }
       );
     }
 
+    // Parse query parameters
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const role = searchParams.get('role') || '';
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Build filter conditions
+    const where: any = {};
+    
+    // Apply search filter
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    // Apply role filter
+    if (role && role.toUpperCase() !== 'ALL') {
+      where.role = role.toUpperCase();
+    }
+
     // Fetch users with their profiles
     const users = await prisma.user.findMany({
+      where,
       include: {
         profile: true,
         mentorProfile: true,
@@ -31,28 +66,61 @@ export async function GET(req: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: limit,
     });
 
+    // Get total count with filters for pagination
+    const total = await prisma.user.count({ where });
+
     // Format the response
-    const formattedUsers = users.map((user: any) => ({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      specialization: user.specialization,
-      createdAt: user.createdAt,
-      profile: user.profile,
-      roleProfile: 
+    const formattedUsers = users.map((user: any) => {
+      // Determine profile data
+      const roleProfile = 
         user.mentorProfile || 
         user.investorProfile || 
         user.startupProfile || 
         user.adminProfile || 
         user.programManagerProfile || 
         user.entrepreneurProfile || 
-        user.participantProfile,
-    }));
+        user.participantProfile;
 
-    return NextResponse.json({ users: formattedUsers });
+      // Determine status
+      const status = roleProfile ? 'ACTIVE' : 'PENDING';
+
+      // Get program information if available
+      let program = '-';
+      if (user.programManagerProfile?.programs) {
+        program = user.programManagerProfile.programs;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        specialization: user.specialization,
+        createdAt: user.createdAt,
+        status: status,
+        program: program,
+        profile: user.profile,
+        roleProfile: roleProfile
+      };
+    });
+
+    // Calculate pagination metadata
+    const pagination = {
+      total,
+      pages: Math.ceil(total / limit),
+      page,
+      limit,
+      hasMore: page < Math.ceil(total / limit)
+    };
+
+    return NextResponse.json({ 
+      users: formattedUsers,
+      pagination
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
@@ -78,24 +146,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, password, name, role, specialization } = body;
 
-    // Map Arabic role name to English enum value
-    const roleMap: { [key: string]: UserRole } = {
-      'مدير النظام': UserRole.ADMIN,
-      'مدير برنامج': UserRole.PROGRAM_MANAGER,
-      'موجه': UserRole.MENTOR,
-      'مستثمر': UserRole.INVESTOR,
-      'مشارك': UserRole.PARTICIPANT,
-      'رائد أعمال': UserRole.ENTREPRENEUR,
-    };
-
-    const userRole = roleMap[role] || null;
-
-    if (!userRole) {
+    // Validate role - only accept valid enum values from the standardized list
+    const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    
+    if (!validRoles.includes(role)) {
+      console.error(`[Users API] Invalid role specified: '${role}'`);
       return NextResponse.json(
-        { error: 'Invalid role specified' },
+        { error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' },
         { status: 400 }
       );
     }
+    
+    // Role is valid, use it directly
+    const userRole = role as UserRole;
+    console.log(`[Users API] Using validated role: '${userRole}'`);
 
     // Validate required fields
     if (!email || !password || !name || !role) {
@@ -174,17 +238,25 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Map Arabic role name to English enum value
-    const roleMap: { [key: string]: UserRole } = {
-      'مدير النظام': UserRole.ADMIN,
-      'مدير برنامج': UserRole.PROGRAM_MANAGER,
-      'موجه': UserRole.MENTOR,
-      'مستثمر': UserRole.INVESTOR,
-      'مشارك': UserRole.PARTICIPANT,
-      'رائد أعمال': UserRole.ENTREPRENEUR,
-    };
-
-    const userRole = role ? roleMap[role] : undefined;
+    // Handle role update if provided
+    let userRole: UserRole | undefined = undefined;
+    
+    if (role) {
+      // Validate role - only accept valid enum values from the standardized list
+      const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+      
+      if (!validRoles.includes(role)) {
+        console.error(`[Users API] Invalid role specified: '${role}'`);
+        return NextResponse.json(
+          { error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' },
+          { status: 400 }
+        );
+      }
+      
+      // Role is valid, use it directly
+      userRole = role as UserRole;
+      console.log(`[Users API] Using validated role: '${userRole}'`);
+    }
 
     // Update user
     const user = await prisma.user.update({

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,12 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowRight, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { showAdminToast } from "@/components/admin/admin-toaster"
-
-interface Role {
-  id: string
-  name: string
-}
 
 export default function NewUserPage() {
   const [name, setName] = useState("")
@@ -24,63 +18,9 @@ export default function NewUserPage() {
   const [role, setRole] = useState("")
   const [specialization, setSpecialization] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [roles, setRoles] = useState<Role[]>([])
-  const [rolesLoading, setRolesLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
-
+  
   const router = useRouter()
   const { toast } = useToast()
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    } else {
-      setRolesLoading(false);
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const fetchRoles = async () => {
-      if (!token) return;
-
-      setRolesLoading(true);
-      try {
-        const response = await fetch('/api/admin/roles', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setRoles(data);
-        } else {
-          showAdminToast({
-            title: "خطأ",
-            description: "فشل في جلب الأدوار",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching roles:', error);
-        showAdminToast({
-          title: "خطأ",
-          description: "فشل في جلب الأدوار",
-          variant: "destructive"
-        });
-      } finally {
-        setRolesLoading(false);
-      }
-    };
-
-    fetchRoles();
-  }, [token]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,8 +40,7 @@ export default function NewUserPage() {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name,
@@ -205,21 +144,12 @@ export default function NewUserPage() {
                   <SelectValue placeholder="اختر دور المستخدم" />
                 </SelectTrigger>
                 <SelectContent>
-                  {rolesLoading ? (
-                    <SelectItem value="loading" disabled>
-                      جاري تحميل الأدوار...
-                    </SelectItem>
-                  ) : roles.length > 0 ? (
-                    roles.map((r) => (
-                      <SelectItem key={r.id} value={r.name}>
-                        {r.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-roles" disabled>
-                      لا توجد أدوار متاحة
-                    </SelectItem>
-                  )}
+                  <SelectItem value="ADMIN">مدير النظام</SelectItem>
+                  <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
+                  <SelectItem value="MENTOR">موجه</SelectItem>
+                  <SelectItem value="INVESTOR">مستثمر</SelectItem>
+                  <SelectItem value="PARTICIPANT">مشارك</SelectItem>
+                  <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
                 </SelectContent>
               </Select>
             </div>

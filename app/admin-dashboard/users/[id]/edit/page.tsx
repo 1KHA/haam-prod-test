@@ -196,14 +196,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                   <SelectValue placeholder="اختر دور المستخدم" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">مدير</SelectItem>
+                  <SelectItem value="ADMIN">مدير النظام</SelectItem>
                   <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
-                  <SelectItem value="STARTUP">شركة ناشئة</SelectItem>
                   <SelectItem value="MENTOR">موجه</SelectItem>
                   <SelectItem value="INVESTOR">مستثمر</SelectItem>
-                  <SelectItem value="JUDGE">محكم</SelectItem>
                   <SelectItem value="PARTICIPANT">مشارك</SelectItem>
-                  <SelectItem value="ACCELERATOR">مسرع أعمال</SelectItem>
+                  <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
                 </SelectContent>
               </Select>
             </div>

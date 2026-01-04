@@ -438,6 +438,44 @@ model FundingOpportunity {
   updatedAt       DateTime  @updatedAt
 }
 
+// Payment model for system-wide payment functionality
+model Payment {
+  id              String    @id @default(uuid())
+  referenceNumber String    @unique
+  paymentDate     DateTime
+  amount          Float
+  currency        String    @default("SAR")
+  status          PaymentStatus
+  type            PaymentType
+  description     String
+  payerName       String
+  payerEmail      String?
+  paymentMethod   String
+  metadata        Json?     // Flexible JSON for additional data
+  history         Json?     // Array of payment status change history
+  creatorId       String
+  creator         User      @relation(fields: [creatorId], references: [id])
+  relatedDocuments Json?    // Array of related document metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum PaymentStatus {
+  COMPLETED
+  PENDING
+  FAILED
+  REJECTED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentType {
+  PROGRAM_FEE
+  MENTORSHIP_FEE
+  EVENT_REGISTRATION
+  SERVICE_FEE
+}
+
 // Report model for system reports
 model Report {
   id              String       @id @default(uuid())

@@ -9,16 +9,18 @@ import {
   ArrowLeft,
   Edit,
   Trash2,
-  CreditCard,
+  DollarSign,
   Building,
   Calendar,
   User,
   AlertTriangle,
-  FileText,
-  Clock,
   CheckCircle,
+  CreditCard,
   Tag,
-  Download
+  FileText,
+  ArrowRight,
+  Download,
+  Upload
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "react-hot-toast"
@@ -373,11 +375,62 @@ export default function PaymentDetails({ params }: PaymentDetailsProps) {
               ))}
             </ul>
           </CardContent>
-          <CardFooter className="justify-center border-t pt-4">
-            <Button variant="outline" size="sm" className="w-full">
-              تحميل جميع المستندات
-            </Button>
-          </CardFooter>
+            <CardFooter className="justify-center border-t pt-4 flex flex-col gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full flex items-center gap-2"
+                onClick={() => {
+                  // Prepare documents for download as a ZIP file
+                  // In a real implementation, this would call an API endpoint
+                  // For demo, we'll just show a toast notification
+                  toast.success("جاري تحميل جميع المستندات");
+                  
+                  // Simulate successful download after a delay
+                  setTimeout(() => {
+                    toast.success("تم تحميل جميع المستندات بنجاح");
+                  }, 1500);
+                }}
+              >
+                <Download className="h-4 w-4" />
+                <span>تحميل جميع المستندات</span>
+              </Button>
+              
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="w-full flex items-center gap-2 mt-2"
+                onClick={() => {
+                  // Create a file input element
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.multiple = true;
+                  input.accept = '.pdf,.docx,.xlsx,.jpg,.png';
+                  
+                  // Handle file selection
+                  input.onchange = async (e) => {
+                    const files = (e.target as HTMLInputElement).files;
+                    if (!files || files.length === 0) return;
+                    
+                    // Show loading notification
+                    toast.loading("جاري رفع المستندات...", { duration: 1000 });
+                    
+                    // Simulate upload delay
+                    setTimeout(() => {
+                      // In a real implementation, this would call an API endpoint to upload files
+                      // For demo, we'll just show a success notification
+                      toast.success(`تم رفع ${files.length} مستندات بنجاح`);
+                    }, 1500);
+                  };
+                  
+                  // Trigger file selection dialog
+                  input.click();
+                }}
+              >
+                <Upload className="h-4 w-4" />
+                <span>رفع مستندات جديدة</span>
+              </Button>
+            </CardFooter>
         </Card>
       )}
 

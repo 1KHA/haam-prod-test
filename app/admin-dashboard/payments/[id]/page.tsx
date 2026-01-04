@@ -114,6 +114,12 @@ export default function PaymentDetailsPage() {
       // Get token from localStorage
       const token = localStorage.getItem('token')
       
+      if (!token) {
+        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
+        router.push('/admin-dashboard/payments')
+        return
+      }
+      
       // Fetch payment details
       const response = await fetch(`/api/admin/payments/${id}`, {
         headers: {
@@ -148,6 +154,11 @@ export default function PaymentDetailsPage() {
       // Get token from localStorage
       const token = localStorage.getItem('token')
       
+      if (!token) {
+        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
+        return
+      }
+      
       // Fetch payment processing status
       const response = await fetch(`/api/admin/payments/process?paymentId=${id}`, {
         headers: {
@@ -181,6 +192,12 @@ export default function PaymentDetailsPage() {
       
       // Get token from localStorage
       const token = localStorage.getItem('token')
+      
+      if (!token) {
+        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
+        setIsProcessing(false)
+        return
+      }
       
       // Process payment
       const response = await fetch('/api/admin/payments/process', {

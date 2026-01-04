@@ -49,41 +49,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a real implementation, this would process the payment in the database
-    // For demonstration, we'll simulate processing a payment
+    // Get the payment record
+    const payment = await (prisma as any).payment.findUnique({
+      where: { id: paymentId }
+    });
+    
+    if (!payment) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
+    }
+
+    // Map actions to statuses
     let newStatus;
     let actionDescription;
     
     switch (action) {
       case 'approve':
-        newStatus = 'completed';
+        newStatus = 'COMPLETED';
         actionDescription = 'تمت الموافقة على الدفعة';
         break;
       case 'reject':
-        newStatus = 'rejected';
+        newStatus = 'REJECTED';
         actionDescription = 'تم رفض الدفعة';
         break;
       case 'refund':
-        newStatus = 'refunded';
+        newStatus = 'REFUNDED';
         actionDescription = 'تم رد الدفعة';
         break;
       case 'mark_as_paid':
-        newStatus = 'completed';
+        newStatus = 'COMPLETED';
         actionDescription = 'تم تحديث الدفعة كمدفوعة';
         break;
       case 'cancel':
-        newStatus = 'cancelled';
+        newStatus = 'CANCELLED';
         actionDescription = 'تم إلغاء الدفعة';
         break;
       default:
-        newStatus = 'pending';
+        newStatus = 'PENDING';
         actionDescription = 'تم تحديث حالة الدفعة';
     }
 
-    // Mock process result
+    // Create a history entry for this action
+    const historyEntry = {
+      status: newStatus,
+      timestamp: new Date().toISOString(),
+      userId: user.userId,
+      note: notes || actionDescription
+    };
+
+    // Add new history entry to existing history
+    const updatedHistory = [...(payment.history || []), historyEntry];
+
+    // Update the payment in the database
+    const updatedPayment = await (prisma as any).payment.update({
+      where: { id: paymentId },
+      data: {
+        status: newStatus,
+        history: updatedHistory,
+        updatedAt: new Date()
+      }
+    });
+
+    // Process result to return
     const processResult = {
       id: paymentId,
-      previousStatus: 'pending',
+      previousStatus: payment.status,
       currentStatus: newStatus,
       processedAt: new Date().toISOString(),
       processedBy: user.userId,
@@ -93,32 +122,32 @@ export async function POST(request: NextRequest) {
       success: true
     };
 
-    // In a real implementation, we would:
-    // 1. Update the payment status in the database
-    // 2. Record the action in an audit log
-    // 3. Trigger any necessary side effects (notifications, emails, etc.)
-    
-    console.log('Payment processed:', processResult);
+    // Generate receipt data for completed payments
+    let receiptData = null;
+    if (action === 'approve' || action === 'mark_as_paid') {
+      const receiptId = `REC-${Date.now().toString().slice(-8)}`;
+      
+      // Create a virtual receipt (in a real app, you might create an actual PDF)
+      receiptData = {
+        id: receiptId,
+        paymentId: updatedPayment.id,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+        status: updatedPayment.status,
+        processedAt: new Date().toISOString(),
+        receiptUrl: `https://example.com/receipts/${receiptId}.pdf`
+      };
+      
+      // In a production app, you'd update the payment with a reference to the receipt
+    }
 
-    // For payments that require integration with a payment gateway
-    // we would add additional logic here
-    
-    // Mock receipt data that would be generated
-    const receiptData = {
-      id: `REC-${Date.now().toString().slice(-8)}`,
-      paymentId,
-      amount: 5000, // This would be fetched from the actual payment
-      currency: 'SAR',
-      status: newStatus,
-      processedAt: new Date().toISOString(),
-      receiptUrl: `https://example.com/receipts/REC-${Date.now().toString().slice(-8)}.pdf`
-    };
+    console.log('Payment processed:', processResult);
 
     return NextResponse.json({ 
       success: true, 
-      message: `تم ${actionDescription} بنجاح`,
+      message: `${actionDescription} بنجاح`,
       result: processResult,
-      receipt: action === 'approve' || action === 'mark_as_paid' ? receiptData : null
+      receipt: receiptData
     });
   } catch (error) {
     console.error('Error processing payment:', error);
@@ -161,36 +190,72 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // In a real implementation, this would check the payment processing status
-    // For demonstration, we'll return mock data
+    // Get the payment from the database
+    const payment = await (prisma as any).payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+    
+    if (!payment) {
+      // For development, return mock data if no payment is found
+      if (process.env.NODE_ENV === 'development') {
+        const mockStatus = generateMockProcessingStatus(paymentId);
+        return NextResponse.json({ 
+          success: true,
+          data: mockStatus,
+          isMock: true
+        });
+      }
+      
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
+    }
+
+    // Format the history entries for the response
+    const processingHistory = payment.history ? payment.history.map((entry: any) => {
+      // Map status to action
+      let action = 'updated';
+      if (entry.status === 'PENDING') action = 'created';
+      else if (entry.status === 'COMPLETED') action = 'approve';
+      else if (entry.status === 'REJECTED') action = 'reject';
+      else if (entry.status === 'REFUNDED') action = 'refund';
+      else if (entry.status === 'CANCELLED') action = 'cancel';
+      
+      return {
+        timestamp: entry.timestamp,
+        action,
+        status: entry.status,
+        user: entry.userId || 'System',
+        notes: entry.note || ''
+      };
+    }) : [];
+
+    // Get the name of the last processor from user records
+    // (In a real app, you would fetch user details for each history entry)
+    let lastProcessedBy = 'System';
+    let lastProcessedAt = payment.updatedAt ? payment.updatedAt.toISOString() : payment.createdAt.toISOString();
+    
+    // Get the last history entry if available
+    if (processingHistory.length > 0) {
+      const lastEntry = processingHistory[processingHistory.length - 1];
+      lastProcessedBy = lastEntry.user;
+      lastProcessedAt = lastEntry.timestamp;
+    }
+
+    // Format the processing status response
     const processingStatus = {
       paymentId,
-      status: 'completed',
-      lastProcessedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      lastProcessedBy: 'user_789',
-      processingHistory: [
-        {
-          timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(), // 3 days ago
-          action: 'created',
-          status: 'pending',
-          user: 'أحمد العمري',
-          notes: 'تم إنشاء طلب الدفع'
-        },
-        {
-          timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
-          action: 'mark_as_paid',
-          status: 'processing',
-          user: 'سارة الخالدي',
-          notes: 'تم استلام إثبات الدفع وجاري التحقق'
-        },
-        {
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          action: 'approve',
-          status: 'completed',
-          user: 'محمد القحطاني',
-          notes: 'تم التحقق من الدفع وتأكيد استلامه'
-        }
-      ]
+      status: payment.status,
+      lastProcessedAt,
+      lastProcessedBy,
+      processingHistory
     };
 
     return NextResponse.json({ 
@@ -204,4 +269,37 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to generate mock processing status data for development
+function generateMockProcessingStatus(paymentId: string) {
+  return {
+    paymentId,
+    status: 'COMPLETED',
+    lastProcessedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    lastProcessedBy: 'مستخدم النظام',
+    processingHistory: [
+      {
+        timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(), // 3 days ago
+        action: 'created',
+        status: 'PENDING',
+        user: 'أحمد العمري',
+        notes: 'تم إنشاء طلب الدفع'
+      },
+      {
+        timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
+        action: 'mark_as_paid',
+        status: 'PROCESSING',
+        user: 'سارة الخالدي',
+        notes: 'تم استلام إثبات الدفع وجاري التحقق'
+      },
+      {
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+        action: 'approve',
+        status: 'COMPLETED',
+        user: 'محمد القحطاني',
+        notes: 'تم التحقق من الدفع وتأكيد استلامه'
+      }
+    ]
+  };
 }

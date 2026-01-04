@@ -24,7 +24,8 @@ import {
   BarChart,
   PieChart,
   RefreshCw,
-  Receipt
+  Receipt,
+  Grid
 } from "lucide-react"
 
 interface Payment {
@@ -323,8 +324,31 @@ export default function PaymentsManagement() {
                 params.append("search", searchQuery);
               }
               
-              // Open export URL in new tab
-              window.open(`/api/admin/payments/export?${params.toString()}`, '_blank');
+              // Get token from localStorage
+              const token = localStorage.getItem('token');
+              
+              if (!token) {
+                toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى');
+                return;
+              }
+              
+              // Create a temporary form to submit the export request with token
+              const form = document.createElement('form');
+              form.method = 'GET';
+              form.action = `/api/admin/payments/export?${params.toString()}`;
+              form.target = '_blank';
+              
+              // Add token as a hidden field
+              const tokenField = document.createElement('input');
+              tokenField.type = 'hidden';
+              tokenField.name = 'token';
+              tokenField.value = token;
+              form.appendChild(tokenField);
+              
+              // Submit the form
+              document.body.appendChild(form);
+              form.submit();
+              document.body.removeChild(form);
             }}
           >
             <Download className="h-4 w-4" />
@@ -343,6 +367,15 @@ export default function PaymentsManagement() {
               <RefreshCw className="h-4 w-4" />
             )}
             <span>تحديث</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => window.location.href = '/admin-dashboard/payments/gallery'}
+          >
+            <Grid className="h-4 w-4" />
+            <span>عرض البطاقات</span>
           </Button>
           <Button 
             variant="default" 
@@ -497,8 +530,28 @@ export default function PaymentsManagement() {
                         params.append("ids", selectedPayments.join(','));
                       }
                       
-                      // Open export URL in new tab
-                      window.open(`/api/admin/payments/export?${params.toString()}`, '_blank');
+                      if (!token) {
+                        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى');
+                        return;
+                      }
+                      
+                      // Create a temporary form to submit the export request with token
+                      const form = document.createElement('form');
+                      form.method = 'GET';
+                      form.action = `/api/admin/payments/export?${params.toString()}`;
+                      form.target = '_blank';
+                      
+                      // Add token as a hidden field
+                      const tokenField = document.createElement('input');
+                      tokenField.type = 'hidden';
+                      tokenField.name = 'token';
+                      tokenField.value = token;
+                      form.appendChild(tokenField);
+                      
+                      // Submit the form
+                      document.body.appendChild(form);
+                      form.submit();
+                      document.body.removeChild(form);
                     }}
                   >
                     <Download className="h-4 w-4" />

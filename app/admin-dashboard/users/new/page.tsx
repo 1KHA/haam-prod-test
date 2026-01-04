@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,9 +18,18 @@ export default function NewUserPage() {
   const [role, setRole] = useState("")
   const [specialization, setSpecialization] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
   
   const router = useRouter()
   const { toast } = useToast()
+  
+  // Get token from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,11 +45,23 @@ export default function NewUserPage() {
     
     setIsLoading(true)
     
+    // Check for authentication token
+    if (!token) {
+      toast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولاً",
+        variant: "destructive"
+      })
+      setIsLoading(false)
+      return
+    }
+    
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           name,
@@ -78,6 +99,35 @@ export default function NewUserPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+  
+  // Show login notice if not authenticated
+  if (!token) {
+    return (
+      <div className="space-y-6 text-right">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => router.push("/admin-dashboard/users")}
+          >
+            <ArrowRight className="h-4 w-4" />
+            <span>العودة إلى قائمة المستخدمين</span>
+          </Button>
+          <h1 className="text-3xl font-bold">إضافة مستخدم جديد</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p className="mb-4 text-muted-foreground">يجب تسجيل الدخول أولاً لإضافة مستخدم جديد</p>
+              <Button onClick={() => router.push("/auth/signin")}>تسجيل الدخول</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
   
   return (

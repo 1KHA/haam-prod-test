@@ -45,9 +45,10 @@ export async function GET(req: NextRequest) {
       ];
     }
     
-    // Apply role filter
+    // Apply role filter - normalize it to uppercase if provided
     if (role && role.toUpperCase() !== 'ALL') {
       where.role = role.toUpperCase();
+      console.log('[Users API] Applying role filter:', role.toUpperCase());
     }
 
     // Fetch users with their profiles
@@ -185,20 +186,93 @@ export async function POST(req: NextRequest) {
     const { hashPassword } = await import('@/lib/auth');
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create the base user data
+    const baseUserData = {
+      email,
+      password: hashedPassword,
+      name,
+      role: userRole,
+      specialization,
+      profile: {
+        create: {},
+      }
+    };
+    
+    // Prepare the role-specific profile data
+    let userData: any = { ...baseUserData };
+    
+    // Add role-specific profile based on the selected role
+    switch(userRole) {
+      case 'ADMIN':
+        userData.adminProfile = {
+          create: {
+            department: 'General',
+            permissions: 'Default'
+          }
+        };
+        break;
+      case 'PROGRAM_MANAGER':
+        userData.programManagerProfile = {
+          create: {
+            programs: '',
+            responsibilities: ''
+          }
+        };
+        break;
+      case 'MENTOR':
+        userData.mentorProfile = {
+          create: {
+            expertise: specialization || '',
+            experience: '',
+            availability: ''
+          }
+        };
+        break;
+      case 'INVESTOR':
+        userData.investorProfile = {
+          create: {
+            companyName: '',
+            investmentFocus: specialization || '',
+            investmentStage: '',
+            investmentSize: ''
+          }
+        };
+        break;
+      case 'PARTICIPANT':
+        userData.participantProfile = {
+          create: {
+            skills: specialization || '',
+            interests: '',
+            education: '',
+            experience: ''
+          }
+        };
+        break;
+      case 'ENTREPRENEUR':
+        userData.entrepreneurProfile = {
+          create: {
+            organizationName: name + "'s Organization",
+            industry: specialization || '',
+            focusAreas: '',
+            programLength: '',
+            website: '',
+            description: ''
+          }
+        };
+        break;
+    }
+    
+    // Create user with the appropriate profiles
     const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role: userRole,
-        specialization,
-        profile: {
-          create: {},
-        },
-      },
+      data: userData,
       include: {
         profile: true,
+        adminProfile: userRole === 'ADMIN',
+        programManagerProfile: userRole === 'PROGRAM_MANAGER',
+        mentorProfile: userRole === 'MENTOR',
+        investorProfile: userRole === 'INVESTOR',
+        participantProfile: userRole === 'PARTICIPANT',
+        entrepreneurProfile: userRole === 'ENTREPRENEUR',
       },
     });
 

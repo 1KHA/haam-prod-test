@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 
-interface Accelerator {
+interface Entrepreneur {
   id: string
   name: string
   email: string
@@ -55,7 +55,7 @@ export default function NewStartup() {
     status: 'PENDING',
     creatorId: ''
   })
-  const [accelerators, setAccelerators] = useState<Accelerator[]>([])
+  const [entrepreneurs, setEntrepreneurs] = useState<Entrepreneur[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,16 +69,17 @@ export default function NewStartup() {
     }
   }, []);
 
-  // Fetch accelerators
+  // Fetch entrepreneurs
   useEffect(() => {
     if (!token) return;
 
-    const fetchAccelerators = async () => {
+    const fetchEntrepreneurs = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const response = await fetch('/api/admin/users?role=ACCELERATOR', {
+        // Using ENTREPRENEUR role
+        const response = await fetch('/api/admin/users?role=ENTREPRENEUR', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -86,21 +87,31 @@ export default function NewStartup() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch accelerators');
+          throw new Error(errorData.error || 'Failed to fetch entrepreneurs');
         }
 
         const data = await response.json();
-        setAccelerators(data.users.map((user: any) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email
-        })));
+        
+        if (data.users && data.users.length > 0) {
+          setEntrepreneurs(data.users.map((user: any) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email
+          })));
+        } else {
+          console.warn('No entrepreneur users found in the system');
+          showAdminToast({
+            title: "تنبيه",
+            description: "لم يتم العثور على مستخدمين من نوع رائد أعمال",
+            variant: "default"
+          });
+        }
       } catch (err) {
-        console.error('Error fetching accelerators:', err);
+        console.error('Error fetching entrepreneurs:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
         showAdminToast({
           title: "خطأ",
-          description: "فشل في جلب قائمة المسرعات",
+          description: "فشل في جلب قائمة رواد الأعمال",
           variant: "destructive"
         });
       } finally {
@@ -108,7 +119,7 @@ export default function NewStartup() {
       }
     };
 
-    fetchAccelerators();
+    fetchEntrepreneurs();
   }, [token]);
 
   // Handle form submission
@@ -127,7 +138,7 @@ export default function NewStartup() {
     if (!startup.creatorId) {
       showAdminToast({
         title: "خطأ",
-        description: "يجب اختيار مسرع",
+        description: "يجب اختيار رائد أعمال",
         variant: "destructive"
       });
       return;
@@ -296,31 +307,31 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">المسرع</label>
+                <label className="text-sm font-medium">رائد الأعمال</label>
                 {loading ? (
                   <div className="flex items-center justify-center py-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   </div>
-                ) : accelerators.length > 0 ? (
+                ) : entrepreneurs.length > 0 ? (
                   <Select 
                     value={startup.creatorId} 
                     onValueChange={(value) => handleSelectChange('creatorId', value)}
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر المسرع" />
+                      <SelectValue placeholder="اختر رائد الأعمال" />
                     </SelectTrigger>
                     <SelectContent>
-                      {accelerators.map(accelerator => (
-                        <SelectItem key={accelerator.id} value={accelerator.id}>
-                          {accelerator.name} ({accelerator.email})
+                      {entrepreneurs.map(entrepreneur => (
+                        <SelectItem key={entrepreneur.id} value={entrepreneur.id}>
+                          {entrepreneur.name} ({entrepreneur.email})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    لا توجد مسرعات متاحة
+                    لا يوجد رواد أعمال متاحين
                   </div>
                 )}
               </div>

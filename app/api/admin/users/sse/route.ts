@@ -147,9 +147,10 @@ export async function GET(req: NextRequest) {
               ];
             }
             
-            // Apply role filter
+            // Apply role filter - normalize it to uppercase if provided
             if (roleFilter && roleFilter.toUpperCase() !== 'ALL') {
               where.role = roleFilter.toUpperCase();
+              console.log('[SSE] Applying role filter:', roleFilter.toUpperCase());
             }
             
             // Calculate pagination

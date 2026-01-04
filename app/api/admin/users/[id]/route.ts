@@ -82,7 +82,7 @@ export async function GET(
   }
 }
 
-// PUT /api/admin/users/[id] - Update a user
+  // PUT /api/admin/users/[id] - Update a user
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -105,9 +105,18 @@ export async function PUT(
     const body = await request.json();
     const { name, email, role, specialization, password } = body;
     
-    // Check if user exists
+    // Check if user exists with their current role and profiles
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: {
+        mentorProfile: true,
+        investorProfile: true,
+        startupProfile: true,
+        adminProfile: true,
+        programManagerProfile: true,
+        entrepreneurProfile: true,
+        participantProfile: true,
+      }
     });
     
     if (!existingUser) {
@@ -144,22 +153,107 @@ export async function PUT(
       updateData.password = await hash(password, 10);
     }
     
+    // Check if role is being changed and handle role-specific profiles
+    if (role && role !== existingUser.role) {
+      console.log(`Changing user role from ${existingUser.role} to ${role}`);
+      
+      // Create new role-specific profile based on the new role
+      switch (role) {
+        case 'ADMIN':
+          updateData.adminProfile = {
+            create: {
+              department: 'General',
+              permissions: 'Default'
+            }
+          };
+          break;
+        case 'PROGRAM_MANAGER':
+          updateData.programManagerProfile = {
+            create: {
+              programs: '',
+              responsibilities: ''
+            }
+          };
+          break;
+        case 'MENTOR':
+          updateData.mentorProfile = {
+            create: {
+              expertise: specialization || '',
+              experience: '',
+              availability: ''
+            }
+          };
+          break;
+        case 'INVESTOR':
+          updateData.investorProfile = {
+            create: {
+              companyName: '',
+              investmentFocus: specialization || '',
+              investmentStage: '',
+              investmentSize: ''
+            }
+          };
+          break;
+        case 'PARTICIPANT':
+          updateData.participantProfile = {
+            create: {
+              skills: specialization || '',
+              interests: '',
+              education: '',
+              experience: ''
+            }
+          };
+          break;
+        case 'ENTREPRENEUR':
+          updateData.entrepreneurProfile = {
+            create: {
+              organizationName: name + "'s Organization",
+              industry: specialization || '',
+              focusAreas: '',
+              programLength: '',
+              website: '',
+              description: ''
+            }
+          };
+          break;
+      }
+    }
+    
     // Update the user
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        specialization: true,
-        createdAt: true,
-        updatedAt: true
+      include: {
+        profile: true,
+        mentorProfile: true,
+        investorProfile: true,
+        startupProfile: true,
+        adminProfile: true,
+        programManagerProfile: true,
+        entrepreneurProfile: true,
+        participantProfile: true,
       }
     });
     
-    return NextResponse.json(updatedUser);
+    // Determine if the user has completed their profile
+    const hasProfile = updatedUser.mentorProfile || 
+                      updatedUser.investorProfile || 
+                      updatedUser.startupProfile ||
+                      updatedUser.participantProfile || 
+                      updatedUser.adminProfile ||
+                      updatedUser.programManagerProfile ||
+                      updatedUser.entrepreneurProfile;
+    
+    // Add virtual status field
+    const userWithStatus = {
+      ...updatedUser,
+      status: hasProfile ? 'ACTIVE' : 'PENDING'
+    };
+    
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = userWithStatus;
+    
+    return NextResponse.json(userWithoutPassword);
   } catch (error) {
     console.error('Error updating user:', error);
     return NextResponse.json(

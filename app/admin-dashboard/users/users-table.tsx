@@ -226,7 +226,7 @@ export default function UsersTable() {
       sseUrl += `&search=${encodeURIComponent(searchQuery)}`;
     }
     if (activeTab !== "all") {
-      sseUrl += `&role=${encodeURIComponent(activeTab.toUpperCase())}`;
+      sseUrl += `&role=${encodeURIComponent(normalizeRoleForApi(activeTab))}`;
     }
     
     // Create a new EventSource connection with Authorization header using fetch API
@@ -297,7 +297,7 @@ export default function UsersTable() {
       }
       
       if (activeTab !== "all") {
-        url += `&role=${encodeURIComponent(activeTab.toUpperCase())}`
+        url += `&role=${encodeURIComponent(normalizeRoleForApi(activeTab))}`
       }
       
       // Get token from localStorage
@@ -348,6 +348,12 @@ export default function UsersTable() {
     if (!isRealTimeEnabled) {
       fetchUsers()
     }
+  }
+  
+  // Normalize role for API request (convert to uppercase)
+  const normalizeRoleForApi = (role: string): string => {
+    if (role === 'all') return 'ALL';
+    return role.toUpperCase();
   }
   
   // Toggle user selection

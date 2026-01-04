@@ -150,6 +150,35 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     return roleMap[role] || role
   }
   
+  // Get the appropriate profile based on role
+  const getRoleSpecificProfile = (user: UserProfile) => {
+    // Normalize role to uppercase for consistent comparison
+    const role = user.role.toUpperCase();
+    
+    switch (role) {
+      case 'MENTOR':
+        return user.mentorProfile;
+      case 'INVESTOR':
+        return user.investorProfile;
+      case 'ADMIN':
+        return user.adminProfile;
+      case 'PROGRAM_MANAGER':
+        return user.programManagerProfile;
+      case 'ENTREPRENEUR':
+        return user.entrepreneurProfile;
+      case 'PARTICIPANT':
+        return user.participantProfile;
+      // These roles might not be in active use but kept for backwards compatibility
+      case 'JUDGE':
+        return user.judgeProfile;
+      case 'ACCELERATOR':
+        return user.acceleratorProfile;
+      default:
+        console.warn(`No profile mapping found for role: ${role}`);
+        return null;
+    }
+  }
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">

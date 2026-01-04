@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 
-interface Entrepreneur {
+interface User {
   id: string
   name: string
   email: string
@@ -55,7 +55,7 @@ export default function NewStartup() {
     status: 'PENDING',
     creatorId: ''
   })
-  const [entrepreneurs, setEntrepreneurs] = useState<Entrepreneur[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,17 +69,17 @@ export default function NewStartup() {
     }
   }, []);
 
-  // Fetch entrepreneurs
+    // Fetch users
   useEffect(() => {
     if (!token) return;
 
-    const fetchEntrepreneurs = async () => {
+    const fetchUsers = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        // Using ENTREPRENEUR role
-        const response = await fetch('/api/admin/users?role=ENTREPRENEUR', {
+        // Fetch all users instead of just entrepreneurs
+        const response = await fetch('/api/admin/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -93,25 +93,25 @@ export default function NewStartup() {
         const data = await response.json();
         
         if (data.users && data.users.length > 0) {
-          setEntrepreneurs(data.users.map((user: any) => ({
+          setUsers(data.users.map((user: any) => ({
             id: user.id,
             name: user.name,
             email: user.email
           })));
         } else {
-          console.warn('No entrepreneur users found in the system');
+          console.warn('No users found in the system');
           showAdminToast({
             title: "تنبيه",
-            description: "لم يتم العثور على مستخدمين من نوع رائد أعمال",
+            description: "لم يتم العثور على مستخدمين في النظام",
             variant: "default"
           });
         }
       } catch (err) {
-        console.error('Error fetching entrepreneurs:', err);
+        console.error('Error fetching users:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
         showAdminToast({
           title: "خطأ",
-          description: "فشل في جلب قائمة رواد الأعمال",
+          description: "فشل في جلب قائمة المستخدمين",
           variant: "destructive"
         });
       } finally {
@@ -119,7 +119,7 @@ export default function NewStartup() {
       }
     };
 
-    fetchEntrepreneurs();
+    fetchUsers();
   }, [token]);
 
   // Handle form submission
@@ -138,7 +138,7 @@ export default function NewStartup() {
     if (!startup.creatorId) {
       showAdminToast({
         title: "خطأ",
-        description: "يجب اختيار رائد أعمال",
+        description: "يجب اختيار مستخدم",
         variant: "destructive"
       });
       return;
@@ -307,31 +307,31 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">رائد الأعمال</label>
+                <label className="text-sm font-medium">المستخدم المسرع</label>
                 {loading ? (
                   <div className="flex items-center justify-center py-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   </div>
-                ) : entrepreneurs.length > 0 ? (
+                ) : users.length > 0 ? (
                   <Select 
                     value={startup.creatorId} 
                     onValueChange={(value) => handleSelectChange('creatorId', value)}
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر رائد الأعمال" />
+                      <SelectValue placeholder="اختر المستخدم" />
                     </SelectTrigger>
                     <SelectContent>
-                      {entrepreneurs.map(entrepreneur => (
-                        <SelectItem key={entrepreneur.id} value={entrepreneur.id}>
-                          {entrepreneur.name} ({entrepreneur.email})
+                      {users.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.email})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    لا يوجد رواد أعمال متاحين
+                    لا يوجد مستخدمين متاحين
                   </div>
                 )}
               </div>

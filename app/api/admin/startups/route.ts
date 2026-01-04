@@ -99,11 +99,15 @@ export async function GET(request: NextRequest) {
           id: startup.creator.id,
           name: startup.creator.name,
           email: startup.creator.email,
-          entrepreneur: startup.creator.entrepreneurProfile ? {
+          accelerator: startup.creator.entrepreneurProfile ? {
             name: startup.creator.entrepreneurProfile.organizationName,
             industry: startup.creator.entrepreneurProfile.industry,
             focusAreas: startup.creator.entrepreneurProfile.focusAreas
-          } : null
+          } : {
+            name: startup.creator.name,
+            industry: null,
+            focusAreas: null
+          }
         }
       };
     });
@@ -169,7 +173,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if creator exists and is an entrepreneur
+    // Check if creator exists
     const creator = await prisma.user.findUnique({
       where: { id: creatorId },
       select: { id: true, role: true }
@@ -182,12 +186,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (creator.role !== UserRole.ENTREPRENEUR) {
-      return NextResponse.json(
-        { error: 'Creator must be an entrepreneur' },
-        { status: 400 }
-      );
-    }
+    // No longer requiring ENTREPRENEUR role - any user can be a creator
     
     // Create the startup
     const startup = await prisma.startup.create({

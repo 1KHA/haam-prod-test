@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
+import { isAuthenticated, verifyToken } from '@/lib/auth';
 import { getUserPermissions } from '@/lib/permissions';
 import { registerSseController, unregisterSseController } from '@/lib/sse-helpers';
 
 export async function GET(req: NextRequest) {
   try {
-    // Get auth header
+    // Get auth either from header or URL param
     const authHeader = req.headers.get('authorization');
-    const user = await isAuthenticated(authHeader || undefined);
+    const url = new URL(req.url);
+    const tokenParam = url.searchParams.get('token');
+    
+    let user;
+    
+    if (tokenParam) {
+      // If token provided in URL (for EventSource which doesn't support custom headers)
+      user = verifyToken(tokenParam);
+      console.log('[SSE] Authenticated using token from URL param');
+    } else {
+      // Traditional header-based authentication
+      user = await isAuthenticated(authHeader || undefined);
+      console.log('[SSE] Authenticated using Authorization header');
+    }
     
     if (!user) {
+      console.log('[SSE] Authentication failed');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -59,7 +73,12 @@ export async function GET(req: NextRequest) {
             const latestPermissions = await getUserPermissions(user.userId);
             
             // Get the latest user info to check for role changes
-            const latestUser = await isAuthenticated(authHeader || undefined);
+            let latestUser;
+            if (tokenParam) {
+              latestUser = verifyToken(tokenParam);
+            } else {
+              latestUser = await isAuthenticated(authHeader || undefined);
+            }
             
             if (!latestUser) {
               controller.close();

@@ -246,13 +246,71 @@ export default function NotificationsManagement() {
     };
   }, []);
 
-  // Fetch notifications from API
+  // Fetch notifications from API with filters
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('/api/admin/notifications?limit=100', {
+      // Build query parameters based on filters
+      let queryParams = new URLSearchParams();
+      queryParams.append('limit', '100');
+      
+      // Add search query if present
+      if (searchQuery) {
+        queryParams.append('search', searchQuery);
+      }
+      
+      // Add status based on active tab
+      if (activeTab === 'sent') {
+        queryParams.append('status', 'sent');
+      } else if (activeTab === 'scheduled') {
+        queryParams.append('status', 'scheduled');
+      } else if (activeTab === 'draft') {
+        queryParams.append('status', 'draft');
+      }
+      
+      // Add date filters
+      if (filters.dateFrom) {
+        queryParams.append('dateFrom', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        queryParams.append('dateTo', filters.dateTo);
+      }
+      
+      // Add priority filter
+      if (filters.priority) {
+        queryParams.append('priority', filters.priority);
+      }
+      
+      // Add type filters
+      if (filters.types.includes('system')) {
+        queryParams.append('type', 'system');
+      }
+      
+      // Add channel filters
+      if (filters.channels.includes('app')) {
+        queryParams.append('channel', 'app');
+      } else if (filters.channels.includes('email')) {
+        queryParams.append('channel', 'email');
+      } else if (filters.channels.includes('sms')) {
+        queryParams.append('channel', 'push');
+      }
+      
+      // Use the filter endpoint when filters are applied
+      const endpoint = (
+        searchQuery || 
+        activeTab !== 'all' || 
+        filters.dateFrom || 
+        filters.dateTo || 
+        filters.priority || 
+        filters.types.length > 0 || 
+        filters.channels.length > 0
+      ) 
+        ? `/api/admin/notifications/filter?${queryParams.toString()}` 
+        : '/api/admin/notifications?limit=100';
+      
+      const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -592,7 +650,20 @@ export default function NotificationsManagement() {
             {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             <span>تحديث</span>
           </Button>
-          <Button variant="default" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              // Scroll to the notification form and highlight it
+              const form = document.getElementById('create-notification-form');
+              if (form) {
+                form.scrollIntoView({ behavior: 'smooth' });
+                form.classList.add('highlight-form');
+                setTimeout(() => form.classList.remove('highlight-form'), 1500);
+              }
+            }}
+          >
             <Plus className="h-4 w-4" />
             <span>إنشاء إشعار جديد</span>
           </Button>
@@ -992,7 +1063,7 @@ export default function NotificationsManagement() {
         </div>
 
         <div>
-          <Card>
+          <Card id="create-notification-form">
             <CardHeader>
               <CardTitle className="flex items-center justify-end gap-2">
                 <span>إنشاء إشعار جديد</span>

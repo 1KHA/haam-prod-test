@@ -29,71 +29,115 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const unreadOnly = searchParams.get('unread') === 'true';
+    const typeFilter = searchParams.get('type');
+    const priorityFilter = searchParams.get('priority');
+    const search = searchParams.get('search') || '';
     
-    // In a real implementation, this would query the database
-    // For demo purposes, we'll return mock data
-    const mockNotifications = [
-      {
-        id: '1',
-        title: 'تحديث النظام',
-        message: 'تم تحديث النظام إلى الإصدار 2.5.0',
-        type: 'system',
-        isRead: false,
-        createdAt: '2025-03-10T14:30:00Z',
-        priority: 'high'
-      },
-      {
-        id: '2',
-        title: 'طلب جديد',
-        message: 'تم استلام طلب انضمام جديد من شركة ناشئة',
-        type: 'application',
-        isRead: true,
-        createdAt: '2025-03-09T10:15:00Z',
-        priority: 'medium'
-      },
-      {
-        id: '3',
-        title: 'تذكير: جلسة إرشادية',
-        message: 'لديك جلسة إرشادية مجدولة غدًا الساعة 2 مساءً',
-        type: 'reminder',
-        isRead: false,
-        createdAt: '2025-03-08T09:45:00Z',
-        priority: 'medium'
-      },
-      {
-        id: '4',
-        title: 'تنبيه أمان',
-        message: 'تم تسجيل الدخول إلى حسابك من جهاز جديد',
-        type: 'security',
-        isRead: true,
-        createdAt: '2025-03-07T18:20:00Z',
-        priority: 'high'
-      },
-      {
-        id: '5',
-        title: 'اكتمال النسخ الاحتياطي',
-        message: 'تم إنشاء نسخة احتياطية للنظام بنجاح',
-        type: 'system',
-        isRead: false,
-        createdAt: '2025-03-06T02:00:00Z',
-        priority: 'low'
-      }
-    ];
-
-    // Filter and paginate
-    let filteredNotifications = [...mockNotifications];
-    if (unreadOnly) {
-      filteredNotifications = filteredNotifications.filter(n => !n.isRead);
+    // Determine if we need all notifications (admin) or just user's notifications
+    const isAdmin = user.role === 'ADMIN' || await hasPermission(user.userId, {
+      category: 'notifications',
+      action: 'edit'
+    });
+    
+    // Build the database query
+    let whereClause: any = {};
+    
+    // Filter by recipient for non-admin users
+    if (!isAdmin) {
+      whereClause = {
+        recipients: {
+          some: {
+            userId: user.userId,
+          }
+        }
+      };
     }
-
-    const paginatedNotifications = filteredNotifications
-      .slice(offset, offset + limit);
-
+    
+    // Additional filters
+    if (typeFilter) {
+      whereClause.type = typeFilter;
+    }
+    
+    if (priorityFilter) {
+      whereClause.priority = priorityFilter;
+    }
+    
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { message: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    // Count total notifications matching criteria
+    const totalCount = await (prisma as any).notification.count({
+      where: whereClause,
+    });
+    
+    // Get notifications with pagination
+    const notifications = await (prisma as any).notification.findMany({
+      where: whereClause,
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        recipients: {
+          where: isAdmin ? {} : { userId: user.userId },
+          select: {
+            id: true,
+            userId: true,
+            isRead: true,
+            readAt: true,
+            deliveredAt: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: offset,
+      take: limit,
+    });
+    
+    // Transform the data for the response
+    const formattedNotifications = notifications.map((notification: any) => {
+      // For each notification, find the recipient record for this user
+      const recipientRecord = notification.recipients.find((r: any) => 
+        !isAdmin ? r.userId === user.userId : true
+      );
+      
+      return {
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        priority: notification.priority,
+        status: notification.status,
+        scheduledFor: notification.scheduledFor,
+        createdAt: notification.createdAt.toISOString(),
+        createdBy: notification.createdBy.name,
+        isRead: recipientRecord ? recipientRecord.isRead : false,
+        readAt: recipientRecord?.readAt ? recipientRecord.readAt.toISOString() : null,
+        recipientId: recipientRecord?.id || null,
+      };
+    });
+    
+    // Calculate unread count for this user
+    const unreadCount = await (prisma as any).notificationRecipient.count({
+      where: {
+        userId: user.userId,
+        isRead: false,
+      },
+    });
+    
     return NextResponse.json({ 
       success: true,
-      notifications: paginatedNotifications,
-      total: filteredNotifications.length,
-      unreadCount: filteredNotifications.filter(n => !n.isRead).length
+      notifications: formattedNotifications,
+      total: totalCount,
+      unreadCount: unreadCount
     });
   } catch (error) {
     console.error('Error fetching notifications:', error);

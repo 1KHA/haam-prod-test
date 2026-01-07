@@ -53,52 +53,132 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a real implementation, we would:
-    // 1. Determine the list of recipient users based on recipientType or the specific recipients list
-    // 2. Create notification records in the database
-    // 3. Send emails/push notifications if requested
-    // 4. Return the results
-
-    // For demo purposes, we'll just simulate a successful response
+    // Get recipient user IDs based on recipientType or specific recipients
+    let recipientUserIds: string[] = [];
     
-    // Mock different recipient counts based on recipient type
-    let recipientCount = 0;
     if (recipientType) {
+      // Get users based on role
+      let whereClause: any = {};
+      
       switch (recipientType) {
         case 'all':
-          recipientCount = 150;
+          // No filter, get all users
           break;
         case 'entrepreneurs':
-          recipientCount = 50;
+          whereClause.role = 'ENTREPRENEUR';
           break;
         case 'mentors':
-          recipientCount = 30;
+          whereClause.role = 'MENTOR';
           break;
         case 'investors':
-          recipientCount = 25;
+          whereClause.role = 'INVESTOR';
           break;
         case 'program_managers':
-          recipientCount = 5;
+          whereClause.role = 'PROGRAM_MANAGER';
+          break;
+        case 'participants':
+          whereClause.role = 'PARTICIPANT';
+          break;
+        case 'admins':
+          whereClause.role = 'ADMIN';
           break;
         default:
-          recipientCount = 10;
+          return NextResponse.json(
+            { error: `Invalid recipientType: ${recipientType}` },
+            { status: 400 }
+          );
       }
-    } else {
-      recipientCount = recipients.length;
+      
+      // Query users based on role filter
+      const users = await prisma.user.findMany({
+        where: whereClause,
+        select: { id: true }
+      });
+      
+      recipientUserIds = users.map(user => user.id);
+    } else if (recipients && Array.isArray(recipients)) {
+      // Use the provided recipient IDs
+      // Validate that these users actually exist
+      const users = await prisma.user.findMany({
+        where: { id: { in: recipients } },
+        select: { id: true }
+      });
+      
+      recipientUserIds = users.map(user => user.id);
     }
-
-    // Create a notification ID for tracking
-    const notificationBatchId = `batch-${Date.now()}`;
-
+    
+    if (recipientUserIds.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid recipients found' },
+        { status: 400 }
+      );
+    }
+    
+    // Determine if this is a scheduled notification
+    const isScheduled = data.scheduledFor && new Date(data.scheduledFor) > new Date();
+    
+    // Create the notification in the database
+    const notification = await (prisma as any).notification.create({
+      data: {
+        title,
+        message,
+        type: data.type || 'system',
+        priority,
+        status: isScheduled ? 'scheduled' : 'sent',
+        scheduledFor: data.scheduledFor ? new Date(data.scheduledFor) : null,
+        sendEmail,
+        sendPush,
+        createdById: user.userId,
+        // Create recipients at the same time
+        recipients: {
+          create: recipientUserIds.map(userId => ({
+            userId,
+            isRead: false,
+            deliveredAt: isScheduled ? null : new Date()
+          }))
+        }
+      },
+      include: {
+        recipients: true
+      }
+    });
+    
+    // If email sending is requested, queue emails
+    if (sendEmail && !isScheduled) {
+      // In a real implementation, we would queue email sending here
+      // For example:
+      // await emailQueue.add({
+      //   recipientIds: recipientUserIds,
+      //   subject: title,
+      //   message: message,
+      //   notificationId: notification.id
+      // });
+      console.log(`Would send email to ${recipientUserIds.length} recipients with subject "${title}"`);
+    }
+    
+    // If push notification sending is requested, queue push notifications
+    if (sendPush && !isScheduled) {
+      // In a real implementation, we would queue push notification sending here
+      // For example:
+      // await pushQueue.add({
+      //   recipientIds: recipientUserIds,
+      //   title: title,
+      //   body: message,
+      //   notificationId: notification.id
+      // });
+      console.log(`Would send push notifications to ${recipientUserIds.length} recipients`);
+    }
+    
     return NextResponse.json({
       success: true,
-      message: 'Notifications sent successfully',
+      message: isScheduled ? 'Notification scheduled successfully' : 'Notifications sent successfully',
       details: {
-        notificationBatchId,
-        recipientCount,
+        notificationId: notification.id,
+        recipientCount: recipientUserIds.length,
         title,
         priority,
         sentAt: new Date().toISOString(),
+        scheduledFor: isScheduled ? new Date(data.scheduledFor).toISOString() : null,
         deliveryChannels: {
           inApp: true,
           email: sendEmail,

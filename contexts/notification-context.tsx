@@ -13,6 +13,12 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   priority: 'low' | 'medium' | 'high';
+  recipientId?: string; // ID of the recipient record (needed for markAsRead)
+  status?: string; // 'sent', 'scheduled', etc.
+  scheduledFor?: string; // For scheduled notifications
+  createdBy?: string; // User who created the notification
+  sendEmail?: boolean; 
+  sendPush?: boolean;
 }
 
 interface NotificationContextType {
@@ -41,7 +47,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithAuth('/api/admin/notifications');
+      // Explicitly specify 'direct' mode to ensure we get a Response object
+      const response = await fetchWithAuth('/api/admin/notifications', {}, 'direct') as Response;
       
       if (!response.ok) {
         throw new Error('Failed to fetch notifications');
@@ -114,8 +121,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       const response = await fetchWithAuth(`/api/admin/notifications/mark-read`, {
         method: 'POST',
-        body: JSON.stringify({ id }),
-      });
+        body: JSON.stringify({ notificationIds: [id] }),
+      }, 'direct') as Response;
       
       if (!response.ok) {
         throw new Error('Failed to mark notification as read');
@@ -138,7 +145,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const response = await fetchWithAuth(`/api/admin/notifications/mark-read`, {
         method: 'POST',
         body: JSON.stringify({ all: true }),
-      });
+      }, 'direct') as Response;
       
       if (!response.ok) {
         throw new Error('Failed to mark all notifications as read');

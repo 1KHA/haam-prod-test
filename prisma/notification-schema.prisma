@@ -1,0 +1,37 @@
+// Notification models to be added to schema.prisma
+
+// Model for system notifications
+model Notification {
+  id              String        @id @default(uuid())
+  title           String        // Notification title
+  message         String        // Notification message/content
+  type            String?       // Type of notification (e.g., "system", "application", "reminder", "security")
+  priority        String        @default("medium") // Priority level: "low", "medium", "high"
+  status          String        @default("sent") // Status: "sent", "scheduled", "draft"
+  scheduledFor    DateTime?     // When to deliver scheduled notifications
+  sendEmail       Boolean       @default(false) // Whether to also send as email
+  sendPush        Boolean       @default(false) // Whether to also send as push notification
+  createdAt       DateTime      @default(now()) // Creation timestamp
+  updatedAt       DateTime      @updatedAt // Last update timestamp
+  createdById     String        // User who created the notification
+  createdBy       User          @relation("CreatedNotifications", fields: [createdById], references: [id])
+  recipients      NotificationRecipient[] // Link to recipients
+}
+
+// Junction table for notification recipients
+model NotificationRecipient {
+  id              String        @id @default(uuid())
+  notificationId  String        // Notification ID
+  notification    Notification  @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId          String        // Recipient user ID
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isRead          Boolean       @default(false) // Whether the user has read this notification
+  readAt          DateTime?     // When the notification was read
+  deliveredAt     DateTime?     // When the notification was delivered
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([notificationId, userId]) // Each user can only have one recipient record per notification
+  @@index([userId]) // Index for faster queries by user
+  @@index([notificationId]) // Index for faster queries by notification
+}

@@ -55,8 +55,9 @@ export function usePermissions() {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      // Create new SSE connection
-      const sse = new EventSource(`/api/auth/permissions/sse?t=${new Date().getTime()}`, {
+      // Create new SSE connection with token in the URL
+      // Since EventSource doesn't support custom headers, we need to include the token in the URL
+      const sse = new EventSource(`/api/auth/permissions/sse?token=${encodeURIComponent(token)}&t=${new Date().getTime()}`, {
         withCredentials: true
       });
       

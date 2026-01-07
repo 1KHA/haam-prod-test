@@ -39,25 +39,65 @@ export async function POST(request: NextRequest) {
     // In a real implementation, this would update the database
     // For demo purposes, we'll just return a success response
     
+    const now = new Date();
+    let updatedCount = 0;
+    
     // If all=true, mark all notifications as read
     if (all) {
-      // In real implementation: Update all notifications where userId = user.userId
+      // Update all notifications for this user
+      const result = await (prisma as any).notificationRecipient.updateMany({
+        where: {
+          userId: user.userId,
+          isRead: false, // Only update unread notifications
+        },
+        data: {
+          isRead: true,
+          readAt: now,
+        },
+      });
+      
+      updatedCount = result.count;
       
       return NextResponse.json({ 
         success: true, 
         message: 'All notifications marked as read',
-        updatedCount: 10 // Mocked value
+        updatedCount: updatedCount
       });
     } 
     // Otherwise, mark specific notifications as read
     else {
-      // In real implementation: Update notifications where id IN notificationIds AND userId = user.userId
+      // We need to make sure these notification IDs belong to the user
+      // First, find valid recipient records
+      const recipientRecords = await (prisma as any).notificationRecipient.findMany({
+        where: {
+          userId: user.userId,
+          notificationId: { in: notificationIds },
+        },
+      });
+      
+      const validRecipientIds = recipientRecords.map((record: any) => record.id);
+      
+      // Now update those specific recipient records
+      if (validRecipientIds.length > 0) {
+        const result = await (prisma as any).notificationRecipient.updateMany({
+          where: {
+            id: { in: validRecipientIds },
+            isRead: false, // Only update unread notifications
+          },
+          data: {
+            isRead: true,
+            readAt: now,
+          },
+        });
+        
+        updatedCount = result.count;
+      }
       
       return NextResponse.json({ 
         success: true, 
         message: 'Notifications marked as read',
         updatedIds: notificationIds,
-        updatedCount: notificationIds.length
+        updatedCount: updatedCount
       });
     }
   } catch (error) {

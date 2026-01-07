@@ -73,66 +73,138 @@ export async function GET(req: NextRequest) {
       async start(controller) {
         const encoder = new TextEncoder();
         
+        // Track the last known notification timestamp for detecting new notifications
+        let lastNotificationTimestamp = new Date();
+        
         // Initial data fetch function
         const fetchNotifications = async () => {
           try {
-            // In a real implementation, this would query the database for user's notifications
-            // For demo purposes, we'll use mock data
-            const mockNotifications = [
-              {
-                id: '1',
-                title: 'تحديث النظام',
-                message: 'تم تحديث النظام إلى الإصدار 2.5.0',
-                type: 'system',
-                isRead: false,
-                createdAt: new Date().toISOString(),
-                priority: 'high'
+            // Get the user's recent notifications
+            const notifications = await (prisma as any).notification.findMany({
+              where: {
+                recipients: {
+                  some: {
+                    userId: user.userId,
+                  }
+                }
               },
-              {
-                id: '2',
-                title: 'طلب جديد',
-                message: 'تم استلام طلب انضمام جديد من شركة ناشئة',
-                type: 'application',
-                isRead: true,
-                createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-                priority: 'medium'
+              include: {
+                createdBy: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                recipients: {
+                  where: { 
+                    userId: user.userId 
+                  },
+                  select: {
+                    id: true,
+                    userId: true,
+                    isRead: true,
+                    readAt: true,
+                    deliveredAt: true,
+                  },
+                },
               },
-              {
-                id: '3',
-                title: 'تذكير: جلسة إرشادية',
-                message: 'لديك جلسة إرشادية مجدولة غدًا الساعة 2 مساءً',
-                type: 'reminder',
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 10, // Limit to 10 most recent notifications
+            });
+            
+            // Format the notifications for the client
+            const formattedNotifications = notifications.map((notification: any) => {
+              // Find this user's recipient record for this notification
+              const recipientRecord = notification.recipients[0]; // Should be only one since we filtered by userId
+              
+              return {
+                id: notification.id,
+                title: notification.title,
+                message: notification.message,
+                type: notification.type || 'system',
+                priority: notification.priority,
+                isRead: recipientRecord ? recipientRecord.isRead : false,
+                createdAt: notification.createdAt.toISOString(),
+                createdBy: notification.createdBy?.name || 'System',
+                recipientId: recipientRecord?.id
+              };
+            });
+            
+            // Get the count of unread notifications
+            const unreadCount = await (prisma as any).notificationRecipient.count({
+              where: {
+                userId: user.userId,
                 isRead: false,
-                createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-                priority: 'medium'
-              }
-            ];
+              },
+            });
 
-            const unreadCount = mockNotifications.filter(n => !n.isRead).length;
-
-            // Send the data as SSE
+            // Send the current notifications data
             controller.enqueue(
               encoder.encode(`event: notifications\ndata: ${JSON.stringify({ 
-                notifications: mockNotifications,
+                notifications: formattedNotifications,
                 unreadCount 
               })}\n\n`)
             );
 
-            // Add a new notification every 30 seconds for demo purposes
-            if (Math.random() > 0.5) {
-              const newNotification = {
-                id: Date.now().toString(),
-                title: 'إشعار جديد',
-                message: `إشعار جديد تم إنشاؤه في ${new Date().toLocaleTimeString('ar-SA')}`,
-                type: 'system',
-                isRead: false,
-                createdAt: new Date().toISOString(),
-                priority: 'medium'
-              };
+            // Check for new notifications since the last fetch
+            const newNotifications = await (prisma as any).notification.findMany({
+              where: {
+                createdAt: { gt: lastNotificationTimestamp },
+                recipients: {
+                  some: {
+                    userId: user.userId,
+                  }
+                }
+              },
+              include: {
+                createdBy: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                },
+                recipients: {
+                  where: { 
+                    userId: user.userId 
+                  },
+                  select: {
+                    id: true,
+                    isRead: true,
+                  },
+                },
+              },
+              orderBy: {
+                createdAt: 'desc',
+              }
+            });
+            
+            // If we found new notifications, send them as individual events
+            if (newNotifications.length > 0) {
+              // Update our timestamp
+              lastNotificationTimestamp = new Date();
               
-              controller.enqueue(
-                encoder.encode(`event: new_notification\ndata: ${JSON.stringify(newNotification)}\n\n`)
-              );
+              // Send each new notification as a separate event
+              for (const notification of newNotifications) {
+                const recipientRecord = notification.recipients[0];
+                
+                const formattedNotification = {
+                  id: notification.id,
+                  title: notification.title,
+                  message: notification.message,
+                  type: notification.type || 'system',
+                  priority: notification.priority,
+                  isRead: recipientRecord ? recipientRecord.isRead : false,
+                  createdAt: notification.createdAt.toISOString(),
+                  createdBy: notification.createdBy?.name || 'System',
+                  recipientId: recipientRecord?.id
+                };
+                
+                controller.enqueue(
+                  encoder.encode(`event: new_notification\ndata: ${JSON.stringify(formattedNotification)}\n\n`)
+                );
+              }
             }
           } catch (error) {
             console.error('Error in SSE stream:', error);

@@ -41,6 +41,35 @@ export default function ReportsManagement() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [dateRange, setDateRange] = useState("month")
+  
+  // Helper function to convert dateRange to actual date objects
+  const getDateRangeValues = (rangeType: string) => {
+    const now = new Date()
+    const endDate = new Date()
+    let startDate = new Date()
+    
+    switch(rangeType) {
+      case 'week':
+        startDate.setDate(now.getDate() - 7)
+        break
+      case 'month':
+        startDate.setMonth(now.getMonth() - 1)
+        break
+      case 'quarter':
+        startDate.setMonth(now.getMonth() - 3)
+        break
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 1)
+        break
+      default:
+        startDate.setMonth(now.getMonth() - 1) // Default to month
+    }
+    
+    return {
+      start: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      end: endDate.toISOString().split('T')[0]
+    }
+  }
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   
   // Added state for API data and loading
@@ -52,6 +81,15 @@ export default function ReportsManagement() {
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [selectedScheduleReport, setSelectedScheduleReport] = useState<string | null>(null)
+  const [scheduleData, setScheduleData] = useState({
+    publishDate: '',
+    publishTime: '09:00',
+    notifyUsers: true,
+    recurring: false,
+    recurrencePattern: 'monthly'
+  })
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [filterOptions, setFilterOptions] = useState({
@@ -72,60 +110,6 @@ export default function ReportsManagement() {
     mostDownloadedReport: null as any
   })
 
-  // API functions to interact with the backend
-  const fetchReports = async () => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      // Build query parameters based on filters
-      let queryParams = new URLSearchParams()
-      
-      if (searchQuery) {
-        queryParams.append('search', searchQuery)
-      }
-      
-      // Map tab to appropriate filter with more inclusive status values
-      // Using both Arabic and English values to handle potential mismatches
-      if (activeTab === "published") queryParams.append('status', 'published,منشور')
-      if (activeTab === "draft") queryParams.append('status', 'draft,مسودة')
-      if (activeTab === "scheduled") queryParams.append('status', 'scheduled,مجدول')
-      if (activeTab === "financial") queryParams.append('category', 'مالي,التمويل')
-      if (activeTab === "programs") queryParams.append('category', 'أداء البرامج,التوجيه')
-      if (activeTab === "startups") queryParams.append('category', 'الشركات الناشئة')
-      
-      // Add debug logging for query parameters
-      console.log('Query parameters:', queryParams.toString())
-      
-      const response = await fetchWithAuth(`/api/admin/reports?${queryParams.toString()}`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch reports')
-      }
-      
-      const data = await response.json()
-      
-      // Add logging to debug response format
-      console.log('API Response:', data)
-      
-      // Check if data.reports exists and is an array
-      if (!data.reports || !Array.isArray(data.reports)) {
-        console.error('Invalid response format:', data)
-        throw new Error('Invalid response format')
-      }
-      
-      setReports(data.reports)
-      
-      // Update statistics
-      updateStatistics(data.reports)
-    } catch (error) {
-      console.error('Error fetching reports:', error)
-      setError('Failed to load reports. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  
   // Function to update statistics based on fetched reports
   const updateStatistics = (reports: any[]) => {
     // Ensure reports is an array and not empty
@@ -172,15 +156,90 @@ export default function ReportsManagement() {
       mostDownloadedReport
     })
   }
+
+  // API functions to interact with the backend
+  const fetchReports = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // Add date range parameters based on the selected range
+      const dateRangeValues = getDateRangeValues(dateRange)
+      
+      // Build query parameters based on filters
+      let queryParams = new URLSearchParams()
+      
+      // Add date range parameters
+      queryParams.append('dateFrom', dateRangeValues.start)
+      queryParams.append('dateTo', dateRangeValues.end)
+      
+      if (searchQuery) {
+        queryParams.append('search', searchQuery)
+      }
+      
+      // Map tab to appropriate filter with more inclusive status values
+      // Using both Arabic and English values to handle potential mismatches
+      if (activeTab === "published") queryParams.append('status', 'published,منشور')
+      if (activeTab === "draft") queryParams.append('status', 'draft,مسودة')
+      if (activeTab === "scheduled") queryParams.append('status', 'scheduled,مجدول')
+      if (activeTab === "financial") queryParams.append('category', 'مالي,التمويل')
+      if (activeTab === "programs") queryParams.append('category', 'أداء البرامج,التوجيه')
+      if (activeTab === "startups") queryParams.append('category', 'الشركات الناشئة')
+      
+      // Add debug logging for query parameters
+      console.log('Query parameters:', queryParams.toString())
+      
+      const response = await fetchWithAuth(`/api/admin/reports?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache' // Prevent caching
+        }
+      }, 'direct')
+      
+      let data
+      
+      // Check if response is a standard Response object
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error('Failed to fetch reports')
+        }
+        
+        data = await response.json()
+      } else {
+        // Handling for ApiResponse<any> type
+        data = response
+      }
+      
+      // Add logging to debug response format
+      console.log('API Response:', data)
+      
+      // Check if data.reports exists and is an array
+      if (!data.reports || !Array.isArray(data.reports)) {
+        console.error('Invalid response format:', data)
+        throw new Error('Invalid response format')
+      }
+      
+      setReports(data.reports)
+      
+      // Update statistics
+      updateStatistics(data.reports)
+    } catch (error) {
+      console.error('Error fetching reports:', error)
+      setError('Failed to load reports. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
   
   // Function to handle exporting reports
   const handleExport = () => {
     // Determine which reports to export (all or selected)
-    let url = '/api/admin/reports/export'
+    const token = localStorage.getItem('token')
+    let url = `/api/admin/reports/export?token=${encodeURIComponent(token || '')}`
     
     if (selectedReports.length > 0) {
       const idsList = selectedReports.join(',')
-      url += `?ids=${idsList}`
+      url += `&ids=${idsList}`
     }
     
     // Open in a new tab
@@ -189,12 +248,51 @@ export default function ReportsManagement() {
   
   // Function to handle printing reports
   const handlePrint = (reportId: string) => {
-    window.open(`/api/admin/reports/print?id=${reportId}`, '_blank')
+    const token = localStorage.getItem('token')
+    window.open(`/api/admin/reports/print?id=${reportId}&token=${encodeURIComponent(token || '')}`, '_blank')
   }
   
   // Function to handle viewing a report
-  const handleView = (reportId: string) => {
-    window.open(`/api/admin/reports/view?id=${reportId}`, '_blank')
+  const handleView = async (reportId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      
+      // First fetch the report details to get the file path
+      const response = await fetchWithAuth(`/api/admin/reports/view?id=${reportId}&skipViewIncrement=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      }, 'direct')
+      
+      let data: any
+
+      // Check if response is a standard Response object
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error('Failed to fetch report details')
+        }
+        
+        data = await response.json()
+      } else {
+        // Handling for ApiResponse<any> type
+        if (response.error) {
+          throw new Error(`Failed to fetch report details: ${response.error}`)
+        }
+        
+        data = response.data
+      }
+      
+      if (!data || !data.report || !data.report.filePath) {
+        throw new Error('Report file not found')
+      }
+      
+      // Then open the download endpoint in a new tab with token for authentication
+      window.open(`/api/admin/reports/download?id=${reportId}&token=${encodeURIComponent(token || '')}`, '_blank')
+    } catch (error) {
+      console.error('Error viewing report:', error)
+      alert('حدث خطأ أثناء عرض التقرير')
+    }
   }
   
   // Function to handle file upload
@@ -221,11 +319,20 @@ export default function ReportsManagement() {
       const response = await fetchWithAuth('/api/admin/reports/upload', {
         method: 'POST',
         body: formData,
-      })
+      }, 'direct')
       
       clearInterval(progressInterval)
       
-      if (!response.ok) {
+      // Check if response is a standard Response object or ApiResponse
+      let isOk = false
+      if (response instanceof Response) {
+        isOk = response.ok
+      } else {
+        // For ApiResponse check status and absence of error
+        isOk = (response.status >= 200 && response.status < 300) && !response.error
+      }
+      
+      if (!isOk) {
         throw new Error('Failed to upload report')
       }
       
@@ -263,13 +370,22 @@ export default function ReportsManagement() {
       if (filterOptions.dateTo) queryParams.append('dateTo', filterOptions.dateTo)
       if (filterOptions.createdBy) queryParams.append('createdBy', filterOptions.createdBy)
       
-      const response = await fetchWithAuth(`/api/admin/reports/filter?${queryParams.toString()}`)
+      const response = await fetchWithAuth(`/api/admin/reports/filter?${queryParams.toString()}`, {}, 'direct')
       
-      if (!response.ok) {
-        throw new Error('Failed to filter reports')
+      let data
+      
+      // Check if response is a standard Response object or ApiResponse
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error('Failed to filter reports')
+        }
+        
+        data = await response.json()
+      } else {
+        // Handling for ApiResponse<any> type
+        data = response
       }
       
-      const data = await response.json()
       setReports(data.reports)
       
       // Update statistics based on filtered reports
@@ -295,9 +411,18 @@ export default function ReportsManagement() {
           userIds,
           message: 'تمت مشاركة هذا التقرير معك'
         })
-      })
+      }, 'direct')
       
-      if (!response.ok) {
+      // Check if response is a standard Response object or ApiResponse
+      let isOk = false
+      if (response instanceof Response) {
+        isOk = response.ok
+      } else {
+        // For ApiResponse check status and absence of error
+        isOk = (response.status >= 200 && response.status < 300) && !response.error
+      }
+      
+      if (!isOk) {
         throw new Error('Failed to share report')
       }
       
@@ -315,9 +440,18 @@ export default function ReportsManagement() {
       const response = await fetchWithAuth(`/api/admin/reports/${reportId}`, {
         method: 'PUT',
         body: JSON.stringify(newData)
-      })
+      }, 'direct')
       
-      if (!response.ok) {
+      // Check if response is a standard Response object or ApiResponse
+      let isOk = false
+      if (response instanceof Response) {
+        isOk = response.ok
+      } else {
+        // For ApiResponse check status and absence of error
+        isOk = (response.status >= 200 && response.status < 300) && !response.error
+      }
+      
+      if (!isOk) {
         throw new Error('Failed to update report')
       }
       
@@ -759,6 +893,113 @@ export default function ReportsManagement() {
         </div>
       )}
       
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-[500px] max-w-full">
+            <h3 className="text-xl font-bold mb-4 text-right">جدولة التقرير</h3>
+            
+            <div className="space-y-4 text-right">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">تاريخ النشر</label>
+                  <input 
+                    type="date" 
+                    className="w-full p-2 border rounded-md"
+                    value={scheduleData.publishDate}
+                    onChange={(e) => setScheduleData({...scheduleData, publishDate: e.target.value})}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">وقت النشر</label>
+                  <input 
+                    type="time" 
+                    className="w-full p-2 border rounded-md"
+                    value={scheduleData.publishTime}
+                    onChange={(e) => setScheduleData({...scheduleData, publishTime: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="notifyUsers"
+                  checked={scheduleData.notifyUsers}
+                  onChange={(e) => setScheduleData({...scheduleData, notifyUsers: e.target.checked})}
+                />
+                <label htmlFor="notifyUsers" className="text-sm">إشعار المستخدمين عند النشر</label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="recurring"
+                  checked={scheduleData.recurring}
+                  onChange={(e) => setScheduleData({...scheduleData, recurring: e.target.checked})}
+                />
+                <label htmlFor="recurring" className="text-sm">تكرار النشر</label>
+              </div>
+              
+              {scheduleData.recurring && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">نمط التكرار</label>
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    value={scheduleData.recurrencePattern}
+                    onChange={(e) => setScheduleData({...scheduleData, recurrencePattern: e.target.value})}
+                  >
+                    <option value="daily">يومي</option>
+                    <option value="weekly">أسبوعي</option>
+                    <option value="biweekly">كل أسبوعين</option>
+                    <option value="monthly">شهري</option>
+                    <option value="quarterly">ربع سنوي</option>
+                  </select>
+                </div>
+              )}
+              
+              <div className="flex justify-between pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowScheduleModal(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      if (!selectedScheduleReport) return;
+                      
+                      // Format the data for the API
+                      const schedulingData = {
+                        status: 'scheduled',
+                        publishDate: scheduleData.publishDate,
+                        scheduledTime: scheduleData.publishTime,
+                        notifyUsers: scheduleData.notifyUsers,
+                        isRecurring: scheduleData.recurring,
+                        recurrencePattern: scheduleData.recurring ? scheduleData.recurrencePattern : null
+                      };
+                      
+                      await handleUpdate(selectedScheduleReport, schedulingData);
+                      
+                      setShowScheduleModal(false);
+                      alert('تم تحديث جدولة التقرير بنجاح');
+                    } catch (error) {
+                      console.error('Error updating schedule:', error);
+                      alert('حدث خطأ أثناء تحديث الجدولة');
+                    }
+                  }}
+                >
+                  حفظ الجدولة
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Filter Modal */}
       {showFilterModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
@@ -977,7 +1218,10 @@ export default function ReportsManagement() {
                     <div className="flex gap-1">
                       <button 
                         className="text-blue-500 hover:text-blue-700"
-                        onClick={() => window.open(`/api/admin/reports/export?ids=${report.id}`, '_blank')}
+                        onClick={() => {
+                          const token = localStorage.getItem('token');
+                          window.open(`/api/admin/reports/export?ids=${report.id}&token=${encodeURIComponent(token || '')}`, '_blank');
+                        }}
                       >
                         <Download className="h-4 w-4" />
                       </button>
@@ -1118,8 +1362,17 @@ export default function ReportsManagement() {
                       size="sm" 
                       className="flex items-center gap-1"
                       onClick={() => {
-                        // In a real implementation, we would show a scheduling modal here
-                        alert('سيتم تنفيذ هذه الميزة قريبًا')
+                        // Set selected report and show schedule modal
+                        setSelectedScheduleReport(report.id)
+                        // Pre-fill with existing data if available
+                        setScheduleData({
+                          publishDate: report.publishDate ? new Date(report.publishDate).toISOString().split('T')[0] : '',
+                          publishTime: report.scheduledTime || '09:00',
+                          notifyUsers: true,
+                          recurring: !!report.isRecurring,
+                          recurrencePattern: report.recurrencePattern || 'monthly'
+                        })
+                        setShowScheduleModal(true)
                       }}
                     >
                       <Calendar className="h-4 w-4" />

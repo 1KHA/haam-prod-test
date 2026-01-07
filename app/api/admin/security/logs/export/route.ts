@@ -1,20 +1,39 @@
 import { NextRequest } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { hasPermission } from '@/lib/permissions';
 
 /**
  * GET /api/admin/security/logs/export
- * Export security logs as CSV based on filter criteria
+ * Export security logs as CSV based on filter criteria or selected IDs
  */
 export async function GET(req: NextRequest) {
   try {
     const user = await isAuthenticated(req.headers.get('Authorization') || undefined);
     
-    if (!user || !user.isAdmin) {
+    if (!user) {
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { 
           status: 401,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+
+    // Permission check
+    const hasRequiredPermission = await hasPermission(user.userId, {
+      category: 'security',
+      action: 'view'
+    });
+
+    if (!hasRequiredPermission) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden - Insufficient permissions' }),
+        { 
+          status: 403,
           headers: {
             'Content-Type': 'application/json'
           }
@@ -30,47 +49,7 @@ export async function GET(req: NextRequest) {
     const fromDate = url.searchParams.get('fromDate');
     const toDate = url.searchParams.get('toDate');
     const search = url.searchParams.get('search');
-    
-    // Build where clause
-    let where: any = {};
-    
-    if (status) {
-      where.status = status;
-    }
-    
-    if (severity) {
-      where.severity = severity;
-    }
-    
-    if (type) {
-      where.type = type;
-    }
-    
-    // Date filtering
-    if (fromDate || toDate) {
-      where.createdAt = {};
-      
-      if (fromDate) {
-        where.createdAt.gte = new Date(fromDate);
-      }
-      
-      if (toDate) {
-        // Add one day to include the end date
-        const endDate = new Date(toDate);
-        endDate.setDate(endDate.getDate() + 1);
-        where.createdAt.lte = endDate;
-      }
-    }
-    
-    // Search functionality
-    if (search) {
-      where.OR = [
-        { action: { contains: search, mode: 'insensitive' } },
-        { userName: { contains: search, mode: 'insensitive' } },
-        { details: { contains: search, mode: 'insensitive' } },
-        { ipAddress: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    const ids = url.searchParams.get('ids');
     
     // For demonstration purposes, we'll use mock data similar to the front end
     // In a real application, you would fetch from the database
@@ -206,8 +185,92 @@ export async function GET(req: NextRequest) {
         type: "system"
       }
     ];
+    
+    // Check if we're exporting specific logs by ID
+    if (ids) {
+      const logIds = ids.split(',');
+      console.log(`Exporting ${logIds.length} specific logs by ID`);
+      
+      // In a real implementation, we would query the database for these specific logs
+      // For now, we'll filter our mock data
+      
+      // Get the logs by ID
+      try {
+        // In a real implementation, this would be:
+        // const logs = await prisma.securityLog.findMany({
+        //   where: {
+        //     id: { in: logIds }
+        //   }
+        // });
+        
+        // For demonstration, filter mock logs
+        const selectedLogs = mockLogs.filter(log => logIds.includes(log.id));
+        
+        if (selectedLogs.length === 0) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'No logs found with the specified IDs' }),
+            { 
+              status: 404,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+        }
+        
+        // Convert to CSV and return
+        return generateCsvResponse(selectedLogs);
+      } catch (error) {
+        console.error('Error fetching logs by ID:', error);
+        throw error;
+      }
+    }
+    
+    // Otherwise, build where clause for filtered logs
+    let where: any = {};
+    
+    if (status) {
+      where.status = status;
+    }
+    
+    if (severity) {
+      where.severity = severity;
+    }
+    
+    if (type) {
+      where.type = type;
+    }
+    
+    // Date filtering
+    if (fromDate || toDate) {
+      where.timestamp = {}; // Using timestamp instead of createdAt to match our mock data
+      
+      if (fromDate) {
+        where.timestamp.gte = new Date(fromDate);
+      }
+      
+      if (toDate) {
+        // Add one day to include the end date
+        const endDate = new Date(toDate);
+        endDate.setDate(endDate.getDate() + 1);
+        where.timestamp.lte = endDate;
+      }
+    }
+    
+    // Search functionality
+    if (search) {
+      where.OR = [
+        { action: { contains: search, mode: 'insensitive' } },
+        { userName: { contains: search, mode: 'insensitive' } },
+        { details: { contains: search, mode: 'insensitive' } },
+        { ipAddress: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    
+    console.log('Exporting logs with filter criteria:', where);
 
-    // Filter logs based on criteria
+    // In a real implementation, this would query the database
+    // For demonstration, we'll filter our mock data based on criteria
     let filteredLogs = [...mockLogs];
     
     if (status) {
@@ -254,46 +317,8 @@ export async function GET(req: NextRequest) {
       );
     }
     
-    // Generate CSV header
-    const csvHeader = [
-      "الرقم التعريفي",
-      "الإجراء",
-      "المستخدم",
-      "الدور",
-      "الحالة",
-      "التوقيت",
-      "عنوان IP",
-      "متصفح المستخدم",
-      "التفاصيل",
-      "مستوى الخطورة",
-      "النوع"
-    ].join(',');
+    return generateCsvResponse(filteredLogs);
     
-    // Generate CSV rows
-    const csvRows = filteredLogs.map(log => [
-      `"${log.id}"`,
-      `"${log.action}"`,
-      `"${log.userName}"`,
-      `"${log.userRole}"`,
-      `"${log.status}"`,
-      `"${new Date(log.timestamp).toLocaleString('ar-SA')}"`,
-      `"${log.ipAddress}"`,
-      `"${log.userAgent}"`,
-      `"${log.details.replace(/"/g, '""')}"`,
-      `"${log.severity}"`,
-      `"${log.type}"`
-    ].join(','));
-    
-    // Combine header and rows
-    const csv = [csvHeader, ...csvRows].join('\n');
-    
-    // Set the response headers for CSV download
-    return new Response(csv, {
-      headers: {
-        'Content-Type': 'text/csv;charset=utf-8',
-        'Content-Disposition': 'attachment; filename="security-logs-export.csv"'
-      }
-    });
     
   } catch (error) {
     console.error('Error exporting security logs:', error);
@@ -307,4 +332,50 @@ export async function GET(req: NextRequest) {
       }
     );
   }
+}
+
+/**
+ * Helper function to generate a CSV response from logs
+ */
+function generateCsvResponse(logs: any[]) {
+  // Generate CSV header
+  const csvHeader = [
+    "الرقم التعريفي",
+    "الإجراء",
+    "المستخدم",
+    "الدور",
+    "الحالة",
+    "التوقيت",
+    "عنوان IP",
+    "متصفح المستخدم",
+    "التفاصيل",
+    "مستوى الخطورة",
+    "النوع"
+  ].join(',');
+  
+  // Generate CSV rows
+  const csvRows = logs.map(log => [
+    `"${log.id}"`,
+    `"${log.action}"`,
+    `"${log.userName}"`,
+    `"${log.userRole}"`,
+    `"${log.status}"`,
+    `"${new Date(log.timestamp).toLocaleString('ar-SA')}"`,
+    `"${log.ipAddress}"`,
+    `"${log.userAgent}"`,
+    `"${log.details.replace(/"/g, '""')}"`,
+    `"${log.severity}"`,
+    `"${log.type}"`
+  ].join(','));
+  
+  // Combine header and rows
+  const csv = [csvHeader, ...csvRows].join('\n');
+  
+  // Set the response headers for CSV download
+  return new Response(csv, {
+    headers: {
+      'Content-Type': 'text/csv;charset=utf-8',
+      'Content-Disposition': 'attachment; filename="security-logs-export.csv"'
+    }
+  });
 }

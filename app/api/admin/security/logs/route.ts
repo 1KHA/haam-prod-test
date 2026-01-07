@@ -192,6 +192,8 @@ export async function GET(request: NextRequest) {
     
     if (toDate) {
       const toDateObj = new Date(toDate);
+      // Add one day to include the end date fully
+      toDateObj.setHours(23, 59, 59, 999);
       filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) <= toDateObj);
     }
     

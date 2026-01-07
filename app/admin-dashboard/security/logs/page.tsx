@@ -113,6 +113,7 @@ export default function SecurityLogs() {
       if (dateRange === "today") {
         const today = new Date();
         params.append("fromDate", today.toISOString().split('T')[0]);
+        params.append("toDate", today.toISOString().split('T')[0]);
       } else if (dateRange === "yesterday") {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -122,6 +123,14 @@ export default function SecurityLogs() {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         params.append("fromDate", weekAgo.toISOString().split('T')[0]);
+        const today = new Date();
+        params.append("toDate", today.toISOString().split('T')[0]);
+      } else if (dateRange === "month") {
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        params.append("fromDate", monthAgo.toISOString().split('T')[0]);
+        const today = new Date();
+        params.append("toDate", today.toISOString().split('T')[0]);
       }
       
       // Get token from localStorage
@@ -226,6 +235,7 @@ export default function SecurityLogs() {
       if (dateRange === "today") {
         const today = new Date();
         params.append("fromDate", today.toISOString().split('T')[0]);
+        params.append("toDate", today.toISOString().split('T')[0]);
       } else if (dateRange === "yesterday") {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -235,6 +245,14 @@ export default function SecurityLogs() {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         params.append("fromDate", weekAgo.toISOString().split('T')[0]);
+        const today = new Date();
+        params.append("toDate", today.toISOString().split('T')[0]);
+      } else if (dateRange === "month") {
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        params.append("fromDate", monthAgo.toISOString().split('T')[0]);
+        const today = new Date();
+        params.append("toDate", today.toISOString().split('T')[0]);
       }
       
       // Add search query
@@ -296,14 +314,14 @@ export default function SecurityLogs() {
       // Build the IDs string
       const params = new URLSearchParams();
       
-      // In a real implementation, we would send the selected IDs
-      // For now, we'll just export all logs but show a specific message
+      // Add selected log IDs to params
+      params.append("ids", selectedLogs.join(','));
       
       // Create an anchor element for downloading the file
       const a = document.createElement('a');
       
       // Make the request
-      const response = await fetch('/api/admin/security/logs/export', {
+      const response = await fetch(`/api/admin/security/logs/export?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

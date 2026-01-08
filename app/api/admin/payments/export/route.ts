@@ -248,7 +248,11 @@ export async function GET(request: NextRequest) {
     headers_response.set('Content-Type', 'text/csv; charset=utf-8');
     headers_response.set('Content-Disposition', 'attachment; filename="payments-export.csv"');
 
-    return new NextResponse(csv, {
+    // Add UTF-8 BOM to ensure proper encoding
+    const bom = '\uFEFF';
+    const csvWithBom = bom + csv;
+    
+    return new NextResponse(csvWithBom, {
       status: 200,
       headers: headers_response,
     });

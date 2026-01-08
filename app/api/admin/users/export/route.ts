@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role') || '';
+    const delimiter = searchParams.get('delimiter') || ','; // Allow delimiter customization for Arabic environments
 
     // Build filter conditions
     let whereClause: any = {};
@@ -109,29 +110,36 @@ export async function GET(req: NextRequest) {
       'تاريخ التحديث'
     ];
 
-    // Create CSV content
-    let csv = headers.join(',') + '\n';
+    // Create CSV content with enhanced Arabic text handling
+    const csvRows: string[] = [];
     
     formattedUsers.forEach((user: any) => {
       const row = [
-        user.id,
+        `"${user.id}"`,
         `"${user.name.replace(/"/g, '""')}"`, // Escape quotes in names
         `"${user.email}"`,
         `"${user.role}"`,
         `"${user.status}"`,
-        `"${user.specialization}"`,
-        user.createdAt,
-        user.updatedAt
+        `"${user.specialization.replace(/"/g, '""')}"`,
+        `"${user.createdAt}"`,
+        `"${user.updatedAt}"`
       ];
-      csv += row.join(',') + '\n';
+      csvRows.push(row.join(delimiter));
     });
+
+    // Combine header and rows
+    const csv = [headers.join(delimiter), ...csvRows].join('\n');
 
     // Set headers for file download
     const headers_response = new Headers();
     headers_response.set('Content-Type', 'text/csv; charset=utf-8');
     headers_response.set('Content-Disposition', 'attachment; filename="users-export.csv"');
 
-    return new NextResponse(csv, {
+    // Add UTF-8 BOM to ensure proper encoding
+    const bom = '\uFEFF';
+    const csvWithBom = bom + csv;
+    
+    return new NextResponse(csvWithBom, {
       status: 200,
       headers: headers_response,
     });

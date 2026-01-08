@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils'
 
 // Sample payments data for demonstration
 const samplePaymentsData = [
@@ -153,7 +154,7 @@ export async function GET(request: NextRequest) {
       // Return JSON data
       return NextResponse.json({ data: paymentsData })
     } else if (format === "csv") {
-      // Convert to CSV
+      // Define headers in Arabic
       const headers = [
         "رقم المعرف",
         "رقم الفاتورة",
@@ -172,35 +173,32 @@ export async function GET(request: NextRequest) {
         "تاريخ التحديث"
       ]
       
-      const rows = paymentsData.map(payment => [
-        payment.id,
-        payment.invoiceNumber,
-        payment.amount,
-        payment.startupName,
-        payment.startupId,
-        payment.category,
-        payment.status,
-        payment.date,
-        payment.dueDate,
-        payment.paidDate || "",
-        payment.paymentMethod || "",
-        `"${payment.description.replace(/"/g, '""')}"`,
-        payment.createdBy,
-        payment.createdAt,
-        payment.updatedAt
-      ])
+      // Map payments data to CSV rows
+      const csvRows = paymentsData.map((payment: any) => ({
+        'رقم المعرف': payment.id || '',
+        'رقم الفاتورة': payment.invoiceNumber || '',
+        'المبلغ': payment.amount || '',
+        'اسم الشركة': payment.startupName || '',
+        'رقم الشركة': payment.startupId || '',
+        'الفئة': payment.category || '',
+        'الحالة': payment.status || '',
+        'تاريخ الإصدار': payment.date || '',
+        'تاريخ الاستحقاق': payment.dueDate || '',
+        'تاريخ السداد': payment.paidDate || '',
+        'طريقة الدفع': payment.paymentMethod || '',
+        'الوصف': payment.description || '',
+        'تم الإنشاء بواسطة': payment.createdBy || '',
+        'تاريخ الإنشاء': payment.createdAt || '',
+        'تاريخ التحديث': payment.updatedAt || ''
+      }))
       
-      const csvContent = [
-        headers.join(","),
-        ...rows.map(row => row.join(","))
-      ].join("\n")
-      
-      // Return CSV data
-      return new NextResponse(csvContent, {
-        headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": "attachment; filename=payments-export.csv"
-        }
+      // Use CSV utility function with proper delimiter support
+      return createCSVResponse({
+        headers,
+        data: csvRows,
+        delimiter: getDelimiterFromRequest(searchParams),
+        filename: 'payments-export.csv',
+        includeUTF8BOM: true
       })
     } else if (format === "excel") {
       // For demonstration, we'll return a placeholder message

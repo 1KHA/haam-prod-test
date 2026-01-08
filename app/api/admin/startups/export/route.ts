@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
     const industry = searchParams.get('industry') || '';
+    const delimiter = searchParams.get('delimiter') || ','; // Allow delimiter customization for Arabic environments
 
     // Build filter conditions
     let whereClause: any = {};
@@ -158,39 +159,46 @@ export async function GET(req: NextRequest) {
       'تاريخ التحديث'
     ];
 
-    // Create CSV content
-    let csv = headers.join(',') + '\n';
+    // Create CSV content with enhanced Arabic text handling
+    const csvRows: string[] = [];
     
     formattedStartups.forEach((startup: any) => {
       const row = [
-        startup.id,
-        `"${startup.name.replace(/"/g, '""')}"`, // Escape quotes in names
+        `"${startup.id}"`,
+        `"${startup.name.replace(/"/g, '""')}"`,
         `"${startup.industry.replace(/"/g, '""')}"`,
         `"${startup.stage.replace(/"/g, '""')}"`,
-        startup.teamSize,
+        `"${startup.teamSize}"`,
         `"${startup.status}"`,
-        `"${startup.description.replace(/"/g, '""').replace(/\n/g, ' ')}"`, // Escape quotes and newlines
-        `"${startup.problem.replace(/"/g, '""').replace(/\n/g, ' ')}"`,
-        `"${startup.solution.replace(/"/g, '""').replace(/\n/g, ' ')}"`,
-        `"${startup.targetMarket?.replace(/"/g, '""').replace(/\n/g, ' ') || ''}"`,
-        `"${startup.businessModel?.replace(/"/g, '""').replace(/\n/g, ' ') || ''}"`,
-        `"${startup.competitiveAdvantage?.replace(/"/g, '""').replace(/\n/g, ' ') || ''}"`,
+        `"${startup.description.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`,
+        `"${startup.problem.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`,
+        `"${startup.solution.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`,
+        `"${startup.targetMarket?.replace(/"/g, '""').replace(/\r?\n/g, ' ') || ''}"`,
+        `"${startup.businessModel?.replace(/"/g, '""').replace(/\r?\n/g, ' ') || ''}"`,
+        `"${startup.competitiveAdvantage?.replace(/"/g, '""').replace(/\r?\n/g, ' ') || ''}"`,
         `"${startup.fundingNeeds?.replace(/"/g, '""') || ''}"`,
         `"${startup.creatorName.replace(/"/g, '""')}"`,
         `"${startup.creatorEmail}"`,
         `"${startup.accelerator.replace(/"/g, '""')}"`,
-        startup.createdAt,
-        startup.updatedAt
+        `"${startup.createdAt}"`,
+        `"${startup.updatedAt}"`
       ];
-      csv += row.join(',') + '\n';
+      csvRows.push(row.join(delimiter));
     });
+
+    // Combine header and rows
+    const csv = [headers.join(delimiter), ...csvRows].join('\n');
 
     // Set headers for file download
     const headers_response = new Headers();
     headers_response.set('Content-Type', 'text/csv; charset=utf-8');
     headers_response.set('Content-Disposition', 'attachment; filename="startups-export.csv"');
 
-    return new NextResponse(csv, {
+    // Add UTF-8 BOM to ensure proper encoding
+    const bom = '\uFEFF';
+    const csvWithBom = bom + csv;
+    
+    return new NextResponse(csvWithBom, {
       status: 200,
       headers: headers_response,
     });

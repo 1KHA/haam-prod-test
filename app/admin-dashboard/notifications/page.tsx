@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "react-hot-toast"
 import { useNotifications } from "@/contexts/notification-context"
+import { exportPresets } from "@/lib/export-utils"
 import { 
   Search, 
   Filter, 
@@ -468,37 +469,23 @@ export default function NotificationsManagement() {
     }
   };
 
-  // Export notifications to CSV
-  const exportNotifications = () => {
-    const csvContent = [
-      // CSV header
-      ['العنوان', 'المحتوى', 'المستلمون', 'القنوات', 'الحالة', 'التاريخ', 'الوقت', 'المرسل', 'معدل القراءة'].join(','),
-      // CSV rows
-      ...filteredNotifications.map(n => [
-        `"${n.title.replace(/"/g, '""')}"`,
-        `"${n.content.replace(/"/g, '""')}"`,
-        `"${n.recipients}"`,
-        `"${n.channels}"`,
-        `"${n.status}"`,
-        `"${n.date}"`,
-        `"${n.time}"`,
-        `"${n.sentBy}"`,
-        `"${n.status === 'مرسل' ? Math.round((n.readCount / n.totalCount) * 100) + '%' : '-'}"`
-      ].join(','))
-    ].join('\n');
-    
-    // Create a Blob and download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `notifications_export_${new Date().toISOString().slice(0,10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success('تم تصدير الإشعارات بنجاح');
+  // Export notifications to CSV using standardized export utilities
+  const exportNotifications = async () => {
+    try {
+      await exportPresets.notifications({
+        search: searchQuery,
+        type: activeTab !== 'all' ? activeTab : undefined,
+        status: activeTab !== 'all' ? activeTab : undefined,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo
+      }, {
+        onSuccess: () => toast.success('تم تصدير الإشعارات بنجاح'),
+        onError: (error) => toast.error(error)
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('حدث خطأ أثناء تصدير البيانات');
+    }
   };
 
   // Update filter handlers

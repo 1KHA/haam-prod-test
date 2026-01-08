@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "react-hot-toast"
+import { exportPresets } from "@/lib/export-utils"
 
 // Define funding item interface
 interface FundingItem {
@@ -166,40 +167,11 @@ export default function FundingManagement() {
             variant="outline" 
             size="sm" 
             className="flex items-center gap-1" 
-            onClick={() => {
-              // Get token from localStorage
-              const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-              
-              // Create export URL
-              const exportUrl = '/api/admin/financing/funding/export';
-              
-              if (token) {
-                // Create a temporary link element for the download with auth
-                fetch(exportUrl, {
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  }
-                })
-                .then(response => response.blob())
-                .then(blob => {
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'funding-export.csv';
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                  document.body.removeChild(a);
-                  
-                  toast.success('تم تصدير البيانات بنجاح');
-                })
-                .catch(error => {
-                  console.error('Error exporting data:', error);
-                  toast.error('حدث خطأ أثناء تصدير البيانات');
-                });
-              } else {
-                toast.error('غير مصرح لك بتصدير البيانات');
-              }
+            onClick={async () => {
+              await exportPresets.funding({}, {
+                onSuccess: () => toast.success('تم تصدير بيانات التمويل بنجاح'),
+                onError: (error) => toast.error(`حدث خطأ أثناء تصدير البيانات: ${error}`)
+              });
             }}
           >
             <Download className="h-4 w-4" />
@@ -302,53 +274,14 @@ export default function FundingManagement() {
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-1"
-                onClick={() => {
-                  // Get token from localStorage
-                  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                  
-                  // Create export URL
-                  let exportUrl = '/api/admin/financing/funding/export';
-                  
-                  // Add query parameters if needed
-                  const queryParams = new URLSearchParams();
-                  if (statusFilter !== 'all') {
-                    queryParams.append('status', statusFilter);
-                  }
-                  if (searchQuery) {
-                    queryParams.append('search', searchQuery);
-                  }
-                  
-                  if (queryParams.toString()) {
-                    exportUrl += `?${queryParams.toString()}`;
-                  }
-                  
-                  if (token) {
-                    // Create a temporary link element for the download with auth
-                    fetch(exportUrl, {
-                      headers: {
-                        'Authorization': `Bearer ${token}`
-                      }
-                    })
-                    .then(response => response.blob())
-                    .then(blob => {
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'funding-export.csv';
-                      document.body.appendChild(a);
-                      a.click();
-                      window.URL.revokeObjectURL(url);
-                      document.body.removeChild(a);
-                      
-                      toast.success('تم تصدير البيانات بنجاح');
-                    })
-                    .catch(error => {
-                      console.error('Error exporting data:', error);
-                      toast.error('حدث خطأ أثناء تصدير البيانات');
-                    });
-                  } else {
-                    toast.error('غير مصرح لك بتصدير البيانات');
-                  }
+                onClick={async () => {
+                  await exportPresets.funding({
+                    search: searchQuery,
+                    status: statusFilter !== 'all' ? statusFilter : undefined
+                  }, {
+                    onSuccess: () => toast.success('تم تصدير بيانات التمويل بنجاح'),
+                    onError: (error) => toast.error(`حدث خطأ أثناء تصدير البيانات: ${error}`)
+                  });
                 }}
               >
                 <Download className="h-4 w-4" />

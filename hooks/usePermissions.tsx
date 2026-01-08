@@ -17,6 +17,7 @@ export function usePermissions() {
 
   // Reference to the SSE connection
   const sseRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Function to clean up SSE connection
   const cleanupSSE = useCallback(() => {
@@ -25,39 +26,74 @@ export function usePermissions() {
       sseRef.current.close();
       sseRef.current = null;
     }
+    
+    // Clear any pending reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
   }, []);
 
-  // Initialize permissions when user changes
-  useEffect(() => {
-    if (user) {
-      fetchUserPermissions();
-      setupSSEConnection();
-    } else {
-      setPermissions([]);
-      setLoading(false);
-      cleanupSSE();
-    }
+  // Fetch user permissions
+  const fetchUserPermissions = useCallback(async () => {
+    if (!user) return;
     
-    // Clean up SSE on unmount
-    return () => {
-      cleanupSSE();
-    };
-  }, [user, cleanupSSE]);
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No token found for permissions fetch');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/auth/permissions', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache', // Prevent caching to get fresh permissions
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPermissions(data.permissions);
+        console.log(`Loaded ${data.permissions.length} permissions for user ${user.id}`);
+      } else {
+        console.error('Failed to fetch permissions:', await response.text());
+        if (response.status === 401) {
+          // Token might be expired, user should re-login
+          console.warn('Unauthorized - token might be expired');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
   
   // Setup SSE connection for real-time permission updates
   const setupSSEConnection = useCallback(() => {
     // Clean up any existing connection
     cleanupSSE();
     
-    if (!user) return;
+    if (!user) {
+      console.log('No user, skipping SSE connection setup');
+      return;
+    }
     
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        console.warn('No token found for SSE connection');
+        return;
+      }
+      
+      console.log(`Setting up SSE connection for user ${user.id}`);
       
       // Create new SSE connection with token in the URL
       // Since EventSource doesn't support custom headers, we need to include the token in the URL
-      const sse = new EventSource(`/api/auth/permissions/sse?token=${encodeURIComponent(token)}&t=${new Date().getTime()}`, {
+      const sse = new EventSource(`/api/auth/permissions/sse?token=${encodeURIComponent(token)}&userId=${user.id}&t=${new Date().getTime()}`, {
         withCredentials: true
       });
       
@@ -72,6 +108,7 @@ export function usePermissions() {
           
           if (data.permissions) {
             setPermissions(data.permissions);
+            setLoading(false); // Mark as loaded when we get initial permissions
           }
         } catch (error) {
           console.error('Error processing SSE permission update:', error);
@@ -97,8 +134,10 @@ export function usePermissions() {
           const data = JSON.parse(event.data);
           console.log('User permissions changed:', data);
           
-          // If we're viewing user details or managing roles, this event can be used to 
-          // trigger UI updates for the changed user (implemented in specific components)
+          // If this is for the current user, refresh permissions
+          if (data.changedUserId === user.id) {
+            fetchUserPermissions();
+          }
           
           // Dispatch a custom event that components can listen for
           window.dispatchEvent(new CustomEvent('user-permissions-changed', { 
@@ -114,43 +153,44 @@ export function usePermissions() {
         console.log('SSE permission stream connected');
       });
       
-      // Handle errors
+      // Handle errors with exponential backoff
       sse.addEventListener('error', (error) => {
         console.error('SSE permission stream error:', error);
-        // Try to reconnect after a delay if connection fails
-        setTimeout(() => {
-          cleanupSSE();
-          setupSSEConnection();
-        }, 5000);
+        
+        // Close the current connection
+        cleanupSSE();
+        
+        // Try to reconnect after a delay with exponential backoff
+        if (!reconnectTimeoutRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log('Attempting to reconnect SSE permissions...');
+            setupSSEConnection();
+          }, 5000);
+        }
       });
     } catch (error) {
       console.error('Error setting up SSE connection:', error);
     }
-  }, [user, cleanupSSE]);
+  }, [user, cleanupSSE, fetchUserPermissions]);
 
-  const fetchUserPermissions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/auth/permissions', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Cache-Control': 'no-cache', // Prevent caching to get fresh permissions
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPermissions(data.permissions);
-        console.log(`Loaded ${data.permissions.length} permissions for user`);
-      } else {
-        console.error('Failed to fetch permissions:', await response.text());
-      }
-    } catch (error) {
-      console.error('Error fetching permissions:', error);
-    } finally {
+  // Initialize permissions when user changes
+  useEffect(() => {
+    if (user) {
+      console.log(`Setting up permissions for user: ${user.id} (${user.email})`);
+      fetchUserPermissions();
+      setupSSEConnection();
+    } else {
+      console.log('No user, clearing permissions');
+      setPermissions([]);
       setLoading(false);
+      cleanupSSE();
     }
-  }, []);
+    
+    // Clean up SSE on unmount or user change
+    return () => {
+      cleanupSSE();
+    };
+  }, [user?.id]); // Only depend on user.id to avoid unnecessary re-renders
 
   /**
    * Check if user has a specific permission

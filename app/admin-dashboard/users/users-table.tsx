@@ -169,6 +169,7 @@ import {
   RefreshCw
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
+import { exportPresets } from "@/lib/export-utils"
 
 interface User {
   id: string
@@ -549,53 +550,32 @@ export default function UsersTable() {
   // Handle export users data
   const handleExport = async () => {
     try {
-      // Get token from localStorage (or context/provider if available)
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      
-      // Build URL with current filters
-      let exportUrl = '/api/admin/users/export?';
+      // Build filters based on current search and tab
+      const filters: any = {};
       
       if (searchQuery) {
-        exportUrl += `search=${encodeURIComponent(searchQuery)}&`;
+        filters.search = searchQuery;
       }
       
       if (activeTab !== "all") {
-        exportUrl += `role=${encodeURIComponent(activeTab.toUpperCase())}`;
+        filters.role = normalizeRoleForApi(activeTab);
       }
       
-      // Create a temporary anchor element for download
-      const link = document.createElement('a');
-      link.href = exportUrl;
-      
-      // Add auth header via fetch and download the blob
-      const response = await fetch(exportUrl, {
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      // Use the new export utility with automatic delimiter detection
+      await exportPresets.users(filters, {
+        onSuccess: () => {
+          showAdminToast({
+            title: "تم التصدير بنجاح",
+            description: "تم تصدير بيانات المستخدمين بنجاح"
+          });
+        },
+        onError: (error) => {
+          showAdminToast({
+            title: "خطأ",
+            description: error,
+            variant: "destructive"
+          });
         }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to export users');
-      }
-      
-      // Get the blob data
-      const blob = await response.blob();
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(blob);
-      link.href = url;
-      link.download = 'users-export.csv';
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      showAdminToast({
-        title: "تم التصدير بنجاح",
-        description: "تم تصدير بيانات المستخدمين بنجاح"
       });
     } catch (error) {
       console.error('Error exporting users:', error);

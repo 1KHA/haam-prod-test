@@ -27,6 +27,7 @@ import {
 import { showAdminToast } from "@/components/admin/admin-toaster"
 import { useRouter } from "next/navigation"
 import { PermissionGate } from "@/hooks/usePermissions"
+import { exportPresets } from "@/lib/export-utils"
 
 interface Startup {
   id: string
@@ -180,64 +181,47 @@ export default function StartupsManagement() {
     setExportLoading(true);
     
     try {
-      // Build query parameters for filtering
-      let queryParams = new URLSearchParams();
+      // Build filters based on current tab and search
+      const filters: any = {};
       
       if (searchQuery) {
-        queryParams.append('search', searchQuery);
+        filters.search = searchQuery;
       }
       
       // Map tab to status filter
       if (activeTab === "active") {
-        queryParams.append('status', 'APPROVED');
+        filters.status = 'APPROVED';
       } else if (activeTab === "pending") {
-        queryParams.append('status', 'PENDING');
+        filters.status = 'PENDING';
       } else if (activeTab === "rejected") {
-        queryParams.append('status', 'REJECTED');
+        filters.status = 'REJECTED';
       }
       
       // Map tab to industry filter
       if (activeTab === "fintech") {
-        queryParams.append('industry', 'التكنولوجيا المالية');
+        filters.industry = 'التكنولوجيا المالية';
       } else if (activeTab === "healthtech") {
-        queryParams.append('industry', 'التكنولوجيا الصحية');
+        filters.industry = 'التكنولوجيا الصحية';
       } else if (activeTab === "greentech") {
-        queryParams.append('industry', 'التكنولوجيا الخضراء');
+        filters.industry = 'التكنولوجيا الخضراء';
       }
       
-      // Create a temporary anchor element for file download
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      
-      // Fetch the CSV data
-      const response = await fetch(`/api/admin/startups/export?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // Use the new export utility with automatic delimiter detection
+      await exportPresets.startups(filters, {
+        token,
+        onSuccess: () => {
+          showAdminToast({
+            title: "تم بنجاح",
+            description: "تم تصدير بيانات الشركات الناشئة بنجاح"
+          });
+        },
+        onError: (error) => {
+          showAdminToast({
+            title: "خطأ",
+            description: error,
+            variant: "destructive"
+          });
         }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to export startups');
-      }
-      
-      // Convert the response to a blob
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Set up the download
-      a.href = url;
-      a.download = `startups-export-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      showAdminToast({
-        title: "تم بنجاح",
-        description: "تم تصدير بيانات الشركات الناشئة بنجاح"
       });
     } catch (err) {
       console.error('Error exporting startups:', err);

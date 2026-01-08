@@ -17,9 +17,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className={cairo.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <body className={cairo.className} suppressHydrationWarning>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem
+          disableTransitionOnChange
+        >
           <Providers>
             {children}
           </Providers>

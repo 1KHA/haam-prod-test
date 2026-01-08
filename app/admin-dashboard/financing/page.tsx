@@ -30,6 +30,7 @@ import {
   CreditCard
 } from "lucide-react"
 import { toast } from "react-hot-toast"
+import { exportPresets } from "@/lib/export-utils"
 
 export default function FinancingManagement() {
   const [activeTab, setActiveTab] = useState("all")
@@ -145,25 +146,16 @@ export default function FinancingManagement() {
             variant="outline" 
             size="sm" 
             className="flex items-center gap-1"
-            onClick={() => {
-              const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-              const exportUrl = `/api/admin/financing/export?format=csv`;
-              
-              // Create a hidden anchor element to trigger the download
-              const a = document.createElement("a");
-              a.href = exportUrl;
-              // Add the token as an Authorization header if it exists
-              if (token) {
-                // In a real implementation, you would use a proper method to send the token
-                // This is just for demonstration purposes
-                a.dataset.token = token;
+            onClick={async () => {
+              try {
+                await exportPresets.financing({}, {
+                  onSuccess: () => toast.success('تم تصدير التقارير المالية بنجاح'),
+                  onError: (error) => toast.error(`حدث خطأ أثناء تصدير البيانات: ${error}`)
+                });
+              } catch (error) {
+                console.error('Export error:', error);
+                toast.error('حدث خطأ أثناء تصدير البيانات');
               }
-              a.download = "financing-export.csv";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              
-              toast.success("جاري تصدير البيانات المالية");
             }}
           >
             <Download className="h-4 w-4" />
@@ -333,25 +325,41 @@ export default function FinancingManagement() {
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-1" 
-                onClick={() => {
+                onClick={async () => {
                   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                  const exportUrl = `/api/admin/financing/export?format=csv&type=${activeTab === 'funding' ? 'funding' : activeTab === 'payments' ? 'payments' : 'all'}`;
-                  
-                  // Create a hidden anchor element to trigger the download
-                  const a = document.createElement("a");
-                  a.href = exportUrl;
-                  // Add the token as an Authorization header if it exists
-                  if (token) {
-                    // In a real implementation, you would use a proper method to send the token
-                    // This is just for demonstration purposes
-                    a.dataset.token = token;
+                  if (!token) {
+                    toast.error('غير مصرح لك بتصدير البيانات');
+                    return;
                   }
-                  a.download = "financing-export.csv";
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  
-                  toast.success("جاري تصدير البيانات المالية");
+
+                  try {
+                    const exportUrl = `/api/admin/financing/export?format=csv&type=${activeTab === 'funding' ? 'funding' : activeTab === 'payments' ? 'payments' : 'all'}`;
+                    
+                    const response = await fetch(exportUrl, {
+                      headers: {
+                        'Authorization': `Bearer ${token}`
+                      }
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('فشل في تصدير البيانات');
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `financing-${activeTab}-export-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    toast.success('تم تصدير البيانات المالية بنجاح');
+                  } catch (error) {
+                    console.error('Export error:', error);
+                    toast.error('حدث خطأ أثناء تصدير البيانات');
+                  }
                 }}
               >
                 <Download className="h-4 w-4" />

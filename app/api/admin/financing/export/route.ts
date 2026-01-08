@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
+import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils'
 
 // Define types for our data
 interface FundingItem {
@@ -264,87 +265,69 @@ export async function GET(request: NextRequest) {
       // Return JSON data
       return NextResponse.json({ data: combinedData })
     } else if (format === "csv") {
-      // Define headers based on data type
-      const commonHeaders = [
+      // Define headers for comprehensive financing export
+      const headers = [
         "رقم المعرف",
-        "النوع", // Type: funding or payment
+        "النوع",
         "المبلغ",
         "الشركة الناشئة",
         "رقم الشركة",
         "الفئة",
         "الحالة",
-        "التاريخ"
+        "التاريخ",
+        "العنوان/رقم الفاتورة",
+        "نوع التمويل/طريقة الدفع",
+        "الجهة الممولة/تاريخ الاستحقاق",
+        "معلومات إضافية",
+        "الوصف",
+        "تاريخ الإنشاء",
+        "تاريخ التحديث"
       ]
       
-      const fundingHeaders = [
-        "العنوان",
-        "نوع التمويل",
-        "الجهة الممولة"
-      ]
-      
-      const paymentHeaders = [
-        "رقم الفاتورة",
-        "تاريخ الاستحقاق",
-        "تاريخ السداد",
-        "طريقة الدفع"
-      ]
-      
-      // Combine headers for all data
-      const allHeaders = [...commonHeaders, ...fundingHeaders, ...paymentHeaders, "الوصف", "تاريخ الإنشاء", "تاريخ التحديث"]
-      
-      // Create rows
-      const rows = combinedData.map(item => {
-        const commonFields = [
-          item.id,
-          item.type === "funding" ? "تمويل" : "مدفوعات",
-          item.amount,
-          item.startupName,
-          item.startupId,
-          item.category,
-          item.status,
-          item.date
-        ]
-        
-        const fundingFields = item.type === "funding" 
-          ? [item.title, item.fundingType, item.investorName]
-          : ["", "", ""]
-          
-        const paymentFields = item.type === "payment"
-          ? [
-              (item as any).invoiceNumber || "",
-              (item as any).dueDate || "",
-              (item as any).paidDate || "",
-              (item as any).paymentMethod || ""
-            ]
-          : ["", "", "", ""]
-        
-        return [...commonFields, ...fundingFields, ...paymentFields, 
-                item.description, item.createdAt, item.updatedAt]
-      })
-      
-      // Create CSV content
-      const csvContent = [
-        allHeaders.join(","),
-        ...rows.map(row => row.map(cell => {
-          // Escape commas and quotes in cell content
-          if (cell === null || cell === undefined) {
-            return '""'
-          }
-          const cellStr = String(cell)
-          if (cellStr.includes(",") || cellStr.includes("\"") || cellStr.includes("\n")) {
-            return `"${cellStr.replace(/"/g, '""')}"`
-          }
-          return cellStr
-        }).join(","))
-      ].join("\n")
-      
-      // Return CSV data
-      return new NextResponse(csvContent, {
-        headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": "attachment; filename=financing-export.csv"
+      // Map financing data to CSV rows
+      const csvRows = combinedData.map((item: FinancingItem) => {
+        const baseData = {
+          'رقم المعرف': item.id,
+          'النوع': item.type === "funding" ? "تمويل" : "مدفوعات",
+          'المبلغ': item.amount,
+          'الشركة الناشئة': item.startupName,
+          'رقم الشركة': item.startupId,
+          'الفئة': item.category,
+          'الحالة': item.status,
+          'التاريخ': item.date,
+          'الوصف': item.description,
+          'تاريخ الإنشاء': item.createdAt,
+          'تاريخ التحديث': item.updatedAt
+        };
+
+        if (item.type === "funding") {
+          return {
+            ...baseData,
+            'العنوان/رقم الفاتورة': item.title,
+            'نوع التمويل/طريقة الدفع': item.fundingType,
+            'الجهة الممولة/تاريخ الاستحقاق': item.investorName,
+            'معلومات إضافية': '-'
+          };
+        } else {
+          const paymentItem = item as PaymentItem;
+          return {
+            ...baseData,
+            'العنوان/رقم الفاتورة': paymentItem.invoiceNumber,
+            'نوع التمويل/طريقة الدفع': paymentItem.paymentMethod || '-',
+            'الجهة الممولة/تاريخ الاستحقاق': paymentItem.dueDate,
+            'معلومات إضافية': paymentItem.paidDate ? `مدفوع في: ${paymentItem.paidDate}` : '-'
+          };
         }
-      })
+      });
+      
+      // Use CSV utility function with proper delimiter support
+      return createCSVResponse({
+        headers,
+        data: csvRows,
+        delimiter: getDelimiterFromRequest(searchParams),
+        filename: 'financing-export.csv',
+        includeUTF8BOM: true
+      });
     } else if (format === "excel") {
       // For demonstration, we'll return a placeholder message
       // In a real implementation, you would use a library like exceljs to create Excel files

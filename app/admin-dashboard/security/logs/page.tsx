@@ -32,6 +32,7 @@ import {
   Save
 } from "lucide-react"
 import { fetchWithAuth } from "@/lib/api-client"
+import { exportPresets } from "@/lib/export-utils"
 
 interface SecurityLog {
   id: string;
@@ -220,78 +221,48 @@ export default function SecurityLogs() {
     try {
       setIsExporting(true);
       
-      // Build query parameters based on current filters
-      const params = new URLSearchParams();
+      // Build filter parameters based on current state
+      const filters: Record<string, string> = {};
       
       // Map activeTab to API parameters
-      if (activeTab === "success") params.append("status", "success");
-      if (activeTab === "failure") params.append("status", "failure");
-      if (activeTab === "high") params.append("severity", "high");
-      if (activeTab === "medium") params.append("severity", "medium");
-      if (activeTab === "low") params.append("severity", "low");
-      if (activeTab === "system") params.append("type", "system");
+      if (activeTab === "success") filters.status = "success";
+      if (activeTab === "failure") filters.status = "failure";
+      if (activeTab === "high") filters.severity = "high";
+      if (activeTab === "medium") filters.severity = "medium";
+      if (activeTab === "low") filters.severity = "low";
+      if (activeTab === "system") filters.type = "system";
       
       // Add date range
       if (dateRange === "today") {
         const today = new Date();
-        params.append("fromDate", today.toISOString().split('T')[0]);
-        params.append("toDate", today.toISOString().split('T')[0]);
+        filters.fromDate = today.toISOString().split('T')[0];
+        filters.toDate = today.toISOString().split('T')[0];
       } else if (dateRange === "yesterday") {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        params.append("fromDate", yesterday.toISOString().split('T')[0]);
-        params.append("toDate", yesterday.toISOString().split('T')[0]);
+        filters.fromDate = yesterday.toISOString().split('T')[0];
+        filters.toDate = yesterday.toISOString().split('T')[0];
       } else if (dateRange === "week") {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
-        params.append("fromDate", weekAgo.toISOString().split('T')[0]);
+        filters.fromDate = weekAgo.toISOString().split('T')[0];
         const today = new Date();
-        params.append("toDate", today.toISOString().split('T')[0]);
+        filters.toDate = today.toISOString().split('T')[0];
       } else if (dateRange === "month") {
         const monthAgo = new Date();
         monthAgo.setDate(monthAgo.getDate() - 30);
-        params.append("fromDate", monthAgo.toISOString().split('T')[0]);
+        filters.fromDate = monthAgo.toISOString().split('T')[0];
         const today = new Date();
-        params.append("toDate", today.toISOString().split('T')[0]);
+        filters.toDate = today.toISOString().split('T')[0];
       }
       
       // Add search query
       if (searchQuery) {
-        params.append("search", searchQuery);
+        filters.search = searchQuery;
       }
       
-      // Get token
-      const token = localStorage.getItem('token');
-      
-      // Create an anchor element for downloading the file
-      const a = document.createElement('a');
-      
-      // Make the request
-      const response = await fetch(`/api/admin/security/logs/export?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to export logs');
-      }
-      
-      // Get the blob from the response
-      const blob = await response.blob();
-      
-      // Create an object URL for the blob
-      const url = URL.createObjectURL(blob);
-      
-      // Set the anchor's attributes
-      a.href = url;
-      a.download = 'security-logs-export.csv';
-      
-      // Append to the body, click, and clean up
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
+      // Use the export utility with automatic delimiter detection
+      await exportPresets.securityLogs(filters);
       toast.success('تم تصدير السجلات بنجاح');
     } catch (error) {
       console.error('Error exporting logs:', error);
@@ -308,44 +279,8 @@ export default function SecurityLogs() {
       
       setIsExporting(true);
       
-      // Get token
-      const token = localStorage.getItem('token');
-      
-      // Build the IDs string
-      const params = new URLSearchParams();
-      
-      // Add selected log IDs to params
-      params.append("ids", selectedLogs.join(','));
-      
-      // Create an anchor element for downloading the file
-      const a = document.createElement('a');
-      
-      // Make the request
-      const response = await fetch(`/api/admin/security/logs/export?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to export selected logs');
-      }
-      
-      // Get the blob from the response
-      const blob = await response.blob();
-      
-      // Create an object URL for the blob
-      const url = URL.createObjectURL(blob);
-      
-      // Set the anchor's attributes
-      a.href = url;
-      a.download = 'selected-security-logs.csv';
-      
-      // Append to the body, click, and clean up
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
+      // Use the export utility for selected IDs
+      await exportPresets.securityLogs({ ids: selectedLogs.join(',') });
       toast.success(`تم تصدير ${selectedLogs.length} سجلات بنجاح`);
     } catch (error) {
       console.error('Error exporting selected logs:', error);

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hasPermission } from '@/lib/permissions';
+import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
 
 /**
  * GET /api/admin/security/logs/export
@@ -218,8 +219,11 @@ export async function GET(req: NextRequest) {
           );
         }
         
+        // Get delimiter from request parameters
+        const delimiter = getDelimiterFromRequest(url.searchParams);
+        
         // Convert to CSV and return
-        return generateCsvResponse(selectedLogs);
+        return generateCsvResponse(selectedLogs, delimiter);
       } catch (error) {
         console.error('Error fetching logs by ID:', error);
         throw error;
@@ -317,7 +321,10 @@ export async function GET(req: NextRequest) {
       );
     }
     
-    return generateCsvResponse(filteredLogs);
+    // Get delimiter from request parameters
+    const delimiter = getDelimiterFromRequest(url.searchParams);
+    
+    return generateCsvResponse(filteredLogs, delimiter);
     
     
   } catch (error) {
@@ -335,11 +342,11 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * Helper function to generate a CSV response from logs
+ * Helper function to generate a CSV response from logs using the CSV utilities
  */
-function generateCsvResponse(logs: any[]) {
-  // Generate CSV header
-  const csvHeader = [
+function generateCsvResponse(logs: any[], delimiter: string) {
+  // Define CSV headers
+  const headers = [
     "الرقم التعريفي",
     "الإجراء",
     "المستخدم",
@@ -351,31 +358,28 @@ function generateCsvResponse(logs: any[]) {
     "التفاصيل",
     "مستوى الخطورة",
     "النوع"
-  ].join(',');
+  ];
   
-  // Generate CSV rows
-  const csvRows = logs.map(log => [
-    `"${log.id}"`,
-    `"${log.action}"`,
-    `"${log.userName}"`,
-    `"${log.userRole}"`,
-    `"${log.status}"`,
-    `"${new Date(log.timestamp).toLocaleString('ar-SA')}"`,
-    `"${log.ipAddress}"`,
-    `"${log.userAgent}"`,
-    `"${log.details.replace(/"/g, '""')}"`,
-    `"${log.severity}"`,
-    `"${log.type}"`
-  ].join(','));
+  // Map logs to CSV data format
+  const csvData = logs.map(log => ({
+    "الرقم التعريفي": log.id,
+    "الإجراء": log.action,
+    "المستخدم": log.userName,
+    "الدور": log.userRole,
+    "الحالة": log.status,
+    "التوقيت": new Date(log.timestamp).toLocaleString('ar-SA'),
+    "عنوان IP": log.ipAddress,
+    "متصفح المستخدم": log.userAgent,
+    "التفاصيل": log.details,
+    "مستوى الخطورة": log.severity,
+    "النوع": log.type
+  }));
   
-  // Combine header and rows
-  const csv = [csvHeader, ...csvRows].join('\n');
-  
-  // Set the response headers for CSV download
-  return new Response(csv, {
-    headers: {
-      'Content-Type': 'text/csv;charset=utf-8',
-      'Content-Disposition': 'attachment; filename="security-logs-export.csv"'
-    }
+  // Use the CSV utility to create proper response
+  return createCSVResponse({
+    headers,
+    data: csvData,
+    delimiter,
+    filename: 'security-logs-export.csv'
   });
 }

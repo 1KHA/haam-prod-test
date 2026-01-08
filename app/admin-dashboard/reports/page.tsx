@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { fetchWithAuth } from "@/lib/api-client"
+import { exportPresets } from "@/lib/export-utils"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { format } from "date-fns"
@@ -232,18 +233,39 @@ export default function ReportsManagement() {
   }
   
   // Function to handle exporting reports
-  const handleExport = () => {
-    // Determine which reports to export (all or selected)
-    const token = localStorage.getItem('token')
-    let url = `/api/admin/reports/export?token=${encodeURIComponent(token || '')}`
-    
-    if (selectedReports.length > 0) {
-      const idsList = selectedReports.join(',')
-      url += `&ids=${idsList}`
+  const handleExport = async () => {
+    try {
+      // Build filter parameters based on current state
+      const filters: Record<string, string> = {};
+      
+      // Add date range parameters based on the selected range
+      const dateRangeValues = getDateRangeValues(dateRange);
+      filters.dateFrom = dateRangeValues.start;
+      filters.dateTo = dateRangeValues.end;
+      
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+      
+      // Map activeTab to API parameters
+      if (activeTab === "published") filters.status = "published,منشور";
+      if (activeTab === "draft") filters.status = "draft,مسودة";
+      if (activeTab === "scheduled") filters.status = "scheduled,مجدول";
+      if (activeTab === "financial") filters.category = "مالي,التمويل";
+      if (activeTab === "programs") filters.category = "أداء البرامج,التوجيه";
+      if (activeTab === "startups") filters.category = "الشركات الناشئة";
+      
+      // Add selected reports IDs if any
+      if (selectedReports.length > 0) {
+        filters.ids = selectedReports.join(',');
+      }
+      
+      // Use the export utility with automatic delimiter detection
+      await exportPresets.reports(filters);
+    } catch (error) {
+      console.error('Error exporting reports:', error);
+      alert('حدث خطأ أثناء تصدير التقارير');
     }
-    
-    // Open in a new tab
-    window.open(url, '_blank')
   }
   
   // Function to handle printing reports
@@ -1218,9 +1240,13 @@ export default function ReportsManagement() {
                     <div className="flex gap-1">
                       <button 
                         className="text-blue-500 hover:text-blue-700"
-                        onClick={() => {
-                          const token = localStorage.getItem('token');
-                          window.open(`/api/admin/reports/export?ids=${report.id}&token=${encodeURIComponent(token || '')}`, '_blank');
+                        onClick={async () => {
+                          try {
+                            await exportPresets.reports({ ids: report.id });
+                          } catch (error) {
+                            console.error('Error exporting report:', error);
+                            alert('حدث خطأ أثناء تصدير التقرير');
+                          }
                         }}
                       >
                         <Download className="h-4 w-4" />

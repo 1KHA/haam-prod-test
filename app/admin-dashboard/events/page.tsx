@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "react-hot-toast"
 import { fetchWithAuth } from "@/lib/api-client"
+import { exportPresets } from "@/lib/export-utils"
 import { 
   Search, 
   Filter, 
@@ -282,53 +283,53 @@ export default function EventsManagement() {
     }
   };
 
-  // Export events
+  // Export events using the new utility
   const exportEvents = async () => {
     try {
       setActionLoading(true);
-      const format = 'csv'; // Default format
-      const includeRegistrations = selectedEvents.length > 0;
-      const query = new URLSearchParams();
       
-      query.append('format', format);
-      query.append('includeRegistrations', String(includeRegistrations));
+      // Build filters based on current tab and search
+      const filters: any = {};
       
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+      
+      // Map tab to status/type filters
+      if (activeTab === "upcoming") {
+        // For upcoming events, we'd need to filter by date on backend
+        filters.status = 'PUBLISHED';
+      } else if (activeTab === "ongoing") {
+        filters.status = 'PUBLISHED';
+      } else if (activeTab === "completed") {
+        filters.status = 'COMPLETED';
+      } else if (activeTab === "hackathons") {
+        filters.eventType = 'HACKATHON';
+      } else if (activeTab === "workshops") {
+        filters.eventType = 'WORKSHOP';
+      } else if (activeTab === "networking") {
+        filters.eventType = 'NETWORKING';
+      } else if (activeTab === "draft") {
+        filters.status = 'DRAFT';
+      } else if (activeTab === "published") {
+        filters.status = 'PUBLISHED';
+      }
+      
+      // Add registration data if events are selected
       if (selectedEvents.length > 0) {
-        // Include only selected events in export if any are selected
-        selectedEvents.forEach(id => query.append('ids', id));
+        filters.includeRegistrations = 'true';
+        // Note: Backend would need to support filtering by IDs for selected events
       }
       
-      // Use fetchWithAuth instead of direct redirection
-      const response = await fetchWithAuth(`/api/admin/events/export?${query.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error(`Error exporting events: ${response.statusText}`);
-      }
-      
-      // Get the filename from the Content-Disposition header if available
-      const contentDisposition = response.headers.get('Content-Disposition') || '';
-      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-      const filename = filenameMatch ? filenameMatch[1] : 'events.csv';
-      
-      // Get the blob from the response
-      const blob = await response.blob();
-      
-      // Create a URL for the blob
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create a temporary link element
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      
-      // Append to the document, click it, and remove it
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast.success("تم تنزيل ملف التصدير بنجاح");
+      // Use the new export utility with automatic delimiter detection
+      await exportPresets.events(filters, {
+        onSuccess: () => {
+          toast.success("تم تنزيل ملف التصدير بنجاح");
+        },
+        onError: (error) => {
+          toast.error(`فشل في تصدير البيانات: ${error}`);
+        }
+      });
     } catch (err) {
       console.error("Error exporting events:", err);
       toast.error(`فشل في تصدير البيانات: ${err instanceof Error ? err.message : 'خطأ غير معروف'}`);

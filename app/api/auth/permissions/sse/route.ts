@@ -15,15 +15,15 @@ export async function GET(req: NextRequest) {
     if (tokenParam) {
       // If token provided in URL (for EventSource which doesn't support custom headers)
       user = verifyToken(tokenParam);
-      console.log('[SSE] Authenticated using token from URL param');
+      console.log(`[SSE] Authenticated user ${user?.userId} (${user?.email}) using token from URL param`);
     } else {
       // Traditional header-based authentication
       user = await isAuthenticated(authHeader || undefined);
-      console.log('[SSE] Authenticated using Authorization header');
+      console.log(`[SSE] Authenticated user ${user?.userId} (${user?.email}) using Authorization header`);
     }
     
     if (!user) {
-      console.log('[SSE] Authentication failed');
+      console.log('[SSE] Authentication failed - no valid token provided');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

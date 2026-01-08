@@ -29,10 +29,19 @@ export async function hasPermission(
       },
     });
 
-    if (!user) return false;
+    if (!user) {
+      console.log(`[PERMISSIONS] No user found with ID: ${userId}`);
+      return false;
+    }
 
-    // Admin has all permissions
-    if (user.role === UserRole.ADMIN) return true;
+    console.log(`[PERMISSIONS] Checking permission for user: ${userId}, role: ${user.role}, required: ${requirement.category}:${requirement.action}`);
+
+    // Enhanced Admin permission check - try multiple approaches for robustness
+    const roleString = user.role.toString();
+    if (roleString === 'ADMIN') {
+      console.log(`[PERMISSIONS] Admin user detected (role: ${user.role}), granting all permissions`);
+      return true;
+    }
 
     // Try multiple strategies to find role permissions
     

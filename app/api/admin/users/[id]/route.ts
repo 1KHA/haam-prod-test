@@ -284,9 +284,19 @@ export async function DELETE(
     
     const userId = params.id;
     
-    // Check if user exists
+    // Check if user exists with all related data
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: {
+        mentorProfile: true,
+        investorProfile: true,
+        entrepreneurProfile: true,
+        programManagerProfile: true,
+        participantProfile: true,
+        adminProfile: true,
+        startups: true,
+        teamMembers: true
+      }
     });
     
     if (!existingUser) {
@@ -296,17 +306,164 @@ export async function DELETE(
       );
     }
     
-    // Delete the user
-    await prisma.user.delete({
-      where: { id: userId }
+    // Use transaction to safely delete user and all related records
+    await prisma.$transaction(async (tx) => {
+      // Delete related records that reference the user
+      
+      // Delete role permissions
+      await tx.rolePermission.deleteMany({
+        where: { userId: userId }
+      });
+      
+      // Delete event registrations
+      await tx.eventRegistration.deleteMany({
+        where: { userId: userId }
+      });
+      
+      // Delete cohort mentorships
+      await tx.cohortMentor.deleteMany({
+        where: { userId: userId }
+      });
+      
+      // Delete company memberships
+      await tx.companyMember.deleteMany({
+        where: { userId: userId }
+      });
+      
+      // Delete team member records
+      await tx.teamMember.deleteMany({
+        where: { creatorId: userId }
+      });
+      
+      // Delete milestones created by user
+      await tx.milestone.deleteMany({
+        where: { createdBy: userId }
+      });
+      
+      // Delete invitations sent by user
+      await tx.invitation.deleteMany({
+        where: { inviterId: userId }
+      });
+      
+      // Delete funding records created by user
+      await tx.funding.deleteMany({
+        where: { createdBy: userId }
+      });
+      
+      // Delete funding opportunities
+      await tx.fundingOpportunity.deleteMany({
+        where: { entrepreneurId: userId }
+      });
+      
+      // Delete all profile records first to avoid foreign key constraints
+      if (existingUser.mentorProfile) {
+        await tx.mentorProfile.delete({
+          where: { userId: userId }
+        });
+      }
+      
+      if (existingUser.investorProfile) {
+        await tx.investorProfile.delete({
+          where: { userId: userId }
+        });
+      }
+      
+      if (existingUser.entrepreneurProfile) {
+        await tx.entrepreneurProfile.delete({
+          where: { userId: userId }
+        });
+      }
+      
+      if (existingUser.programManagerProfile) {
+        await tx.programManagerProfile.delete({
+          where: { userId: userId }
+        });
+      }
+      
+      if (existingUser.participantProfile) {
+        await tx.participantProfile.delete({
+          where: { userId: userId }
+        });
+      }
+      
+      if (existingUser.adminProfile) {
+        await tx.adminProfile.delete({
+          where: { userId: userId }
+        });
+      }
+      
+      // Delete startups created by the user (with proper cascade)
+      const userStartups = await tx.startup.findMany({
+        where: { creatorId: userId }
+      });
+      
+      // Delete all related startup records first
+      for (const startup of userStartups) {
+        // Delete milestones related to each startup
+        await tx.milestone.deleteMany({
+          where: { startupId: startup.id }
+        });
+        
+        // Delete cohort memberships
+        await tx.cohortMember.deleteMany({
+          where: { startupId: startup.id }
+        });
+        
+        // Delete company members
+        await tx.companyMember.deleteMany({
+          where: { startupId: startup.id }
+        });
+        
+        // Delete invitations for the startup
+        await tx.invitation.deleteMany({
+          where: { startupId: startup.id }
+        });
+      }
+      
+      // Delete the startups themselves
+      await tx.startup.deleteMany({
+        where: { creatorId: userId }
+      });
+      
+      // Only check for critical records that truly cannot be deleted (programs and cohorts)
+      const criticalRecords = await tx.user.findUnique({
+        where: { id: userId },
+        include: {
+          programs: true,
+          managedCohorts: true
+        }
+      });
+      
+      if (criticalRecords) {
+        const hasCriticalRecords = criticalRecords.programs.length > 0 ||
+                                  criticalRecords.managedCohorts.length > 0;
+        
+        if (hasCriticalRecords) {
+          throw new Error('Cannot delete user: user has created programs or manages cohorts that must be handled first');
+        }
+      }
+      
+      // Finally, delete the user
+      await tx.user.delete({
+        where: { id: userId }
+      });
     });
     
     return NextResponse.json({ 
       success: true,
       message: 'User deleted successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting user:', error);
+    
+    // Check for specific constraint violations
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Cannot delete user: user has associated records that must be handled first' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to delete user' },
       { status: 500 }

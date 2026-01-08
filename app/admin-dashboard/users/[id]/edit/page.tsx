@@ -30,7 +30,14 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`/api/admin/users/${userId}`)
+        // Get token from localStorage
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        })
         const data = await response.json()
         
         if (response.ok) {
@@ -89,10 +96,14 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         userData.password = password
       }
       
+      // Get token from localStorage
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(userData)
       })

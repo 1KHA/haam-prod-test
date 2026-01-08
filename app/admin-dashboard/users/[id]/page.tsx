@@ -52,7 +52,14 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`/api/admin/users/${userId}`)
+        // Get token from localStorage
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        })
         const data = await response.json()
         
         if (response.ok) {
@@ -86,8 +93,14 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     setIsDeleting(true)
     
     try {
+      // Get token from localStorage
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      
       const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
       })
       
       if (response.ok) {

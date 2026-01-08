@@ -5,15 +5,51 @@ import { checkPermission } from '@/lib/permissions';
 // GET /api/admin/users/export - Export users data
 export async function GET(req: NextRequest) {
   try {
-    // Check permission
+    // Enhanced debugging for admin users
+    console.log('[USER EXPORT] Starting export request...');
+    const authHeader = req.headers.get('authorization');
+    console.log('[USER EXPORT] Auth header present:', !!authHeader);
+    console.log('[USER EXPORT] Auth header format:', authHeader ? authHeader.substring(0, 20) + '...' : 'missing');
+    
+    // Check permission with enhanced logging
     const permissionCheck = await checkPermission(req, { category: 'users', action: 'view' });
     
+    console.log('[USER EXPORT] Permission check result:', {
+      authorized: permissionCheck.authorized,
+      error: permissionCheck.error,
+      userId: permissionCheck.userId
+    });
+    
     if (!permissionCheck.authorized) {
+      // Enhanced error response with debugging info
+      let errorMessage = permissionCheck.error || 'Unauthorized access';
+      let errorDetails = '';
+      
+      if (permissionCheck.error === 'Unauthorized') {
+        errorMessage = 'Authentication required';
+        errorDetails = 'Please ensure you are logged in and have a valid authentication token.';
+        console.log('[USER EXPORT] Authentication failed - no valid token');
+      } else if (permissionCheck.error === 'Forbidden - Insufficient permissions') {
+        errorMessage = 'Insufficient permissions';
+        errorDetails = 'Your account does not have permission to export user data. Required permission: users:view';
+        console.log('[USER EXPORT] Permission denied for user:', permissionCheck.userId);
+      }
+      
       return NextResponse.json(
-        { error: permissionCheck.error },
+        { 
+          error: errorMessage,
+          details: errorDetails,
+          requiredPermission: 'users:view',
+          debug: {
+            hasAuthHeader: !!authHeader,
+            userId: permissionCheck.userId
+          }
+        },
         { status: permissionCheck.error === 'Unauthorized' ? 401 : 403 }
       );
     }
+
+    console.log('[USER EXPORT] Permission check passed for user:', permissionCheck.userId);
 
     // Parse query params
     const { searchParams } = new URL(req.url);

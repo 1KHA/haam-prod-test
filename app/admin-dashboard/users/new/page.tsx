@@ -11,6 +11,14 @@ import { ArrowRight, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 
+interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  usersCount: number;
+  permissions: Record<string, Record<string, boolean>>;
+}
+
 export default function NewUserPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -18,10 +26,28 @@ export default function NewUserPage() {
   const [role, setRole] = useState("")
   const [specialization, setSpecialization] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [roles, setRoles] = useState<Role[]>([])
+  const [rolesLoading, setRolesLoading] = useState(true)
   const [token, setToken] = useState<string | null>(null)
   
   const router = useRouter()
   const { toast } = useToast()
+  
+  // Role name mapping for display
+  const getRoleDisplayName = (roleName: string) => {
+    const roleMap: Record<string, string> = {
+      "ADMIN": "مدير النظام",
+      "PROGRAM_MANAGER": "مدير برنامج", 
+      "MENTOR": "موجه",
+      "INVESTOR": "مستثمر",
+      "PARTICIPANT": "مشارك",
+      "ENTREPRENEUR": "رائد أعمال",
+      "STARTUP": "شركة ناشئة",
+      "JUDGE": "محكم",
+      "ACCELERATOR": "مسرع أعمال"
+    };
+    return roleMap[roleName] || roleName;
+  };
   
   // Get token from localStorage
   useEffect(() => {
@@ -30,6 +56,53 @@ export default function NewUserPage() {
       setToken(storedToken);
     }
   }, []);
+  
+  // Fetch available roles
+  useEffect(() => {
+    const fetchRoles = async () => {
+      if (!token) return;
+      
+      try {
+        setRolesLoading(true);
+        const response = await fetch('/api/admin/roles', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setRoles(data);
+        } else {
+          console.error('Failed to fetch roles');
+          // Fallback to default roles if API fails
+          setRoles([
+            { id: '1', name: 'ADMIN', usersCount: 0, permissions: {} },
+            { id: '2', name: 'PROGRAM_MANAGER', usersCount: 0, permissions: {} },
+            { id: '3', name: 'MENTOR', usersCount: 0, permissions: {} },
+            { id: '4', name: 'INVESTOR', usersCount: 0, permissions: {} },
+            { id: '5', name: 'PARTICIPANT', usersCount: 0, permissions: {} },
+            { id: '6', name: 'ENTREPRENEUR', usersCount: 0, permissions: {} }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        // Fallback to default roles
+        setRoles([
+          { id: '1', name: 'ADMIN', usersCount: 0, permissions: {} },
+          { id: '2', name: 'PROGRAM_MANAGER', usersCount: 0, permissions: {} },
+          { id: '3', name: 'MENTOR', usersCount: 0, permissions: {} },
+          { id: '4', name: 'INVESTOR', usersCount: 0, permissions: {} },
+          { id: '5', name: 'PARTICIPANT', usersCount: 0, permissions: {} },
+          { id: '6', name: 'ENTREPRENEUR', usersCount: 0, permissions: {} }
+        ]);
+      } finally {
+        setRolesLoading(false);
+      }
+    };
+    
+    fetchRoles();
+  }, [token]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -191,15 +264,30 @@ export default function NewUserPage() {
               <Label htmlFor="role">الدور</Label>
               <Select value={role} onValueChange={setRole} required>
                 <SelectTrigger id="role">
-                  <SelectValue placeholder="اختر دور المستخدم" />
+                  <SelectValue placeholder={rolesLoading ? "جاري التحميل..." : "اختر دور المستخدم"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">مدير النظام</SelectItem>
-                  <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
-                  <SelectItem value="MENTOR">موجه</SelectItem>
-                  <SelectItem value="INVESTOR">مستثمر</SelectItem>
-                  <SelectItem value="PARTICIPANT">مشارك</SelectItem>
-                  <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
+                  {rolesLoading ? (
+                    <SelectItem value="loading-placeholder" disabled>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        جاري التحميل...
+                      </div>
+                    </SelectItem>
+                  ) : roles.length > 0 ? (
+                    roles.map((roleItem) => (
+                      <SelectItem key={roleItem.id} value={roleItem.name}>
+                        <div className="flex flex-col">
+                          <span>{getRoleDisplayName(roleItem.name)}</span>
+                          {roleItem.description && (
+                            <span className="text-xs text-muted-foreground">{roleItem.description}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-roles-placeholder" disabled>لا توجد أدوار متاحة</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

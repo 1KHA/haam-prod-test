@@ -147,20 +147,46 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, password, name, role, specialization } = body;
 
-    // Validate role - only accept valid enum values from the standardized list
-    const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    // Validate role - check if it exists in the database (dynamic roles) or is a valid enum value
+    const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    let isValidRole = false;
+    let userRole: UserRole;
     
-    if (!validRoles.includes(role)) {
+    // First check if it's a valid enum role
+    if (validEnumRoles.includes(role)) {
+      isValidRole = true;
+      userRole = role as UserRole;
+      console.log(`[Users API] Using predefined role: '${role}'`);
+    } else {
+      // Check if it's a custom role that exists in the database
+      try {
+        const existingRole = await prisma.role.findFirst({
+          where: { name: role }
+        });
+        
+        if (existingRole) {
+          isValidRole = true;
+          // For custom roles, we'll use a default enum value but store the actual role name
+          // Custom roles will be handled via the RolePermission table
+          userRole = 'PARTICIPANT' as UserRole; // Use PARTICIPANT as default for custom roles
+          console.log(`[Users API] Using custom role: '${role}' (mapped to PARTICIPANT)`);
+        }
+      } catch (error) {
+        console.error(`[Users API] Error checking custom role: ${error}`);
+        return NextResponse.json(
+          { error: 'Database error while validating role' },
+          { status: 500 }
+        );
+      }
+    }
+    
+    if (!isValidRole) {
       console.error(`[Users API] Invalid role specified: '${role}'`);
       return NextResponse.json(
-        { error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' },
+        { error: `Invalid role value: '${role}'. Role must be a valid predefined role or an existing custom role.` },
         { status: 400 }
       );
     }
-    
-    // Role is valid, use it directly
-    const userRole = role as UserRole;
-    console.log(`[Users API] Using validated role: '${userRole}'`);
 
     // Validate required fields
     if (!email || !password || !name || !role) {
@@ -267,14 +293,45 @@ export async function POST(req: NextRequest) {
       data: userData,
       include: {
         profile: true,
-        adminProfile: userRole === 'ADMIN',
-        programManagerProfile: userRole === 'PROGRAM_MANAGER',
-        mentorProfile: userRole === 'MENTOR',
-        investorProfile: userRole === 'INVESTOR',
-        participantProfile: userRole === 'PARTICIPANT',
-        entrepreneurProfile: userRole === 'ENTREPRENEUR',
-      },
+        adminProfile: true,
+        programManagerProfile: true,
+        mentorProfile: true,
+        investorProfile: true,
+        participantProfile: true,
+        entrepreneurProfile: true,
+      } as any,
     });
+
+    // If this is a custom role, create the RolePermission links
+    if (!validEnumRoles.includes(role)) {
+      try {
+        const customRole = await prisma.role.findFirst({
+          where: { name: role },
+          include: { permissions: true }
+        });
+        
+        if (customRole && customRole.permissions.length > 0) {
+          // Create RolePermission entries for each permission in the custom role
+          const rolePermissionData = customRole.permissions.map(rolePermission => ({
+            userId: user.id,
+            roleId: customRole.id,
+            permissionId: rolePermission.permissionId
+          }));
+          
+          await prisma.rolePermission.createMany({
+            data: rolePermissionData,
+            skipDuplicates: true
+          });
+          
+          console.log(`[Users API] Linked user ${user.id} to custom role ${role} with ${customRole.permissions.length} permissions`);
+        } else {
+          console.warn(`[Users API] Custom role ${role} has no permissions defined`);
+        }
+      } catch (error) {
+        console.error(`[Users API] Error linking user to custom role: ${error}`);
+        // Don't fail the user creation if role linking fails
+      }
+    }
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
@@ -316,20 +373,44 @@ export async function PUT(req: NextRequest) {
     let userRole: UserRole | undefined = undefined;
     
     if (role) {
-      // Validate role - only accept valid enum values from the standardized list
-      const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+      // Validate role - check if it exists in the database (dynamic roles) or is a valid enum value
+      const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+      let isValidRole = false;
       
-      if (!validRoles.includes(role)) {
+      // First check if it's a valid enum role
+      if (validEnumRoles.includes(role)) {
+        isValidRole = true;
+        userRole = role as UserRole;
+        console.log(`[Users API] Using predefined role: '${role}'`);
+      } else {
+        // Check if it's a custom role that exists in the database
+        try {
+          const existingRole = await prisma.role.findFirst({
+            where: { name: role }
+          });
+          
+          if (existingRole) {
+            isValidRole = true;
+            // For custom roles, use PARTICIPANT as default enum value
+            userRole = 'PARTICIPANT' as UserRole;
+            console.log(`[Users API] Using custom role: '${role}' (mapped to PARTICIPANT)`);
+          }
+        } catch (error) {
+          console.error(`[Users API] Error checking custom role: ${error}`);
+          return NextResponse.json(
+            { error: 'Database error while validating role' },
+            { status: 500 }
+          );
+        }
+      }
+      
+      if (!isValidRole) {
         console.error(`[Users API] Invalid role specified: '${role}'`);
         return NextResponse.json(
-          { error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' },
+          { error: `Invalid role value: '${role}'. Role must be a valid predefined role or an existing custom role.` },
           { status: 400 }
         );
       }
-      
-      // Role is valid, use it directly
-      userRole = role as UserRole;
-      console.log(`[Users API] Using validated role: '${userRole}'`);
     }
 
     // Update user

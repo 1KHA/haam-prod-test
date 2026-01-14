@@ -16,7 +16,7 @@ export async function hasPermission(
   requirement: PermissionRequirement
 ): Promise<boolean> {
   try {
-    // Get user with role
+    // Get user with their assigned role permissions
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -34,110 +34,51 @@ export async function hasPermission(
       return false;
     }
 
-    console.log(`[PERMISSIONS] Checking permission for user: ${userId}, role: ${user.role}, required: ${requirement.category}:${requirement.action}`);
+    console.log(`[PERMISSIONS] Checking permission for user: ${userId}, default role: ${user.role}, required: ${requirement.category}:${requirement.action}`);
 
-    // Enhanced Admin permission check - try multiple approaches for robustness
-    const roleString = user.role.toString();
-    if (roleString === 'ADMIN') {
-      console.log(`[PERMISSIONS] Admin user detected (role: ${user.role}), granting all permissions`);
+    // Admin users get all permissions (based on default role)
+    if (user.role === UserRole.ADMIN) {
+      console.log(`[PERMISSIONS] Admin user detected, granting all permissions`);
       return true;
     }
 
-    // Try multiple strategies to find role permissions
-    
-    // Strategy 1: Try with Arabic role name mapping
-    const arabicRoleName = getRoleNameInArabic(user.role);
-    
-    let hasRolePermission = false;
-    
-    // Strategy 2: Find the role record in the database
-    const userRoleRecord = await prisma.role.findFirst({
-      where: {
-        OR: [
-          { name: arabicRoleName },
-          { name: user.role.toString() } // Also try with the enum value directly
-        ]
-      }
-    });
-    
-    if (userRoleRecord) {
-      // Try lookup by role ID (most reliable)
-      const permissionsByRoleId = await prisma.rolePermission.findMany({
-        where: {
-          roleId: userRoleRecord.id,
-          userId: null,
-          permission: {
-            category: requirement.category,
-            action: requirement.action,
-          },
-        },
-        include: {
-          permission: true,
-        },
-      });
-      
-      if (permissionsByRoleId.length > 0) {
-        hasRolePermission = true;
-      }
-    }
-    
-    // Strategy 3: Try by name if not found yet
-    if (!hasRolePermission) {
-      const permissionsByName = await prisma.rolePermission.findMany({
-        where: {
-          role: {
-            name: arabicRoleName,
-          },
-          permission: {
-            category: requirement.category,
-            action: requirement.action,
-          },
-          userId: null,
-        },
-        include: {
-          permission: true,
-        },
-      });
-      
-      if (permissionsByName.length > 0) {
-        hasRolePermission = true;
-      }
-    }
-    
-    // Strategy 4: Try with the raw role name
-    if (!hasRolePermission) {
-      const permissionsByRawName = await prisma.rolePermission.findMany({
-        where: {
-          role: {
-            name: user.role.toString(),
-          },
-          permission: {
-            category: requirement.category,
-            action: requirement.action,
-          },
-          userId: null,
-        },
-        include: {
-          permission: true,
-        },
-      });
-      
-      if (permissionsByRawName.length > 0) {
-        hasRolePermission = true;
-      }
-    }
-    
-    if (hasRolePermission) return true;
-
-    // Check user-specific permissions
-    const userSpecificPermission = user.rolePermissions.find(
+    // Check all user's assigned permissions (both role-based and direct)
+    const hasRequiredPermission = user.rolePermissions.some(
       (rp) =>
         rp.permission.category === requirement.category &&
-        rp.permission.action === requirement.action &&
-        rp.userId === userId
+        rp.permission.action === requirement.action
     );
 
-    return !!userSpecificPermission;
+    if (hasRequiredPermission) {
+      console.log(`[PERMISSIONS] Permission granted through assigned roles/permissions`);
+      return true;
+    }
+
+    // Fallback: Check default role permissions for backward compatibility
+    const arabicRoleName = getRoleNameInArabic(user.role);
+    const defaultRolePermission = await prisma.rolePermission.findFirst({
+      where: {
+        role: {
+          OR: [
+            { name: arabicRoleName },
+            { name: user.role.toString() }
+          ]
+        },
+        permission: {
+          category: requirement.category,
+          action: requirement.action,
+        },
+        userId: null, // Role-based permissions, not user-specific
+      },
+    });
+
+    if (defaultRolePermission) {
+      console.log(`[PERMISSIONS] Permission granted through default role: ${arabicRoleName}`);
+      return true;
+    }
+
+    console.log(`[PERMISSIONS] Permission denied - no matching permissions found`);
+    return false;
   } catch (error) {
     console.error('Error checking permission:', error);
     return false;

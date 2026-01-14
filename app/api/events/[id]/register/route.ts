@@ -148,8 +148,7 @@ export async function POST(
         data: {
           userId: user.userId,
           eventId,
-          status: 'waitlist',
-          notes: body.notes || null
+          status: 'waitlist'
         }
       });
       
@@ -165,8 +164,7 @@ export async function POST(
       data: {
         userId: user.userId,
         eventId,
-        status: 'confirmed',
-        notes: body.notes || null
+        status: 'confirmed'
       }
     });
     

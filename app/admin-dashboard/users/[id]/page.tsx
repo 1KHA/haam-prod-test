@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Loader2, Trash2, Edit, User, Mail, Briefcase, Calendar, Tag } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowRight, Loader2, Trash2, Edit, User, Mail, Briefcase, Calendar, Tag, Shield } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import {
@@ -15,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import UserRolePermissionManager from "@/components/admin/UserRolePermissionManager"
 
 interface UserProfile {
   id: string
@@ -250,332 +252,356 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
         <h1 className="text-3xl font-bold">تفاصيل المستخدم</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>المعلومات الأساسية</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">الاسم</p>
-                <p className="text-lg">{user.name}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">البريد الإلكتروني</p>
-                <p className="text-lg">{user.email}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">الدور</p>
-                <p className="text-lg">{getRoleDisplayName(user.role)}</p>
-              </div>
-            </div>
-            
-            {user.specialization && (
-              <div className="flex items-center gap-2">
-                <Tag className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">التخصص</p>
-                  <p className="text-lg">{user.specialization}</p>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">تاريخ التسجيل</p>
-                <p className="text-lg">{formatDate(user.createdAt)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>الملف الشخصي</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {user.role === 'STARTUP' && user.startupProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات الشركة الناشئة</h3>
-                <div className="grid grid-cols-2 gap-4">
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="profile">الملف الشخصي</TabsTrigger>
+          <TabsTrigger value="permissions">الأدوار والصلاحيات</TabsTrigger>
+          <TabsTrigger value="activity">النشاطات</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <CardTitle>المعلومات الأساسية</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">اسم الشركة</p>
-                    <p>{user.startupProfile.companyName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">المجال</p>
-                    <p>{user.startupProfile.industry || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">المرحلة</p>
-                    <p>{user.startupProfile.stage || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">تاريخ التأسيس</p>
-                    <p>{user.startupProfile.foundingDate ? formatDate(user.startupProfile.foundingDate) : '-'}</p>
+                    <p className="text-sm font-medium">الاسم</p>
+                    <p className="text-lg">{user.name}</p>
                   </div>
                 </div>
-                {user.startupProfile.description && (
+                
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">الوصف</p>
-                    <p>{user.startupProfile.description}</p>
-                  </div>
-                )}
-              </div>
-            ) : user.role === 'MENTOR' && user.mentorProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات الموجه</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">مجال الخبرة</p>
-                    <p>{user.mentorProfile.expertise || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">الخبرة</p>
-                    <p>{user.mentorProfile.experience || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">الإتاحة</p>
-                    <p>{user.mentorProfile.availability || '-'}</p>
+                    <p className="text-sm font-medium">البريد الإلكتروني</p>
+                    <p className="text-lg">{user.email}</p>
                   </div>
                 </div>
-              </div>
-            ) : user.role === 'INVESTOR' && user.investorProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات المستثمر</h3>
-                <div className="grid grid-cols-2 gap-4">
+                
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">اسم الشركة</p>
-                    <p>{user.investorProfile.companyName || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">مجال الاستثمار</p>
-                    <p>{user.investorProfile.investmentFocus || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">مرحلة الاستثمار</p>
-                    <p>{user.investorProfile.investmentStage || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">حجم الاستثمار</p>
-                    <p>{user.investorProfile.investmentSize || '-'}</p>
+                    <p className="text-sm font-medium">الدور</p>
+                    <p className="text-lg">{getRoleDisplayName(user.role)}</p>
                   </div>
                 </div>
-              </div>
-            ) : user.role === 'ENTREPRENEUR' && user.entrepreneurProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات رائد الأعمال</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">اسم المنظمة</p>
-                    <p>{user.entrepreneurProfile.organizationName || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">المجال</p>
-                    <p>{user.entrepreneurProfile.industry || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">مجالات التركيز</p>
-                    <p>{user.entrepreneurProfile.focusAreas || '-'}</p>
-                  </div>
-                  {user.entrepreneurProfile.website && (
+                
+                {user.specialization && (
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">الموقع الإلكتروني</p>
-                      <p>{user.entrepreneurProfile.website}</p>
+                      <p className="text-sm font-medium">التخصص</p>
+                      <p className="text-lg">{user.specialization}</p>
                     </div>
-                  )}
-                </div>
-                {user.entrepreneurProfile.description && (
-                  <div>
-                    <p className="text-sm font-medium">الوصف</p>
-                    <p>{user.entrepreneurProfile.description}</p>
                   </div>
                 )}
-              </div>
-            ) : user.role === 'ACCELERATOR' && user.acceleratorProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات مسرع الأعمال</h3>
-                <div className="grid grid-cols-2 gap-4">
+                
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">اسم المنظمة</p>
-                    <p>{user.acceleratorProfile.organizationName || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">المجال</p>
-                    <p>{user.acceleratorProfile.industry || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">مجالات التركيز</p>
-                    <p>{user.acceleratorProfile.focusAreas || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">مدة البرنامج</p>
-                    <p>{user.acceleratorProfile.programLength || '-'}</p>
+                    <p className="text-sm font-medium">تاريخ التسجيل</p>
+                    <p className="text-lg">{formatDate(user.createdAt)}</p>
                   </div>
                 </div>
-                {user.acceleratorProfile.description && (
-                  <div>
-                    <p className="text-sm font-medium">الوصف</p>
-                    <p>{user.acceleratorProfile.description}</p>
-                  </div>
-                )}
-              </div>
-            ) : user.role === 'PROGRAM_MANAGER' && user.programManagerProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات مدير البرنامج</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">البرامج</p>
-                    <p>{user.programManagerProfile.programs || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">المسؤوليات</p>
-                    <p>{user.programManagerProfile.responsibilities || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            ) : user.role === 'ADMIN' && user.adminProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات المدير</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">القسم</p>
-                    <p>{user.adminProfile.department || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">الصلاحيات</p>
-                    <p>{user.adminProfile.permissions || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            ) : user.role === 'PARTICIPANT' && user.participantProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات المشارك</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">المهارات</p>
-                    <p>{user.participantProfile.skills || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">الاهتمامات</p>
-                    <p>{user.participantProfile.interests || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">التعليم</p>
-                    <p>{user.participantProfile.education || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">الخبرة</p>
-                    <p>{user.participantProfile.experience || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            ) : user.role === 'JUDGE' && user.judgeProfile ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">معلومات المحكم</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Display judge profile fields if they exist in the schema */}
-                  <div>
-                    <p className="text-sm font-medium">التخصص</p>
-                    <p>{user.specialization || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">لم يتم إكمال الملف الشخصي بعد.</p>
-            )}
-          </CardContent>
-        </Card>
-        
-        {user.startups && user.startups.length > 0 && (
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle>الشركات الناشئة</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {user.startups.map((startup) => (
-                  <div key={startup.id} className="border rounded-md p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        {startup.status === 'APPROVED' ? (
-                          <span className="text-green-600">معتمدة</span>
-                        ) : startup.status === 'REJECTED' ? (
-                          <span className="text-red-600">مرفوضة</span>
-                        ) : (
-                          <span className="text-amber-600">قيد المراجعة</span>
-                        )}
+              </CardContent>
+            </Card>
+            
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>الملف الشخصي</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user.role === 'STARTUP' && user.startupProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات الشركة الناشئة</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">اسم الشركة</p>
+                        <p>{user.startupProfile.companyName}</p>
                       </div>
-                      <h3 className="text-lg font-semibold">{startup.name}</h3>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
                       <div>
                         <p className="text-sm font-medium">المجال</p>
-                        <p>{startup.industry}</p>
+                        <p>{user.startupProfile.industry || '-'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">المرحلة</p>
-                        <p>{startup.stage}</p>
+                        <p>{user.startupProfile.stage || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">تاريخ الإنشاء</p>
-                        <p>{formatDate(startup.createdAt)}</p>
+                        <p className="text-sm font-medium">تاريخ التأسيس</p>
+                        <p>{user.startupProfile.foundingDate ? formatDate(user.startupProfile.foundingDate) : '-'}</p>
+                      </div>
+                    </div>
+                    {user.startupProfile.description && (
+                      <div>
+                        <p className="text-sm font-medium">الوصف</p>
+                        <p>{user.startupProfile.description}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : user.role === 'MENTOR' && user.mentorProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات الموجه</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">مجال الخبرة</p>
+                        <p>{user.mentorProfile.expertise || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">الخبرة</p>
+                        <p>{user.mentorProfile.experience || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">الإتاحة</p>
+                        <p>{user.mentorProfile.availability || '-'}</p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        {user.teamMembers && user.teamMembers.length > 0 && (
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle>أعضاء الفريق</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {user.teamMembers.map((member) => (
-                  <div key={member.id} className="border rounded-md p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        {member.department}
-                      </div>
-                      <h3 className="text-lg font-semibold">{member.name}</h3>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
+                ) : user.role === 'INVESTOR' && user.investorProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات المستثمر</h3>
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium">المنصب</p>
-                        <p>{member.position}</p>
+                        <p className="text-sm font-medium">اسم الشركة</p>
+                        <p>{user.investorProfile.companyName || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">البريد الإلكتروني</p>
-                        <p>{member.email}</p>
+                        <p className="text-sm font-medium">مجال الاستثمار</p>
+                        <p>{user.investorProfile.investmentFocus || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">الهاتف</p>
-                        <p>{member.phone}</p>
+                        <p className="text-sm font-medium">مرحلة الاستثمار</p>
+                        <p>{user.investorProfile.investmentStage || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">حجم الاستثمار</p>
+                        <p>{user.investorProfile.investmentSize || '-'}</p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                ) : user.role === 'ENTREPRENEUR' && user.entrepreneurProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات رائد الأعمال</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">اسم المنظمة</p>
+                        <p>{user.entrepreneurProfile.organizationName || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">المجال</p>
+                        <p>{user.entrepreneurProfile.industry || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">مجالات التركيز</p>
+                        <p>{user.entrepreneurProfile.focusAreas || '-'}</p>
+                      </div>
+                      {user.entrepreneurProfile.website && (
+                        <div>
+                          <p className="text-sm font-medium">الموقع الإلكتروني</p>
+                          <p>{user.entrepreneurProfile.website}</p>
+                        </div>
+                      )}
+                    </div>
+                    {user.entrepreneurProfile.description && (
+                      <div>
+                        <p className="text-sm font-medium">الوصف</p>
+                        <p>{user.entrepreneurProfile.description}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : user.role === 'ACCELERATOR' && user.acceleratorProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات مسرع الأعمال</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">اسم المنظمة</p>
+                        <p>{user.acceleratorProfile.organizationName || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">المجال</p>
+                        <p>{user.acceleratorProfile.industry || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">مجالات التركيز</p>
+                        <p>{user.acceleratorProfile.focusAreas || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">مدة البرنامج</p>
+                        <p>{user.acceleratorProfile.programLength || '-'}</p>
+                      </div>
+                    </div>
+                    {user.acceleratorProfile.description && (
+                      <div>
+                        <p className="text-sm font-medium">الوصف</p>
+                        <p>{user.acceleratorProfile.description}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : user.role === 'PROGRAM_MANAGER' && user.programManagerProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات مدير البرنامج</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">البرامج</p>
+                        <p>{user.programManagerProfile.programs || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">المسؤوليات</p>
+                        <p>{user.programManagerProfile.responsibilities || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : user.role === 'ADMIN' && user.adminProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات المدير</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">القسم</p>
+                        <p>{user.adminProfile.department || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">الصلاحيات</p>
+                        <p>{user.adminProfile.permissions || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : user.role === 'PARTICIPANT' && user.participantProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات المشارك</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium">المهارات</p>
+                        <p>{user.participantProfile.skills || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">الاهتمامات</p>
+                        <p>{user.participantProfile.interests || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">التعليم</p>
+                        <p>{user.participantProfile.education || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">الخبرة</p>
+                        <p>{user.participantProfile.experience || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : user.role === 'JUDGE' && user.judgeProfile ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">معلومات المحكم</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Display judge profile fields if they exist in the schema */}
+                      <div>
+                        <p className="text-sm font-medium">التخصص</p>
+                        <p>{user.specialization || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">لم يتم إكمال الملف الشخصي بعد.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="permissions" className="space-y-6">
+          <UserRolePermissionManager userId={userId} />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-6">
+          {user.startups && user.startups.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>الشركات الناشئة</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {user.startups.map((startup) => (
+                    <div key={startup.id} className="border rounded-md p-4">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-muted-foreground">
+                          {startup.status === 'APPROVED' ? (
+                            <span className="text-green-600">معتمدة</span>
+                          ) : startup.status === 'REJECTED' ? (
+                            <span className="text-red-600">مرفوضة</span>
+                          ) : (
+                            <span className="text-amber-600">قيد المراجعة</span>
+                          )}
+                        </div>
+                        <h3 className="text-lg font-semibold">{startup.name}</h3>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        <div>
+                          <p className="text-sm font-medium">المجال</p>
+                          <p>{startup.industry}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">المرحلة</p>
+                          <p>{startup.stage}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">تاريخ الإنشاء</p>
+                          <p>{formatDate(startup.createdAt)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {user.teamMembers && user.teamMembers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>أعضاء الفريق</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {user.teamMembers.map((member) => (
+                    <div key={member.id} className="border rounded-md p-4">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-muted-foreground">
+                          {member.department}
+                        </div>
+                        <h3 className="text-lg font-semibold">{member.name}</h3>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        <div>
+                          <p className="text-sm font-medium">المنصب</p>
+                          <p>{member.position}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">البريد الإلكتروني</p>
+                          <p>{member.email}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">الهاتف</p>
+                          <p>{member.phone}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {(!user.startups || user.startups.length === 0) && (!user.teamMembers || user.teamMembers.length === 0) && (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">لا توجد نشاطات لعرضها.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
       
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

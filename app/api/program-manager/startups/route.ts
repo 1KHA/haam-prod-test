@@ -170,3 +170,105 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// POST /api/program-manager/startups - Create a new startup
+export async function POST(request: NextRequest) {
+  try {
+    // Get authorization header
+    const authHeader = request.headers.get('authorization');
+    
+    // Check if user is authenticated
+    const user = await isAuthenticated(authHeader || undefined);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Only program managers can create startups
+    if (user.role !== UserRole.PROGRAM_MANAGER) {
+      return NextResponse.json(
+        { error: 'Only program managers can create startups' },
+        { status: 403 }
+      );
+    }
+
+    // Get request body
+    const body = await request.json();
+    const { 
+      name, 
+      industry, 
+      stage, 
+      description, 
+      problem, 
+      solution, 
+      targetMarket, 
+      businessModel, 
+      competitiveAdvantage, 
+      teamSize, 
+      fundingNeeds, 
+      pitchDeckUrl, 
+      status,
+      creatorId 
+    } = body;
+    
+    // Validate required fields
+    if (!name || !industry || !stage || !description || !problem || !solution || !creatorId) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    
+    // Check if creator exists
+    const creator = await prisma.user.findUnique({
+      where: { id: creatorId },
+      select: { id: true, role: true }
+    });
+    
+    if (!creator) {
+      return NextResponse.json(
+        { error: 'Creator not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Create the startup
+    const startup = await prisma.startup.create({
+      data: {
+        name,
+        industry,
+        stage,
+        description,
+        problem,
+        solution,
+        targetMarket,
+        businessModel,
+        competitiveAdvantage,
+        teamSize: typeof teamSize === 'string' ? parseInt(teamSize) || 1 : teamSize || 1,
+        fundingNeeds,
+        pitchDeckUrl,
+        status: status || 'PENDING',
+        creatorId
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+    
+    return NextResponse.json(startup, { status: 201 });
+  } catch (error) {
+    console.error('Error creating startup:', error);
+    return NextResponse.json(
+      { error: 'Failed to create startup' },
+      { status: 500 }
+    );
+  }
+}

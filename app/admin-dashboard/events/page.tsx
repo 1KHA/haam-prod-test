@@ -127,104 +127,9 @@ export default function EventsManagement() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<boolean>(false)
-
-  // Sample events data for fallback
-  const sampleEvents = [
-    { 
-      id: "1", 
-      title: "هاكاثون الذكاء الاصطناعي", 
-      type: "هاكاثون", 
-      status: "قادم", 
-      apiStatus: "published",
-      date: "15 أبريل 2025",
-      time: "09:00 صباحًا - 06:00 مساءً",
-      location: "مركز الابتكار، الرياض",
-      organizer: "إدارة المنصة",
-      attendees: 120,
-      description: "هاكاثون لتطوير حلول مبتكرة باستخدام الذكاء الاصطناعي",
-      registrationDeadline: "10 أبريل 2025"
-    },
-    { 
-      id: "2", 
-      title: "يوم المستثمر", 
-      type: "عرض تقديمي", 
-      status: "قادم", 
-      apiStatus: "published",
-      date: "20 أبريل 2025",
-      time: "02:00 مساءً - 06:00 مساءً",
-      location: "فندق الفيصلية، الرياض",
-      organizer: "إدارة المنصة",
-      attendees: 85,
-      description: "فرصة للشركات الناشئة لعرض منتجاتها أمام المستثمرين",
-      registrationDeadline: "15 أبريل 2025"
-    },
-    { 
-      id: "3", 
-      title: "ورشة عمل: تطوير نموذج العمل", 
-      type: "ورشة عمل", 
-      status: "قادم", 
-      apiStatus: "published",
-      date: "25 أبريل 2025",
-      time: "10:00 صباحًا - 02:00 مساءً",
-      location: "مقر المسرع، الرياض",
-      organizer: "مسرع التقنية المالية",
-      attendees: 40,
-      description: "ورشة عمل لمساعدة الشركات الناشئة في تطوير نماذج أعمالها",
-      registrationDeadline: "20 أبريل 2025"
-    },
-    { 
-      id: "4", 
-      title: "مؤتمر التقنيات الناشئة", 
-      time: "09:00 صباحًا - 05:00 مساءً",
-      location: "مركز الملك عبدالله المالي، الرياض",
-      organizer: "وزارة الاتصالات وتقنية المعلومات",
-      attendees: 500,
-      description: "مؤتمر سنوي يجمع رواد الأعمال والمستثمرين وخبراء التقنية",
-      registrationDeadline: "1 مارس 2025"
-    },
-    { 
-      id: "5", 
-      title: "لقاء الموجهين والشركات الناشئة", 
-      type: "شبكات", 
-      status: "جاري", 
-      apiStatus: "published",
-      date: "13 مارس 2025",
-      time: "06:00 مساءً - 09:00 مساءً",
-      location: "مقر الحاضنة، جدة",
-      organizer: "حاضنة التقنيات الناشئة",
-      attendees: 60,
-      description: "فرصة للشركات الناشئة للتواصل مع الموجهين وبناء علاقات مهنية",
-      registrationDeadline: "10 مارس 2025"
-    },
-    { 
-      id: "6", 
-      title: "ورشة عمل: التسويق الرقمي", 
-      type: "ورشة عمل", 
-      status: "مكتمل", 
-      apiStatus: "completed",
-      date: "5 مارس 2025",
-      time: "01:00 مساءً - 04:00 مساءً",
-      location: "مقر المسرع، الرياض",
-      organizer: "مسرع التقنية المالية",
-      attendees: 35,
-      description: "ورشة عمل لتعليم استراتيجيات التسويق الرقمي للشركات الناشئة",
-      registrationDeadline: "3 مارس 2025"
-    },
-    { 
-      id: "7", 
-      title: "هاكاثون التقنيات المالية", 
-      type: "هاكاثون", 
-      status: "مكتمل", 
-      apiStatus: "completed",
-      date: "20 فبراير 2025 - 22 فبراير 2025",
-      time: "09:00 صباحًا - 09:00 مساءً",
-      location: "مركز الابتكار، الرياض",
-      organizer: "مسرع التقنية المالية",
-      attendees: 150,
-      description: "هاكاثون لتطوير حلول مبتكرة في مجال التقنيات المالية",
-      registrationDeadline: "15 فبراير 2025"
-    }
-  ];
+  const [showFilterModal, setShowFilterModal] = useState<boolean>(false)
+  const [typeFilter, setTypeFilter] = useState<string>("")
+  const [statusFilter, setStatusFilter] = useState<string>("")
 
   // Fetch events from API
   useEffect(() => {
@@ -244,9 +149,10 @@ export default function EventsManagement() {
         setEvents(formattedEvents);
       } catch (err) {
         console.error('Failed to fetch events:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch events');
-        // Fall back to sample data for demo purposes
-        setEvents(sampleEvents);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch events';
+        setError(errorMessage);
+        toast.error(`فشل تحميل الفعاليات: ${errorMessage}`);
+        setEvents([]);
       } finally {
         setLoading(false);
       }
@@ -501,7 +407,11 @@ export default function EventsManagement() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
@@ -525,11 +435,46 @@ export default function EventsManagement() {
             <div className="flex gap-2">
               {selectedEvents.length > 0 && (
                 <>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={async () => {
+                      try {
+                        const response = await fetchWithAuth('/api/admin/notifications/send', {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            title: 'دعوة للفعاليات',
+                            message: `تمت دعوتك للمشاركة في ${selectedEvents.length} فعاليات`,
+                            recipientType: 'all',
+                            priority: 'medium'
+                          })
+                        });
+                        if (response.ok) {
+                          toast.success("تم إرسال الإشعار بنجاح");
+                        } else {
+                          toast.error("فشل في إرسال الإشعار");
+                        }
+                      } catch (err) {
+                        toast.error("فشل في إرسال الإشعار");
+                      }
+                    }}
+                  >
                     <MessageSquare className="h-4 w-4" />
                     <span>إرسال إشعار</span>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => {
+                      const links = selectedEvents.map(id => 
+                        `${window.location.origin}/events/${id}`
+                      ).join('\n');
+                      navigator.clipboard.writeText(links);
+                      toast.success("تم نسخ روابط الفعاليات");
+                    }}
+                  >
                     <Share2 className="h-4 w-4" />
                     <span>مشاركة</span>
                   </Button>

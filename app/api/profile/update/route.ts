@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
         profile: true,
         mentorProfile: user.role === UserRole.MENTOR,
         entrepreneurProfile: user.role === UserRole.ENTREPRENEUR,
-        participantProfile: user.role === UserRole.PARTICIPANT,
         investorProfile: user.role === UserRole.INVESTOR,
         adminProfile: user.role === UserRole.ADMIN,
         programManagerProfile: user.role === UserRole.PROGRAM_MANAGER,

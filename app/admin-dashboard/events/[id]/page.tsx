@@ -128,7 +128,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 id: "user1",
                 name: "أحمد محمد",
                 email: "ahmed@example.com",
-                role: "PARTICIPANT",
+                role: "ENTREPRENEUR",
                 profile: { avatar: null }
               }
             },
@@ -141,7 +141,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 id: "user2",
                 name: "سارة عبدالله",
                 email: "sara@example.com",
-                role: "PARTICIPANT",
+                role: "ENTREPRENEUR",
                 profile: { avatar: null }
               }
             }

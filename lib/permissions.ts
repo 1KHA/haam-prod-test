@@ -298,7 +298,6 @@ function getRoleNameInArabic(role: UserRole): string {
     'PROGRAM_MANAGER': 'مدير برنامج',
     'MENTOR': 'موجه',
     'INVESTOR': 'مستثمر',
-    'PARTICIPANT': 'مشارك',
     'ENTREPRENEUR': 'رائد أعمال',
   };
   

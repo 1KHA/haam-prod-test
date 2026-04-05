@@ -33,7 +33,6 @@ export async function GET(
         investorProfile: true,
         entrepreneurProfile: true,
         programManagerProfile: true,
-        participantProfile: true,
         adminProfile: true,
         startups: true,
         teamMembers: true
@@ -53,7 +52,6 @@ export async function GET(
       user.role === 'INVESTOR' ? !!user.investorProfile :
       user.role === 'ENTREPRENEUR' ? !!user.entrepreneurProfile :
       user.role === 'PROGRAM_MANAGER' ? !!user.programManagerProfile :
-      user.role === 'PARTICIPANT' ? !!user.participantProfile :
       user.role === 'ADMIN' ? !!user.adminProfile :
       false
     }`);
@@ -62,7 +60,6 @@ export async function GET(
     const hasProfile = user.mentorProfile || 
                       user.investorProfile || 
                       user.entrepreneurProfile ||
-                      user.participantProfile || 
                       user.adminProfile ||
                       user.programManagerProfile;
     
@@ -115,7 +112,6 @@ export async function PUT(
         adminProfile: true,
         programManagerProfile: true,
         entrepreneurProfile: true,
-        participantProfile: true,
       }
     });
     
@@ -128,12 +124,12 @@ export async function PUT(
     
     // Validate role value if provided
     if (role) {
-      const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+      const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'ENTREPRENEUR'];
       
       if (!validRoles.includes(role)) {
         return NextResponse.json(
           { 
-            error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' 
+            error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, ENTREPRENEUR' 
           },
           { status: 400 }
         );
@@ -194,16 +190,6 @@ export async function PUT(
             }
           };
           break;
-        case 'PARTICIPANT':
-          updateData.participantProfile = {
-            create: {
-              skills: specialization || '',
-              interests: '',
-              education: '',
-              experience: ''
-            }
-          };
-          break;
         case 'ENTREPRENEUR':
           updateData.entrepreneurProfile = {
             create: {
@@ -231,7 +217,6 @@ export async function PUT(
         adminProfile: true,
         programManagerProfile: true,
         entrepreneurProfile: true,
-        participantProfile: true,
       }
     });
     
@@ -239,7 +224,6 @@ export async function PUT(
     const hasProfile = updatedUser.mentorProfile || 
                       updatedUser.investorProfile || 
                       updatedUser.startupProfile ||
-                      updatedUser.participantProfile || 
                       updatedUser.adminProfile ||
                       updatedUser.programManagerProfile ||
                       updatedUser.entrepreneurProfile;
@@ -292,7 +276,6 @@ export async function DELETE(
         investorProfile: true,
         entrepreneurProfile: true,
         programManagerProfile: true,
-        participantProfile: true,
         adminProfile: true,
         startups: true,
         teamMembers: true
@@ -376,12 +359,6 @@ export async function DELETE(
       
       if (existingUser.programManagerProfile) {
         await tx.programManagerProfile.delete({
-          where: { userId: userId }
-        });
-      }
-      
-      if (existingUser.participantProfile) {
-        await tx.participantProfile.delete({
           where: { userId: userId }
         });
       }
@@ -502,12 +479,12 @@ export async function PATCH(
     }
     
     // Validate role value
-    const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    const validRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'ENTREPRENEUR'];
     
     if (!validRoles.includes(role)) {
       return NextResponse.json(
         { 
-          error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' 
+          error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, ENTREPRENEUR' 
         },
         { status: 400 }
       );

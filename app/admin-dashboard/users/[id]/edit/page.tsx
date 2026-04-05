@@ -18,7 +18,6 @@ const ARABIC_ROLE_MAP: Record<string, string> = {
   'مدير برنامج': 'PROGRAM_MANAGER',
   'موجه': 'MENTOR',
   'مستثمر': 'INVESTOR',
-  'مشارك': 'PARTICIPANT',
   'رائد أعمال': 'ENTREPRENEUR',
 }
 
@@ -27,7 +26,6 @@ const ROLE_DISPLAY_NAMES: Record<string, string> = {
   'PROGRAM_MANAGER': 'مدير برنامج',
   'MENTOR': 'موجه',
   'INVESTOR': 'مستثمر',
-  'PARTICIPANT': 'مشارك',
   'ENTREPRENEUR': 'رائد أعمال',
 }
 
@@ -274,7 +272,6 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                       <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
                       <SelectItem value="MENTOR">موجه</SelectItem>
                       <SelectItem value="INVESTOR">مستثمر</SelectItem>
-                      <SelectItem value="PARTICIPANT">مشارك</SelectItem>
                       <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
                     </>
                   )}

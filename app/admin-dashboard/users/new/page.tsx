@@ -40,7 +40,6 @@ export default function NewUserPage() {
       "PROGRAM_MANAGER": "مدير برنامج", 
       "MENTOR": "موجه",
       "INVESTOR": "مستثمر",
-      "PARTICIPANT": "مشارك",
       "ENTREPRENEUR": "رائد أعمال",
     };
     return roleMap[roleName] || roleName;
@@ -78,8 +77,7 @@ export default function NewUserPage() {
             { id: '2', name: 'PROGRAM_MANAGER', usersCount: 0, permissions: {} },
             { id: '3', name: 'MENTOR', usersCount: 0, permissions: {} },
             { id: '4', name: 'INVESTOR', usersCount: 0, permissions: {} },
-            { id: '5', name: 'PARTICIPANT', usersCount: 0, permissions: {} },
-            { id: '6', name: 'ENTREPRENEUR', usersCount: 0, permissions: {} }
+            { id: '5', name: 'ENTREPRENEUR', usersCount: 0, permissions: {} }
           ]);
         }
       } catch (error) {
@@ -90,8 +88,7 @@ export default function NewUserPage() {
           { id: '2', name: 'PROGRAM_MANAGER', usersCount: 0, permissions: {} },
           { id: '3', name: 'MENTOR', usersCount: 0, permissions: {} },
           { id: '4', name: 'INVESTOR', usersCount: 0, permissions: {} },
-          { id: '5', name: 'PARTICIPANT', usersCount: 0, permissions: {} },
-          { id: '6', name: 'ENTREPRENEUR', usersCount: 0, permissions: {} }
+          { id: '5', name: 'ENTREPRENEUR', usersCount: 0, permissions: {} }
         ]);
       } finally {
         setRolesLoading(false);

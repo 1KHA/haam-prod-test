@@ -89,13 +89,6 @@ export async function POST(request: NextRequest) {
 
     // Create role-specific profile
     switch (role) {
-      case UserRole.PARTICIPANT:
-        await prisma.participantProfile.create({
-          data: {
-            userId: user.id,
-          },
-        });
-        break;
       case UserRole.MENTOR:
         await prisma.mentorProfile.create({
           data: {

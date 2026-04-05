@@ -120,20 +120,6 @@ async function main() {
   });
 
 
-  // Create participant role
-  const participantRole = await prisma.role.upsert({
-    where: { name: 'مشارك' },
-    update: {
-      description: 'مشارك في البرامج والفعاليات',
-      roleEnum: 'PARTICIPANT',
-    },
-    create: {
-      name: 'مشارك',
-      description: 'مشارك في البرامج والفعاليات',
-      roleEnum: 'PARTICIPANT',
-    },
-  });
-
   // Clean up old roles
   const rolesToDelete = ['مسرع أعمال', 'شركة ناشئة'];
   for (const roleName of rolesToDelete) {
@@ -391,43 +377,6 @@ async function main() {
     }
   }
 
-
-  // Add permissions to participant role
-  const participantPermissions = [
-    { category: 'dashboard', action: 'view' },
-  ];
-
-  for (const { category, action } of participantPermissions) {
-    const permission = await prisma.permission.findUnique({
-      where: {
-        category_action: {
-          category,
-          action,
-        },
-      },
-    });
-
-    if (permission) {
-      // Check if the role permission already exists
-      const existingRolePermission = await prisma.rolePermission.findFirst({
-        where: {
-          roleId: participantRole.id,
-          permissionId: permission.id,
-          userId: null,
-        },
-      });
-
-      if (!existingRolePermission) {
-        // Create the role permission if it doesn't exist
-        await prisma.rolePermission.create({
-          data: {
-            roleId: participantRole.id,
-            permissionId: permission.id,
-          },
-        });
-      }
-    }
-  }
 
   // Add permissions to entrepreneur role
   const entrepreneurPermissions = [

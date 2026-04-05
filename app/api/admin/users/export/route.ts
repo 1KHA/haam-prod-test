@@ -82,7 +82,6 @@ export async function GET(req: NextRequest) {
         adminProfile: true,
         programManagerProfile: true,
         entrepreneurProfile: true,
-        participantProfile: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -98,8 +97,7 @@ export async function GET(req: NextRequest) {
         user.startupProfile || 
         user.adminProfile || 
         user.programManagerProfile || 
-        user.entrepreneurProfile || 
-        user.participantProfile;
+        user.entrepreneurProfile;
 
       // Determine status
       const status = roleProfile ? 'ACTIVE' : 'PENDING';
@@ -111,7 +109,6 @@ export async function GET(req: NextRequest) {
         'STARTUP': 'شركة ناشئة',
         'MENTOR': 'موجه',
         'INVESTOR': 'مستثمر',
-        'PARTICIPANT': 'مشارك',
         'ENTREPRENEUR': 'رائد أعمال',
         'ACCELERATOR': 'مسرع أعمال'
       };

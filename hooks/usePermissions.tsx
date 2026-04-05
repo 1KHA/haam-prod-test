@@ -272,7 +272,6 @@ export function usePermissions() {
       'PROGRAM_MANAGER': 'مدير برنامج',
       'MENTOR': 'موجه',
       'INVESTOR': 'مستثمر',
-      'PARTICIPANT': 'مشارك',
       'ENTREPRENEUR': 'رائد أعمال'
     };
     

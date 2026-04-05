@@ -118,8 +118,6 @@ export default function ProfilePage() {
         roleProfile = userData.entrepreneurProfile as EntrepreneurProfile
       } else if (userData.role === 'MENTOR' && userData.mentorProfile) {
         roleProfile = userData.mentorProfile as MentorProfile
-      } else if (userData.role === 'PARTICIPANT' && userData.participantProfile) {
-        roleProfile = userData.participantProfile
       } else if (userData.role === 'INVESTOR' && userData.investorProfile) {
         roleProfile = userData.investorProfile
       } else if (userData.role === 'ADMIN' && userData.adminProfile) {
@@ -184,7 +182,6 @@ export default function ProfilePage() {
       "PROGRAM_MANAGER": "مدير البرنامج",
       "MENTOR": "مرشد",
       "INVESTOR": "مستثمر",
-      "PARTICIPANT": "مشارك",
       "ENTREPRENEUR": "رائد أعمال"
     }
     

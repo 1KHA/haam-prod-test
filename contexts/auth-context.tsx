@@ -41,12 +41,11 @@ interface SignUpData {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
+const ROLE_DASHBOARD_MAP: Partial<Record<UserRole, string>> = {
   [UserRole.ADMIN]: '/admin-dashboard',
   [UserRole.PROGRAM_MANAGER]: '/program-manager-dashboard',
   [UserRole.MENTOR]: '/mentor-dashboard',
   [UserRole.INVESTOR]: '/investor-dashboard',
-  [UserRole.PARTICIPANT]: '/',
   [UserRole.ENTREPRENEUR]: '/entrepreneur-dashboard',
 };
 

@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
           whereClause.role = 'PROGRAM_MANAGER';
           break;
         case 'participants':
-          whereClause.role = 'PARTICIPANT';
+          // PARTICIPANT role removed - treat as no-op or skip
+          whereClause.role = 'ENTREPRENEUR'; // fallback
           break;
         case 'admins':
           whereClause.role = 'ADMIN';

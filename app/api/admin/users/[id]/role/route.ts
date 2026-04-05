@@ -47,7 +47,7 @@ export async function PUT(
     }
     
     // Validate role - first check standard enum roles, then check custom roles in the database
-    const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'ENTREPRENEUR'];
     
     let isValidRole = validEnumRoles.includes(role);
     
@@ -174,7 +174,7 @@ export async function PUT(
       if (error.code === 'P2006' || error.message.includes('enum')) {
         return NextResponse.json(
           { 
-            error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT, ENTREPRENEUR' 
+            error: 'Invalid role value. Valid roles are: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, ENTREPRENEUR' 
           },
           { status: 400 }
         );

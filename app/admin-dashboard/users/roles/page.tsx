@@ -368,15 +368,6 @@ export default function RolesPermissions() {
         ]
       }
     ],
-    PARTICIPANT: [
-      {
-        category: "dashboard",
-        displayName: "لوحة التحكم",
-        actions: [
-          { action: "view", pages: ["/"] }
-        ]
-      }
-    ],
     ENTREPRENEUR: [
       {
         category: "dashboard",
@@ -983,7 +974,6 @@ export default function RolesPermissions() {
                       "مدير برنامج": "PROGRAM_MANAGER",
                       "موجه": "MENTOR",
                       "مستثمر": "INVESTOR",
-                      "مشارك": "PARTICIPANT",
                       "رائد أعمال": "ENTREPRENEUR"
                     };
                     

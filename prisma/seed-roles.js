@@ -93,12 +93,6 @@ async function main() {
     create: { name: 'محكم', description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات' },
   });
 
-  const participantRole = await prisma.role.upsert({
-    where: { name: 'مشارك' },
-    update: { description: 'مشارك في البرامج والفعاليات' },
-    create: { name: 'مشارك', description: 'مشارك في البرامج والفعاليات' },
-  });
-
   const entrepreneurRole = await prisma.role.upsert({
     where: { name: 'ENTREPRENEUR' },
     update: { description: 'Manage company, access resources and funding' },

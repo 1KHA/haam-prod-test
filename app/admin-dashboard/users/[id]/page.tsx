@@ -31,7 +31,6 @@ interface UserProfile {
   mentorProfile?: any
   investorProfile?: any
   acceleratorProfile?: any
-  participantProfile?: any
   adminProfile?: any
   programManagerProfile?: any
   entrepreneurProfile?: any  // Added missing profile
@@ -152,7 +151,6 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
       'PROGRAM_MANAGER': 'مدير برنامج',
       'MENTOR': 'موجه',
       'INVESTOR': 'مستثمر',
-      'PARTICIPANT': 'مشارك',
       'ENTREPRENEUR': 'رائد أعمال'
     }
     
@@ -180,8 +178,6 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
         return user.programManagerProfile;
       case 'ENTREPRENEUR':
         return user.entrepreneurProfile;
-      case 'PARTICIPANT':
-        return user.participantProfile;
       default:
         console.warn(`No profile mapping found for role: ${role}`);
         return null;
@@ -460,28 +456,6 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                       <div>
                         <p className="text-sm font-medium">الصلاحيات</p>
                         <p>{user.adminProfile.permissions || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : user.role === 'PARTICIPANT' && user.participantProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات المشارك</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">المهارات</p>
-                        <p>{user.participantProfile.skills || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">الاهتمامات</p>
-                        <p>{user.participantProfile.interests || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">التعليم</p>
-                        <p>{user.participantProfile.education || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">الخبرة</p>
-                        <p>{user.participantProfile.experience || '-'}</p>
                       </div>
                     </div>
                   </div>

@@ -20,7 +20,6 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   profile       Profile?
-  participantProfile ParticipantProfile?
   startupProfile StartupProfile?
   mentorProfile MentorProfile?
   investorProfile InvestorProfile?
@@ -62,18 +61,6 @@ model Profile {
   city          String?
   country       String?
   position      String?   // Added position field
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model ParticipantProfile {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skills        String?
-  interests     String?
-  education     String?
-  experience    String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -252,7 +239,6 @@ enum UserRole {
   PROGRAM_MANAGER
   MENTOR
   INVESTOR
-  PARTICIPANT
   ENTREPRENEUR
 }
 

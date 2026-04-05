@@ -62,7 +62,6 @@ export async function GET(req: NextRequest) {
         adminProfile: true,
         programManagerProfile: true,
         entrepreneurProfile: true,
-        participantProfile: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -83,8 +82,7 @@ export async function GET(req: NextRequest) {
         user.startupProfile || 
         user.adminProfile || 
         user.programManagerProfile || 
-        user.entrepreneurProfile || 
-        user.participantProfile;
+        user.entrepreneurProfile;
 
       // Determine status
       const status = roleProfile ? 'ACTIVE' : 'PENDING';
@@ -148,9 +146,9 @@ export async function POST(req: NextRequest) {
     const { email, password, name, role, specialization } = body;
 
     // Validate role - check if it exists in the database (dynamic roles) or is a valid enum value
-    const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+    const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'ENTREPRENEUR'];
     let isValidRole = false;
-    let userRole: UserRole = UserRole.PARTICIPANT;
+    let userRole: UserRole = UserRole.ENTREPRENEUR;
     
     // First check if it's a valid enum role
     if (validEnumRoles.includes(role)) {
@@ -168,8 +166,8 @@ export async function POST(req: NextRequest) {
           isValidRole = true;
           // For custom roles, we'll use a default enum value but store the actual role name
           // Custom roles will be handled via the RolePermission table
-          userRole = 'PARTICIPANT' as UserRole; // Use PARTICIPANT as default for custom roles
-          console.log(`[Users API] Using custom role: '${role}' (mapped to PARTICIPANT)`);
+          userRole = 'ENTREPRENEUR' as UserRole; // Use ENTREPRENEUR as default for custom roles
+          console.log(`[Users API] Using custom role: '${role}' (mapped to ENTREPRENEUR)`);
         }
       } catch (error) {
         console.error(`[Users API] Error checking custom role: ${error}`);
@@ -264,16 +262,6 @@ export async function POST(req: NextRequest) {
           }
         };
         break;
-      case 'PARTICIPANT':
-        userData.participantProfile = {
-          create: {
-            skills: specialization || '',
-            interests: '',
-            education: '',
-            experience: ''
-          }
-        };
-        break;
       case 'ENTREPRENEUR':
         userData.entrepreneurProfile = {
           create: {
@@ -291,15 +279,14 @@ export async function POST(req: NextRequest) {
     // Create user with the appropriate profiles
     const user = await prisma.user.create({
       data: userData,
-      include: {
-        profile: true,
-        adminProfile: true,
-        programManagerProfile: true,
-        mentorProfile: true,
-        investorProfile: true,
-        participantProfile: true,
-        entrepreneurProfile: true,
-      } as any,
+        include: {
+          profile: true,
+          adminProfile: true,
+          programManagerProfile: true,
+          mentorProfile: true,
+          investorProfile: true,
+          entrepreneurProfile: true,
+        } as any,
     });
 
     // If this is a custom role, create the RolePermission links
@@ -374,7 +361,7 @@ export async function PUT(req: NextRequest) {
     
     if (role) {
       // Validate role - check if it exists in the database (dynamic roles) or is a valid enum value
-      const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
+      const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'ENTREPRENEUR'];
       let isValidRole = false;
       
       // First check if it's a valid enum role
@@ -391,9 +378,9 @@ export async function PUT(req: NextRequest) {
           
           if (existingRole) {
             isValidRole = true;
-            // For custom roles, use PARTICIPANT as default enum value
-            userRole = 'PARTICIPANT' as UserRole;
-            console.log(`[Users API] Using custom role: '${role}' (mapped to PARTICIPANT)`);
+            // For custom roles, use ENTREPRENEUR as default enum value
+            userRole = 'ENTREPRENEUR' as UserRole;
+            console.log(`[Users API] Using custom role: '${role}' (mapped to ENTREPRENEUR)`);
           }
         } catch (error) {
           console.error(`[Users API] Error checking custom role: ${error}`);

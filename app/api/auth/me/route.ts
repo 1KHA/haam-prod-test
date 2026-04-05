@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
       where: { id: user.userId },
       include: {
         profile: true,
-        participantProfile: user.role === UserRole.PARTICIPANT,
         mentorProfile: user.role === UserRole.MENTOR,
         investorProfile: user.role === UserRole.INVESTOR,
         adminProfile: user.role === UserRole.ADMIN,

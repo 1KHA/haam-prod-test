@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
         participantProfile: user.role === UserRole.PARTICIPANT,
         mentorProfile: user.role === UserRole.MENTOR,
         investorProfile: user.role === UserRole.INVESTOR,
-        judgeProfile: user.role === UserRole.JUDGE,
         adminProfile: user.role === UserRole.ADMIN,
         programManagerProfile: user.role === UserRole.PROGRAM_MANAGER,
         entrepreneurProfile: user.role === UserRole.ENTREPRENEUR,

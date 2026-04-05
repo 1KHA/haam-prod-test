@@ -34,7 +34,6 @@ interface UserProfile {
   participantProfile?: any
   adminProfile?: any
   programManagerProfile?: any
-  judgeProfile?: any
   entrepreneurProfile?: any  // Added missing profile
   startups?: any[]
   teamMembers?: any[]
@@ -183,11 +182,6 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
         return user.entrepreneurProfile;
       case 'PARTICIPANT':
         return user.participantProfile;
-      // These roles might not be in active use but kept for backwards compatibility
-      case 'JUDGE':
-        return user.judgeProfile;
-      case 'ACCELERATOR':
-        return user.acceleratorProfile;
       default:
         console.warn(`No profile mapping found for role: ${role}`);
         return null;
@@ -488,17 +482,6 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                       <div>
                         <p className="text-sm font-medium">الخبرة</p>
                         <p>{user.participantProfile.experience || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : user.role === 'JUDGE' && user.judgeProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات المحكم</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Display judge profile fields if they exist in the schema */}
-                      <div>
-                        <p className="text-sm font-medium">التخصص</p>
-                        <p>{user.specialization || '-'}</p>
                       </div>
                     </div>
                   </div>

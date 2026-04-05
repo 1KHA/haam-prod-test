@@ -12,7 +12,6 @@ const navItems = [
   { name: "لوحة التحكم", href: "/dashboard", icon: Home },
   { name: "المستخدمون", href: "/dashboard/users", icon: Users },
   { name: "الفرق", href: "/dashboard/teams", icon: Flag },
-  { name: "الحكام", href: "/dashboard/judges", icon: Award },
   { name: "النتائج", href: "/dashboard/scores", icon: Star },
   { name: "الموجهون", href: "/dashboard/mentors", icon: Book },
   { name: "الفعاليات", href: "/dashboard/events", icon: Calendar },

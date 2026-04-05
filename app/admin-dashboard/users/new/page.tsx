@@ -42,9 +42,6 @@ export default function NewUserPage() {
       "INVESTOR": "مستثمر",
       "PARTICIPANT": "مشارك",
       "ENTREPRENEUR": "رائد أعمال",
-      "STARTUP": "شركة ناشئة",
-      "JUDGE": "محكم",
-      "ACCELERATOR": "مسرع أعمال"
     };
     return roleMap[roleName] || roleName;
   };

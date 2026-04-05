@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
     // Validate role - check if it exists in the database (dynamic roles) or is a valid enum value
     const validEnumRoles = ['ADMIN', 'PROGRAM_MANAGER', 'MENTOR', 'INVESTOR', 'PARTICIPANT', 'ENTREPRENEUR'];
     let isValidRole = false;
-    let userRole: UserRole;
+    let userRole: UserRole = UserRole.PARTICIPANT;
     
     // First check if it's a valid enum role
     if (validEnumRoles.includes(role)) {
@@ -321,7 +321,7 @@ export async function POST(req: NextRequest) {
           await prisma.rolePermission.createMany({
             data: rolePermissionData,
             skipDuplicates: true
-          });
+          } as any);
           
           console.log(`[Users API] Linked user ${user.id} to custom role ${role} with ${customRole.permissions.length} permissions`);
         } else {

@@ -4,7 +4,7 @@ const columns = ["ID", "Name", "Email", "Role"]
 const data = [
   { id: 1, name: "John Doe", email: "john@example.com", role: "Participant" },
   { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Mentor" },
-  { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Judge" },
+  { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Participant" },
 ]
 
 export default function UsersPage() {

@@ -300,9 +300,6 @@ function getRoleNameInArabic(role: UserRole): string {
     'INVESTOR': 'مستثمر',
     'PARTICIPANT': 'مشارك',
     'ENTREPRENEUR': 'رائد أعمال',
-    'STARTUP': 'شركة ناشئة',
-    'JUDGE': 'محكم',
-    'ACCELERATOR': 'مسرع أعمال'
   };
   
   // If the role is not in the map, log a warning and return the role as-is

@@ -5,7 +5,6 @@ const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Users", href: "/dashboard/users", icon: Users },
   { name: "Teams", href: "/dashboard/teams", icon: Flag },
-  { name: "Judges", href: "/dashboard/judges", icon: Award },
   { name: "Scores", href: "/dashboard/scores", icon: Star },
   { name: "Mentors", href: "/dashboard/mentors", icon: Book },
   { name: "Events", href: "/dashboard/events", icon: Calendar },

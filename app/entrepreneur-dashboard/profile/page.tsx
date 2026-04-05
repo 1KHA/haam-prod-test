@@ -122,8 +122,6 @@ export default function ProfilePage() {
         roleProfile = userData.participantProfile
       } else if (userData.role === 'INVESTOR' && userData.investorProfile) {
         roleProfile = userData.investorProfile
-      } else if (userData.role === 'JUDGE' && userData.judgeProfile) {
-        roleProfile = userData.judgeProfile
       } else if (userData.role === 'ADMIN' && userData.adminProfile) {
         roleProfile = userData.adminProfile
       } else if (userData.role === 'PROGRAM_MANAGER' && userData.programManagerProfile) {
@@ -186,7 +184,6 @@ export default function ProfilePage() {
       "PROGRAM_MANAGER": "مدير البرنامج",
       "MENTOR": "مرشد",
       "INVESTOR": "مستثمر",
-      "JUDGE": "محكم",
       "PARTICIPANT": "مشارك",
       "ENTREPRENEUR": "رائد أعمال"
     }

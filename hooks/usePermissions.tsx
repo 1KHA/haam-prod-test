@@ -270,12 +270,9 @@ export function usePermissions() {
     const roleMap: Record<string, string> = {
       'ADMIN': 'مدير النظام',
       'PROGRAM_MANAGER': 'مدير برنامج',
-      'STARTUP': 'شركة ناشئة',
       'MENTOR': 'موجه',
       'INVESTOR': 'مستثمر',
-      'JUDGE': 'محكم',
       'PARTICIPANT': 'مشارك',
-      'ACCELERATOR': 'مسرع أعمال',
       'ENTREPRENEUR': 'رائد أعمال'
     };
     

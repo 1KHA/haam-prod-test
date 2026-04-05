@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { RouteGuard } from "@/components/auth/RouteGuard"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/lib/auth"
 export default function ParticipantDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
 

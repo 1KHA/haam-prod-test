@@ -16,7 +16,7 @@ import {
   Rocket
 } from "lucide-react"
 import { RouteGuard } from "@/components/auth/RouteGuard"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/lib/auth"
 
 export default function ProgramManagerDashboard() {
   const [activeTab, setActiveTab] = useState("overview")

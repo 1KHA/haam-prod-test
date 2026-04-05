@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { RouteGuard } from "@/components/auth/RouteGuard"
 import { PermissionGate } from "@/hooks/usePermissions"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/lib/auth"
 import { useAuth } from "@/contexts/auth-context"
 
 interface Milestone {

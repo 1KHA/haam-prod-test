@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { RouteGuard } from "@/components/auth/RouteGuard"
 import { PermissionGate } from "@/hooks/usePermissions"
 import { Button } from "@/components/ui/button"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/lib/auth"
 
 interface CompanyMember {
   id: string;

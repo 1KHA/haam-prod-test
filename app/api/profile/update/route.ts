@@ -71,7 +71,6 @@ export async function POST(request: NextRequest) {
         entrepreneurProfile: user.role === UserRole.ENTREPRENEUR,
         participantProfile: user.role === UserRole.PARTICIPANT,
         investorProfile: user.role === UserRole.INVESTOR,
-        judgeProfile: user.role === UserRole.JUDGE,
         adminProfile: user.role === UserRole.ADMIN,
         programManagerProfile: user.role === UserRole.PROGRAM_MANAGER,
       },

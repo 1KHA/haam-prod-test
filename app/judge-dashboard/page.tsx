@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 
 import { RouteGuard } from "@/components/auth/RouteGuard"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/lib/auth"
 export default function JudgeDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -119,7 +119,7 @@ export default function JudgeDashboard() {
   return (
     <RouteGuard 
       requiredPermission={{ category: 'dashboard', action: 'view' }}
-      requiredRole={UserRole.JUDGE}
+      requiredRole={UserRole.PARTICIPANT}
     >
       
     <div className="space-y-6 text-right">

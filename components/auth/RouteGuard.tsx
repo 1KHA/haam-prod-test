@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PermissionRequirement } from '@/lib/permissions';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 
 interface RouteGuardProps {
   children: React.ReactNode;

@@ -101,13 +101,6 @@ export async function POST(request: NextRequest) {
           },
         });
         break;
-      case UserRole.JUDGE:
-        await prisma.judgeProfile.create({
-          data: {
-            userId: user.id,
-          },
-        });
-        break;
       case UserRole.ADMIN:
         await prisma.adminProfile.create({
           data: {

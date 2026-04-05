@@ -168,17 +168,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       case UserRole.INVESTOR:
         router.push('/investor-dashboard');
         break;
-      case UserRole.JUDGE:
-        router.push('/judge-dashboard');
-        break;
       case UserRole.PARTICIPANT:
         router.push('/participant-dashboard');
-        break;
-      case UserRole.STARTUP:
-        router.push('/entrepreneur-dashboard'); // Startups use the entrepreneur dashboard
-        break;
-      case UserRole.ACCELERATOR:
-        router.push('/program-manager-dashboard'); // Accelerators use the program manager dashboard
         break;
       default:
         router.push('/');

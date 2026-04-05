@@ -12,6 +12,31 @@ import { ArrowRight, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 
+// Arabic to enum mapping for roles
+const ARABIC_ROLE_MAP: Record<string, string> = {
+  'مدير النظام': 'ADMIN',
+  'مدير برنامج': 'PROGRAM_MANAGER',
+  'موجه': 'MENTOR',
+  'مستثمر': 'INVESTOR',
+  'مشارك': 'PARTICIPANT',
+  'رائد أعمال': 'ENTREPRENEUR',
+}
+
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  'ADMIN': 'مدير النظام',
+  'PROGRAM_MANAGER': 'مدير برنامج',
+  'MENTOR': 'موجه',
+  'INVESTOR': 'مستثمر',
+  'PARTICIPANT': 'مشارك',
+  'ENTREPRENEUR': 'رائد أعمال',
+}
+
+interface RoleOption {
+  id: string
+  name: string
+  enumValue: string
+}
+
 export default function EditUserPage({ params }: { params: { id: string } }) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -20,12 +45,37 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
   const [specialization, setSpecialization] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([])
   
   const router = useRouter()
   const { toast } = useToast()
   const { refreshPermissions } = usePermissions()
   const userId = params.id
   
+  // Fetch available roles from API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+        const response = await fetch('/api/admin/roles', {
+          headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          const roles: RoleOption[] = data.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            enumValue: ARABIC_ROLE_MAP[r.name] || r.name,
+          }))
+          setAvailableRoles(roles)
+        }
+      } catch (error) {
+        console.error('Error fetching roles:', error)
+      }
+    }
+    fetchRoles()
+  }, [])
+
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
@@ -212,12 +262,22 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                   <SelectValue placeholder="اختر دور المستخدم" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">مدير النظام</SelectItem>
-                  <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
-                  <SelectItem value="MENTOR">موجه</SelectItem>
-                  <SelectItem value="INVESTOR">مستثمر</SelectItem>
-                  <SelectItem value="PARTICIPANT">مشارك</SelectItem>
-                  <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
+                  {availableRoles.length > 0 ? (
+                    availableRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.enumValue}>
+                        {r.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="ADMIN">مدير النظام</SelectItem>
+                      <SelectItem value="PROGRAM_MANAGER">مدير برنامج</SelectItem>
+                      <SelectItem value="MENTOR">موجه</SelectItem>
+                      <SelectItem value="INVESTOR">مستثمر</SelectItem>
+                      <SelectItem value="PARTICIPANT">مشارك</SelectItem>
+                      <SelectItem value="ENTREPRENEUR">رائد أعمال</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>

@@ -144,7 +144,7 @@ export default function SignUpForm() {
     let userRole: UserRole;
     if (role === "moderator") {
       if (signupType === "hackathon") {
-        userRole = UserRole.JUDGE;
+        userRole = UserRole.PARTICIPANT;
       } else {
         userRole = UserRole.MENTOR;
       }

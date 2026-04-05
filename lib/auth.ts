@@ -1,18 +1,9 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
 
-// Define UserRole enum (must exactly match the one in Prisma schema)
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  PROGRAM_MANAGER = 'PROGRAM_MANAGER',
-  MENTOR = 'MENTOR',
-  INVESTOR = 'INVESTOR',
-  PARTICIPANT = 'PARTICIPANT',
-  ENTREPRENEUR = 'ENTREPRENEUR',
-  STARTUP = 'STARTUP',
-  JUDGE = 'JUDGE',
-  ACCELERATOR = 'ACCELERATOR'
-}
+// Re-export UserRole from Prisma client (single source of truth)
+export { UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 // Secret key for JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';

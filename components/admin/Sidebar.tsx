@@ -31,6 +31,7 @@ interface NavItem {
   href: string;
   icon: any;
   permission?: PermissionRequirement;
+  hidden?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -74,7 +75,8 @@ const navItems: NavItem[] = [
     name: "التمويل", 
     href: "/admin-dashboard/financing", 
     icon: DollarSign,
-    permission: { category: "funding", action: "view" }
+    permission: { category: "funding", action: "view" },
+    hidden: true
   },
   { 
     name: "الفعاليات", 
@@ -86,13 +88,15 @@ const navItems: NavItem[] = [
     name: "سجلات الأمان", 
     href: "/admin-dashboard/security/logs", 
     icon: Shield,
-    permission: { category: "settings", action: "view" }
+    permission: { category: "settings", action: "view" },
+    hidden: true
   },
   { 
     name: "التحليلات", 
     href: "/admin-dashboard/analytics", 
     icon: BarChart,
-    permission: { category: "analytics", action: "view" }
+    permission: { category: "analytics", action: "view" },
+    hidden: true
   },
   { 
     name: "الإشعارات", 
@@ -110,7 +114,8 @@ const navItems: NavItem[] = [
     name: "التكاملات", 
     href: "/admin-dashboard/integrations", 
     icon: Plug,
-    permission: { category: "integrations", action: "view" }
+    permission: { category: "integrations", action: "view" },
+    hidden: true
   },
 ]
 
@@ -119,11 +124,14 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { hasPermission, loading } = usePermissions()
 
-  // Filter navigation items based on permissions
+  // Filter navigation items based on permissions and hidden status
   const filteredNavItems = useMemo(() => {
     if (loading) return []
     
     return navItems.filter(item => {
+      // Skip hidden items
+      if (item.hidden) return false
+      
       // If no permission is specified, show the item
       if (!item.permission) return true
       

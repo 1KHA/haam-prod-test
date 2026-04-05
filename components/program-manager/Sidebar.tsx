@@ -79,19 +79,22 @@ const navItems = [
     name: "إدارة التمويل", 
     href: "/program-manager-dashboard/funding", 
     icon: DollarSign,
-    permission: { category: 'funding', action: 'view' }
+    permission: { category: 'funding', action: 'view' },
+    hidden: true
   },
   { 
     name: "الموارد التعليمية", 
     href: "/program-manager-dashboard/resources", 
     icon: BookOpen,
-    permission: { category: 'resources', action: 'view' }
+    permission: { category: 'resources', action: 'view' },
+    hidden: true
   },
   { 
     name: "التقييم والملاحظات", 
     href: "/program-manager-dashboard/feedback", 
     icon: FileText,
-    permission: { category: 'startups', action: 'view' }
+    permission: { category: 'startups', action: 'view' },
+    hidden: true
   },
   { 
     name: "المهام والمراحل", 
@@ -103,13 +106,15 @@ const navItems = [
     name: "التقارير والتحليلات", 
     href: "/program-manager-dashboard/reports", 
     icon: BarChart,
-    permission: { category: 'reports', action: 'view' }
+    permission: { category: 'reports', action: 'view' },
+    hidden: true
   },
   { 
     name: "المناقشات", 
     href: "/program-manager-dashboard/discussions", 
     icon: MessageSquare,
-    permission: { category: 'discussions', action: 'view' }
+    permission: { category: 'discussions', action: 'view' },
+    hidden: true
   },
 ]
 
@@ -118,11 +123,14 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { hasPermission, loading } = usePermissions()
 
-  // Filter navigation items based on permissions
+  // Filter navigation items based on permissions and hidden status
   const filteredNavItems = useMemo(() => {
     if (loading) return []
     
     return navItems.filter(item => {
+      // Skip hidden items
+      if (item.hidden) return false
+      
       if (!item.permission) return true
       return hasPermission(item.permission)
     })

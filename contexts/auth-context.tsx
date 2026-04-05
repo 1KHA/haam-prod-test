@@ -46,7 +46,7 @@ const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
   [UserRole.PROGRAM_MANAGER]: '/program-manager-dashboard',
   [UserRole.MENTOR]: '/mentor-dashboard',
   [UserRole.INVESTOR]: '/investor-dashboard',
-  [UserRole.PARTICIPANT]: '/participant-dashboard',
+  [UserRole.PARTICIPANT]: '/',
   [UserRole.ENTREPRENEUR]: '/entrepreneur-dashboard',
 };
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,8 +18,6 @@ import { Label } from "@/components/ui/label"
 export default function SignUpForm() {
   const router = useRouter()
   const { signUp, isLoading, error } = useAuth()
-  const [signupType, setSignupType] = useState<string | null>(null)
-  const [signupRole, setSignupRole] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -29,6 +27,7 @@ export default function SignUpForm() {
     confirmPassword: "",
     phone: "",
     specialization: "",
+    organizationName: "",
   })
   
   const [errors, setErrors] = useState({
@@ -70,32 +69,16 @@ export default function SignUpForm() {
     "أخرى"
   ]
 
-  useEffect(() => {
-    // Retrieve the signup type and role from localStorage
-    const type = localStorage.getItem("signupType")
-    const role = localStorage.getItem("signupRole")
-    
-    if (!type || !role) {
-      // If no type or role is found, redirect back to the first step
-      router.push("/auth/signup")
-    } else {
-      setSignupType(type)
-      setSignupRole(role)
-    }
-  }, [router])
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     
-    // Validate password and confirmPassword
     if (name === "password" || name === "confirmPassword") {
       validatePasswords(name, value)
     }
   }
   
   const handleSelectChange = (value: string) => {
-    console.log("Specialization selected:", value)
     setFormData(prev => ({ ...prev, specialization: value }))
   }
   
@@ -126,7 +109,6 @@ export default function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validate form
     if (formData.password !== formData.confirmPassword) {
       setErrors(prev => ({ ...prev, confirmPassword: "كلمات المرور غير متطابقة" }))
       return
@@ -137,55 +119,26 @@ export default function SignUpForm() {
       return
     }
     
-    // Get the role from localStorage
-    const role = localStorage.getItem("signupRole")
-    
-    // Map the role to UserRole enum
-    let userRole: UserRole;
-    if (role === "moderator") {
-      if (signupType === "hackathon") {
-        userRole = UserRole.PARTICIPANT;
-      } else {
-        userRole = UserRole.MENTOR;
-      }
-    } else {
-      if (signupType === "hackathon") {
-        userRole = UserRole.PARTICIPANT;
-      } else {
-        userRole = UserRole.ENTREPRENEUR;
-      }
-    }
-    
-    // Create user data
+    // Always register as ENTREPRENEUR — other roles are admin-only
     const userData = {
       name: `${formData.firstName} ${formData.lastName}`,
       email: formData.email,
       password: formData.password,
-      role: userRole,
+      role: UserRole.ENTREPRENEUR,
       specialization: formData.specialization,
-      phone: formData.phone, // Add phone to userData
+      phone: formData.phone,
+      organizationName: formData.organizationName,
     };
     
-    console.log("Submitting user data:", userData);
-    
-    // Sign up user
     await signUp(userData);
-    
-    // Clear localStorage
-    localStorage.removeItem("signupType");
-    localStorage.removeItem("signupRole");
-    
-    // No need to handle redirection here as it's handled in the auth context
   }
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">إكمال التسجيل</h1>
+        <h1 className="text-2xl font-bold">تسجيل رائد أعمال</h1>
         <p className="text-muted-foreground mt-2">
-          {signupType === "hackathon" 
-            ? (signupRole === "user" ? "أكمل بياناتك للتسجيل كمشارك في الهاكاثون" : "أكمل بياناتك للتسجيل كمشرف في الهاكاثون")
-            : (signupRole === "user" ? "أكمل بياناتك للتسجيل كمسرع أعمال" : "أكمل بياناتك للتسجيل كمرشد في المسرع")}
+          أكمل بياناتك للانضمام إلى مسرعة الأعمال
         </p>
       </div>
       
@@ -251,6 +204,19 @@ export default function SignUpForm() {
             required
           />
         </div>
+
+        <div className="space-y-2">
+          <label htmlFor="organizationName" className="text-sm font-medium">
+            اسم المشروع أو المنظمة
+          </label>
+          <Input
+            id="organizationName"
+            name="organizationName"
+            value={formData.organizationName}
+            onChange={handleChange}
+            placeholder="اسم شركتك أو مشروعك الناشئ"
+          />
+        </div>
         
         <div className="space-y-2">
           <Label htmlFor="specialization" className="text-sm font-medium">
@@ -259,7 +225,6 @@ export default function SignUpForm() {
           <Select
             value={formData.specialization}
             onValueChange={handleSelectChange}
-            required
           >
             <SelectTrigger id="specialization" className="text-right justify-end">
               <SelectValue placeholder="اختر تخصصك" />
@@ -312,7 +277,7 @@ export default function SignUpForm() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/auth/signup/role")}
+            onClick={() => router.push("/auth/signup")}
           >
             رجوع
           </Button>

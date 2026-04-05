@@ -12,9 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function Header() {
   const { setTheme, theme } = useTheme()
+  const { signOut } = useAuth()
 
   return (
     <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4">
@@ -36,7 +38,7 @@ export default function Header() {
               تبديل المظهر
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>تسجيل الخروج</DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut}>تسجيل الخروج</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

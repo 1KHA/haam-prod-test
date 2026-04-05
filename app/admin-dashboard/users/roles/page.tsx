@@ -373,7 +373,7 @@ export default function RolesPermissions() {
         category: "dashboard",
         displayName: "لوحة التحكم",
         actions: [
-          { action: "view", pages: ["/participant-dashboard"] }
+          { action: "view", pages: ["/"] }
         ]
       }
     ],

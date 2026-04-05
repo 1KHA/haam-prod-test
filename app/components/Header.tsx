@@ -13,10 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("")
   const { setTheme, theme } = useTheme()
+  const { signOut } = useAuth()
 
   return (
     <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -51,7 +53,7 @@ export default function Header() {
               Toggle Theme
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut}>Log out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

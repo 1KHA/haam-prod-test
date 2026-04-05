@@ -40,6 +40,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Only ENTREPRENEUR can register publicly — all other roles must be created by admin
+    const ALLOWED_PUBLIC_ROLES: UserRole[] = [UserRole.ENTREPRENEUR];
+    if (!ALLOWED_PUBLIC_ROLES.includes(role as UserRole)) {
+      return NextResponse.json(
+        { error: 'التسجيل العام متاح لرواد الأعمال فقط. يرجى التواصل مع المسؤول لإنشاء حسابات الأدوار الأخرى.' },
+        { status: 403 }
+      );
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },

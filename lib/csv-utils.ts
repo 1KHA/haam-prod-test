@@ -58,10 +58,13 @@ export function generateCSV(options: CSVExportOptions): string {
  * Creates a CSV download response with proper headers and encoding
  */
 export function createCSVResponse(options: CSVExportOptions): Response {
-  const { filename = 'export.csv', includeUTF8BOM = true } = options;
+  const { filename = 'export.csv', includeUTF8BOM = true, delimiter = ',' } = options;
   
   // Generate CSV content
   let csvContent = generateCSV(options);
+  
+  // Add Excel separator instruction to force Excel to use the correct delimiter
+  csvContent = `sep=${delimiter}\n` + csvContent;
   
   // Add UTF-8 BOM for proper Arabic text encoding
   if (includeUTF8BOM) {

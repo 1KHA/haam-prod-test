@@ -21,6 +21,7 @@ import {
   Loader2
 } from "lucide-react"
 import { toast } from "react-hot-toast"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export default function EditEvent() {
   const params = useParams()
@@ -76,8 +77,6 @@ export default function EditEvent() {
 
   const fetchEventDetails = async () => {
     try {
-      const { fetchWithAuth } = await import('@/lib/api-client')
-      
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {}, 'response') as any
       
       if (response.error) {
@@ -137,8 +136,6 @@ export default function EditEvent() {
         ...formData,
         capacity: parseInt(formData.capacity) || null,
       }
-      
-      const { fetchWithAuth } = await import('@/lib/api-client')
       
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {
         method: 'PUT',

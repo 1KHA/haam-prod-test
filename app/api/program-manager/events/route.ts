@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
         // Override the OR condition if specific status is requested
         delete filter.OR;
         filter.status = status;
-        // But still limit draft events to user's own
-        if (status === 'draft') {
+        // Limit draft and cancelled events to user's own
+        if (status === 'draft' || status === 'cancelled') {
           filter.creatorId = user.userId;
         }
       }

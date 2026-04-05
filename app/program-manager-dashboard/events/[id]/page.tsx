@@ -22,6 +22,7 @@ import {
 import { toast } from "react-hot-toast"
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
+import { fetchWithAuth } from "@/lib/api-client"
 
 interface Event {
   id: string
@@ -59,8 +60,6 @@ export default function EventDetail() {
 
   const fetchEventDetails = async () => {
     try {
-      const { fetchWithAuth } = await import('@/lib/api-client')
-      
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {}, 'response') as any
       
       if (response.error) {
@@ -86,8 +85,6 @@ export default function EventDetail() {
 
     setIsDeleting(true)
     try {
-      const { fetchWithAuth } = await import('@/lib/api-client')
-      
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {
         method: 'DELETE'
       }, 'response') as any

@@ -22,6 +22,7 @@ import {
 import { toast } from "react-hot-toast"
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
+import { fetchWithAuth } from "@/lib/api-client"
 
 interface Registration {
   id: string
@@ -64,8 +65,6 @@ export default function EventRegistrations() {
 
   const fetchEventDetails = async () => {
     try {
-      const { fetchWithAuth } = await import('@/lib/api-client')
-      
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {}, 'response') as any
       
       if (response.error) {
@@ -81,8 +80,6 @@ export default function EventRegistrations() {
 
   const fetchRegistrations = async () => {
     try {
-      const { fetchWithAuth } = await import('@/lib/api-client')
-      
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}/registrations`, {}, 'response') as any
       
       if (response.error) {
@@ -101,8 +98,6 @@ export default function EventRegistrations() {
 
   const handleExportRegistrations = async () => {
     try {
-      const { fetchWithAuth } = await import('@/lib/api-client')
-      
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}/registrations/export`, {}, 'response') as any
       
       if (response.error) {

@@ -24,6 +24,7 @@ import {
   Loader2
 } from "lucide-react"
 import { toast } from "react-hot-toast"
+import { fetchWithAuth } from "@/lib/api-client"
 
 export default function CreateEvent() {
   const router = useRouter()
@@ -89,9 +90,6 @@ export default function CreateEvent() {
         ...formData,
         capacity: parseInt(formData.capacity) || null,
       }
-      
-      // Import and use fetchWithAuth for authenticated request
-      const { fetchWithAuth } = await import('@/lib/api-client');
       
       const response = await fetchWithAuth('/api/program-manager/events', {
         method: 'POST',

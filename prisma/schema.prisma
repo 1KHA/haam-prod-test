@@ -367,7 +367,7 @@ model Event {
   startDate           DateTime
   endDate             DateTime
   location            String
-  capacity            Int
+  capacity            Int?
   status              String            @default("draft") // "draft", "published", "cancelled", "completed"
   organizer           String
   organizerId         String?           // Optional reference to the organizer's ID (could be admin, program manager, etc.)

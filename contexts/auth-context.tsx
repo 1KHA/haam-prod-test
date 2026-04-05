@@ -41,11 +41,21 @@ interface SignUpData {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
+  [UserRole.ADMIN]: '/admin-dashboard',
+  [UserRole.PROGRAM_MANAGER]: '/program-manager-dashboard',
+  [UserRole.MENTOR]: '/mentor-dashboard',
+  [UserRole.INVESTOR]: '/investor-dashboard',
+  [UserRole.PARTICIPANT]: '/participant-dashboard',
+  [UserRole.ENTREPRENEUR]: '/entrepreneur-dashboard',
+};
+
 // Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -152,29 +162,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Helper function to redirect based on user role
   const redirectBasedOnRole = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        router.push('/admin-dashboard');
-        break;
-      case UserRole.PROGRAM_MANAGER:
-        router.push('/program-manager-dashboard');
-        break;
-      case UserRole.ENTREPRENEUR:
-        router.push('/entrepreneur-dashboard');
-        break;
-      case UserRole.MENTOR:
-        router.push('/mentor-dashboard');
-        break;
-      case UserRole.INVESTOR:
-        router.push('/investor-dashboard');
-        break;
-      case UserRole.PARTICIPANT:
-        router.push('/participant-dashboard');
-        break;
-      default:
-        router.push('/');
+    const dashboard = ROLE_DASHBOARD_MAP[role];
+    if (dashboard) {
+      setIsRedirecting(true);
+      router.push(dashboard);
+    } else {
+      console.warn(`[AUTH] No dashboard mapping for role: ${role}`);
+      router.push('/');
     }
   };
+
+  useEffect(() => {
+    if (!isRedirecting) return;
+    const timeout = setTimeout(() => setIsRedirecting(false), 500);
+    return () => clearTimeout(timeout);
+  }, [isRedirecting]);
 
   const value = {
     user,

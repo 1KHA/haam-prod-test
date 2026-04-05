@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 
 // GET /api/admin/startups - Get all startups with pagination and filtering
 export async function GET(request: NextRequest) {

@@ -216,6 +216,7 @@ model Role {
   id            String    @id @default(uuid())
   name          String    @unique
   description   String?
+  roleEnum      UserRole? // Links Role table to UserRole enum for direct lookup
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   permissions   RolePermission[]

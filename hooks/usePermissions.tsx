@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 
 export interface PermissionRequirement {
   category: string;

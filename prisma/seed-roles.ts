@@ -68,10 +68,12 @@ async function main() {
     where: { name: 'مدير النظام' },
     update: {
       description: 'وصول كامل إلى جميع ميزات النظام وإعداداته',
+      roleEnum: 'ADMIN',
     },
     create: {
       name: 'مدير النظام',
       description: 'وصول كامل إلى جميع ميزات النظام وإعداداته',
+      roleEnum: 'ADMIN',
     },
   });
 
@@ -80,10 +82,12 @@ async function main() {
     where: { name: 'مدير برنامج' },
     update: {
       description: 'إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة',
+      roleEnum: 'PROGRAM_MANAGER',
     },
     create: {
       name: 'مدير برنامج',
       description: 'إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة',
+      roleEnum: 'PROGRAM_MANAGER',
     },
   });
 
@@ -92,10 +96,12 @@ async function main() {
     where: { name: 'موجه' },
     update: {
       description: 'تقديم الإرشاد والتوجيه للشركات الناشئة',
+      roleEnum: 'MENTOR',
     },
     create: {
       name: 'موجه',
       description: 'تقديم الإرشاد والتوجيه للشركات الناشئة',
+      roleEnum: 'MENTOR',
     },
   });
 
@@ -104,10 +110,12 @@ async function main() {
     where: { name: 'مستثمر' },
     update: {
       description: 'عرض الشركات الناشئة وتقديم التمويل',
+      roleEnum: 'INVESTOR',
     },
     create: {
       name: 'مستثمر',
       description: 'عرض الشركات الناشئة وتقديم التمويل',
+      roleEnum: 'INVESTOR',
     },
   });
 
@@ -117,10 +125,12 @@ async function main() {
     where: { name: 'مشارك' },
     update: {
       description: 'مشارك في البرامج والفعاليات',
+      roleEnum: 'PARTICIPANT',
     },
     create: {
       name: 'مشارك',
       description: 'مشارك في البرامج والفعاليات',
+      roleEnum: 'PARTICIPANT',
     },
   });
 
@@ -166,10 +176,12 @@ async function main() {
     where: { name: 'رائد أعمال' },
     update: {
       description: 'إدارة الشركة والوصول إلى الموارد والتمويل',
+      roleEnum: 'ENTREPRENEUR',
     },
     create: {
       name: 'رائد أعمال',
       description: 'إدارة الشركة والوصول إلى الموارد والتمويل',
+      roleEnum: 'ENTREPRENEUR',
     },
   });
 

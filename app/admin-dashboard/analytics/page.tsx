@@ -79,6 +79,13 @@ export default function AnalyticsDashboard() {
       { type: "جولة ب", count: 20, amount: "8,000,000", percentage: 32 },
       { type: "جولة ج", count: 5, amount: "3,750,000", percentage: 15 }
     ],
+    fundingBySector: [
+      { sector: "التقنية المالية", amount: "8,500,000", percentage: 34 },
+      { sector: "الذكاء الاصطناعي", amount: "6,250,000", percentage: 25 },
+      { sector: "التقنيات الصحية", amount: "4,500,000", percentage: 18 },
+      { sector: "التجارة الإلكترونية", amount: "3,250,000", percentage: 13 },
+      { sector: "التعليم التقني", amount: "2,500,000", percentage: 10 }
+    ],
     programSuccess: [
       { program: "مسرع التقنية المالية", startups: 25, graduated: 22, funded: 18, success: 88 },
       { program: "مسرع الذكاء الاصطناعي", startups: 20, graduated: 18, funded: 15, success: 90 },
@@ -609,4 +616,22 @@ export default function AnalyticsDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4
+                <div className="space-y-4">
+                  {analyticsData.fundingBySector.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-sm font-medium">{item.sector}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-lg font-bold">{item.amount} ريال</span>
+                        <span className="text-xs text-muted-foreground">({item.percentage}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

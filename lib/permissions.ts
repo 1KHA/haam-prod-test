@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 import { isAuthenticated } from '@/lib/auth';
 
 export interface PermissionRequirement {
@@ -54,14 +54,14 @@ export async function hasPermission(
       return true;
     }
 
-    // Fallback: Check default role permissions for backward compatibility
-    const arabicRoleName = getRoleNameInArabic(user.role);
+    // Fallback: Check default role permissions using roleEnum (primary) or Arabic name (legacy)
     const defaultRolePermission = await prisma.rolePermission.findFirst({
       where: {
         role: {
           OR: [
-            { name: arabicRoleName },
-            { name: user.role.toString() }
+            { roleEnum: user.role },           // Primary: direct enum match
+            { name: getRoleNameInArabic(user.role) }, // Legacy: Arabic name fallback
+            { name: user.role.toString() }     // Legacy: raw enum string fallback
           ]
         },
         permission: {
@@ -73,7 +73,7 @@ export async function hasPermission(
     });
 
     if (defaultRolePermission) {
-      console.log(`[PERMISSIONS] Permission granted through default role: ${arabicRoleName}`);
+      console.log(`[PERMISSIONS] Permission granted through default role: ${user.role}`);
       return true;
     }
 
@@ -149,27 +149,24 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
       }));
     }
 
-    // Find the role in the database - try multiple strategies
+    // Find the role in the database - primary strategy: use roleEnum field
     let rolePermissions: any[] = [];
     
-    // Strategy 1: Try with Arabic role name mapping
-    const arabicRoleName = getRoleNameInArabic(user.role);
-    console.log(`Role mapped to Arabic: ${user.role} -> ${arabicRoleName}`);
-    
-    // Strategy 2: Find the role record in the database
+    // Strategy 1 (primary): Find role by roleEnum field - direct, reliable lookup
     const userRoleRecord = await prisma.role.findFirst({
       where: {
         OR: [
-          { name: arabicRoleName },
-          { name: user.role.toString() } // Also try with the enum value directly
+          { roleEnum: user.role },                    // Primary: direct enum match
+          { name: getRoleNameInArabic(user.role) },   // Legacy: Arabic name fallback
+          { name: user.role.toString() }              // Legacy: raw enum string fallback
         ]
       }
     });
     
     if (userRoleRecord) {
-      console.log(`Found role in database: ${userRoleRecord.name} (ID: ${userRoleRecord.id})`);
+      console.log(`Found role in database: ${userRoleRecord.name} (ID: ${userRoleRecord.id}, roleEnum: ${userRoleRecord.roleEnum})`);
       
-      // Try lookup by role ID (most reliable)
+      // Lookup by role ID (most reliable)
       const permissionsByRoleId = await prisma.rolePermission.findMany({
         where: {
           roleId: userRoleRecord.id,
@@ -183,44 +180,8 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
       
       console.log(`Found ${permissionsByRoleId.length} permissions using roleId lookup`);
       rolePermissions = [...permissionsByRoleId];
-    }
-    
-    // Strategy 3: If no permissions found yet, try by name
-    if (rolePermissions.length === 0) {
-      const permissionsByName = await prisma.rolePermission.findMany({
-        where: {
-          role: {
-            name: arabicRoleName,
-          },
-          userId: null,
-        },
-        include: {
-          permission: true,
-          role: true,
-        },
-      });
-      
-      console.log(`Found ${permissionsByName.length} role-based permissions by name: ${arabicRoleName}`);
-      rolePermissions = [...permissionsByName];
-    }
-    
-    // Strategy 4: Try with the raw role name
-    if (rolePermissions.length === 0) {
-      const permissionsByRawName = await prisma.rolePermission.findMany({
-        where: {
-          role: {
-            name: user.role.toString(),
-          },
-          userId: null,
-        },
-        include: {
-          permission: true,
-          role: true,
-        },
-      });
-      
-      console.log(`Found ${permissionsByRawName.length} permissions using raw role name: ${user.role.toString()}`);
-      rolePermissions = [...rolePermissions, ...permissionsByRawName];
+    } else {
+      console.warn(`No role record found for user role: ${user.role}`);
     }
 
     // Get user-specific permissions

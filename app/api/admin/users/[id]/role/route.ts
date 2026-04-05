@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 import { emitPermissionsRefresh } from '@/lib/sse-helpers';
 
 // PUT /api/admin/users/[id]/role - Update a user's role

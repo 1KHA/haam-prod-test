@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hash } from 'bcrypt';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '@/lib/auth';
 import { checkPermission } from '@/lib/permissions';
 
 // GET /api/admin/users/[id] - Get a single user by ID

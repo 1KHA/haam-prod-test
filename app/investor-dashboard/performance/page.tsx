@@ -565,3 +565,32 @@ export default function PerformancePage() {
                         <div className="space-y-1">
                           <div className="text-xs text-muted-foreground">تاريخ الاستثمار</div>
                           <div className="text-sm font-medium">{startup.investmentDate}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">مبلغ الاستثمار</div>
+                          <div className="text-sm font-medium">{startup.investmentAmount}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">القيمة الحالية</div>
+                          <div className="text-sm font-medium">{startup.currentValue}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-xs text-muted-foreground">العائد</div>
+                          <div className="text-sm font-medium text-green-600">{startup.roi}</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">لا توجد شركات ناشئة خرجت</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

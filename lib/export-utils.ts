@@ -291,6 +291,8 @@ export const exportPresets = {
     level?: string;
     dateFrom?: string;
     dateTo?: string;
+    ids?: string;
+    [key: string]: string | undefined;
   } = {}, customOptions: Partial<Parameters<typeof exportCSV>[0]> = {}) {
     const queryParams = new URLSearchParams();
     addFilterParams(queryParams, filters);

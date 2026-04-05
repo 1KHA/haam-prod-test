@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'all'; // opportunities, records, or all
     
     // Get funding opportunities
-    let opportunities = [];
+    let opportunities: Record<string, unknown>[] = [];
     if (type === 'all' || type === 'opportunities') {
       opportunities = await prisma.fundingOpportunity.findMany({
         orderBy: { 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get user's startups to check for funding records
-    let fundingRecords = [];
+    let fundingRecords: Record<string, unknown>[] = [];
     if (type === 'all' || type === 'records') {
       const userStartups = await prisma.startup.findMany({
         where: {

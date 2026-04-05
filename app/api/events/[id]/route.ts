@@ -41,9 +41,9 @@ export async function GET(
     if (user) {
       userRegistration = await prisma.eventRegistration.findUnique({
         where: {
-          userId_eventId: {
-            userId: user.userId,
-            eventId: id
+          eventId_userId: {
+            eventId: id,
+            userId: user.userId
           }
         }
       });

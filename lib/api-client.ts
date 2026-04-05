@@ -19,6 +19,9 @@ export interface ApiResponse<T = any> {
  * @param mode 'response' for new ApiResponse format, 'direct' for backward compatibility
  * @returns Promise with the formatted API response or direct Response for backward compatibility
  */
+export async function fetchWithAuth<T = any>(url: string, options?: RequestInit): Promise<Response>;
+export async function fetchWithAuth<T = any>(url: string, options: RequestInit, mode: 'direct'): Promise<Response>;
+export async function fetchWithAuth<T = any>(url: string, options: RequestInit, mode: 'response'): Promise<ApiResponse<T>>;
 export async function fetchWithAuth<T = any>(
   url: string, 
   options: RequestInit = {},

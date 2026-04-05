@@ -95,8 +95,6 @@ export async function POST(req: NextRequest) {
             sharedById: userId,
             sharedWithId: user.id,
             message: message || '',
-            isRead: false, // Initialize as unread
-            sharedAt: new Date(), // Record the exact time of sharing
           },
           include: {
             sharedBy: {
@@ -130,20 +128,10 @@ export async function POST(req: NextRequest) {
       users.map((user: { id: string, name: string, email: string }) =>
         prisma.notification.create({
           data: {
-            userId: user.id,
+            createdById: userId,
             type: 'REPORT_SHARED',
             title: 'تقرير جديد مشارك معك',
-            content: `تمت مشاركة التقرير "${report.title}" معك`,
-            metadata: {
-              reportId: reportId,
-              reportTitle: report.title,
-              reportFormat: report.format,
-              reportUrl: `/api/admin/reports/view?id=${reportId}`,
-              downloadUrl: `/api/admin/reports/download?id=${reportId}`,
-              sharedById: userId,
-              sharedByName: report.createdBy?.name || 'مستخدم النظام',
-              message: message || '',
-            },
+            message: `تمت مشاركة التقرير "${report.title}" معك`,
           },
         })
       )
@@ -245,7 +233,7 @@ export async function GET(req: NextRequest) {
         }
       },
       orderBy: {
-        sharedAt: 'desc',
+        createdAt: 'desc',
       },
     });
 

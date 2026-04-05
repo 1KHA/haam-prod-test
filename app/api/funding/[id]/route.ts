@@ -1,24 +1,21 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/lib/auth';
+import { isAuthenticated, UserRole } from '@/lib/auth';
 
 // GET /api/funding/[id] - Get a specific funding opportunity
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
+    const authHeader = request.headers.get('authorization') ?? undefined;
+    const user = await isAuthenticated(authHeader);
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user || user.role !== UserRole.ENTREPRENEUR) {
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -33,7 +30,7 @@ export async function GET(
       );
     }
 
-    if (fundingOpportunity.entrepreneurId !== user.id) {
+    if (fundingOpportunity.entrepreneurId !== user.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -49,20 +46,18 @@ export async function GET(
 
 // PUT /api/funding/[id] - Update a funding opportunity
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
+    const authHeader = request.headers.get('authorization') ?? undefined;
+    const user = await isAuthenticated(authHeader);
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user || user.role !== UserRole.ENTREPRENEUR) {
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -77,16 +72,16 @@ export async function PUT(
       );
     }
 
-    if (fundingOpportunity.entrepreneurId !== user.id) {
+    if (fundingOpportunity.entrepreneurId !== user.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { title, description, amount, type, requirements, deadline } = body;
+    const { title, description, amount, fundingType, requirements, deadline } = body;
 
     // Validate funding type
     const validTypes = ['GRANT', 'INVESTMENT', 'LOAN'];
-    if (type && !validTypes.includes(type)) {
+    if (fundingType && !validTypes.includes(fundingType)) {
       return NextResponse.json(
         { error: 'Invalid funding type' },
         { status: 400 }
@@ -99,7 +94,7 @@ export async function PUT(
         title,
         description,
         amount,
-        type,
+        fundingType,
         requirements,
         deadline: deadline ? new Date(deadline) : undefined,
       },
@@ -117,20 +112,18 @@ export async function PUT(
 
 // DELETE /api/funding/[id] - Delete a funding opportunity
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
+    const authHeader = request.headers.get('authorization') ?? undefined;
+    const user = await isAuthenticated(authHeader);
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user || user.role !== UserRole.ENTREPRENEUR) {
+    if (user.role !== UserRole.ENTREPRENEUR) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -145,7 +138,7 @@ export async function DELETE(
       );
     }
 
-    if (fundingOpportunity.entrepreneurId !== user.id) {
+    if (fundingOpportunity.entrepreneurId !== user.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

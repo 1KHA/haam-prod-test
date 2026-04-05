@@ -400,6 +400,8 @@ model EventRegistration {
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   status          String    @default("confirmed") // "confirmed", "cancelled", "waitlist"
+  notes           String?   @default("")
+  registeredBy    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   

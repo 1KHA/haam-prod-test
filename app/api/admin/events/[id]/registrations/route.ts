@@ -157,9 +157,9 @@ export async function POST(
     // Check if registration already exists
     const existingRegistration = await prisma.eventRegistration.findUnique({
       where: {
-        userId_eventId: {
-          userId: body.userId,
-          eventId: id
+        eventId_userId: {
+          eventId: id,
+          userId: body.userId
         }
       }
     });

@@ -352,7 +352,7 @@ export default function FundingManagement() {
                                 </DialogDescription>
                               </DialogHeader>
                               <DialogFooter>
-                                <DialogClose asChild>
+                                <DialogClose>
                                   <Button variant="outline">إلغاء</Button>
                                 </DialogClose>
                                 <Button variant="destructive" onClick={() => handleDelete(item.id)}>

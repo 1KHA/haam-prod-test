@@ -289,21 +289,11 @@ export default function ReportsManagement() {
       
       let data: any
 
-      // Check if response is a standard Response object
-      if (response instanceof Response) {
-        if (!response.ok) {
-          throw new Error('Failed to fetch report details')
-        }
-        
-        data = await response.json()
-      } else {
-        // Handling for ApiResponse<any> type
-        if (response.error) {
-          throw new Error(`Failed to fetch report details: ${response.error}`)
-        }
-        
-        data = response.data
+      if (!response.ok) {
+        throw new Error('Failed to fetch report details')
       }
+      
+      data = await response.json()
       
       if (!data || !data.report || !data.report.filePath) {
         throw new Error('Report file not found')
@@ -345,16 +335,7 @@ export default function ReportsManagement() {
       
       clearInterval(progressInterval)
       
-      // Check if response is a standard Response object or ApiResponse
-      let isOk = false
-      if (response instanceof Response) {
-        isOk = response.ok
-      } else {
-        // For ApiResponse check status and absence of error
-        isOk = (response.status >= 200 && response.status < 300) && !response.error
-      }
-      
-      if (!isOk) {
+      if (!response.ok) {
         throw new Error('Failed to upload report')
       }
       
@@ -435,16 +416,7 @@ export default function ReportsManagement() {
         })
       }, 'direct')
       
-      // Check if response is a standard Response object or ApiResponse
-      let isOk = false
-      if (response instanceof Response) {
-        isOk = response.ok
-      } else {
-        // For ApiResponse check status and absence of error
-        isOk = (response.status >= 200 && response.status < 300) && !response.error
-      }
-      
-      if (!isOk) {
+      if (!response.ok) {
         throw new Error('Failed to share report')
       }
       
@@ -464,16 +436,7 @@ export default function ReportsManagement() {
         body: JSON.stringify(newData)
       }, 'direct')
       
-      // Check if response is a standard Response object or ApiResponse
-      let isOk = false
-      if (response instanceof Response) {
-        isOk = response.ok
-      } else {
-        // For ApiResponse check status and absence of error
-        isOk = (response.status >= 200 && response.status < 300) && !response.error
-      }
-      
-      if (!isOk) {
+      if (!response.ok) {
         throw new Error('Failed to update report')
       }
       

@@ -164,10 +164,15 @@ export async function POST(req: NextRequest) {
         
         if (existingRole) {
           isValidRole = true;
-          // For custom roles, we'll use a default enum value but store the actual role name
-          // Custom roles will be handled via the RolePermission table
-          userRole = 'ENTREPRENEUR' as UserRole; // Use ENTREPRENEUR as default for custom roles
-          console.log(`[Users API] Using custom role: '${role}' (mapped to ENTREPRENEUR)`);
+          // Use the roleEnum from the Role record if it maps to a known enum value
+          if (existingRole.roleEnum && validEnumRoles.includes(existingRole.roleEnum)) {
+            userRole = existingRole.roleEnum as UserRole;
+            console.log(`[Users API] Resolved role '${role}' → enum '${existingRole.roleEnum}'`);
+          } else {
+            // Truly custom role with no enum mapping — default to ENTREPRENEUR
+            userRole = 'ENTREPRENEUR' as UserRole;
+            console.log(`[Users API] Custom role '${role}' has no enum mapping, defaulting to ENTREPRENEUR`);
+          }
         }
       } catch (error) {
         console.error(`[Users API] Error checking custom role: ${error}`);
@@ -378,9 +383,14 @@ export async function PUT(req: NextRequest) {
           
           if (existingRole) {
             isValidRole = true;
-            // For custom roles, use ENTREPRENEUR as default enum value
-            userRole = 'ENTREPRENEUR' as UserRole;
-            console.log(`[Users API] Using custom role: '${role}' (mapped to ENTREPRENEUR)`);
+            // Use the roleEnum from the Role record if it maps to a known enum value
+            if (existingRole.roleEnum && validEnumRoles.includes(existingRole.roleEnum)) {
+              userRole = existingRole.roleEnum as UserRole;
+              console.log(`[Users API] Resolved role '${role}' → enum '${existingRole.roleEnum}'`);
+            } else {
+              userRole = 'ENTREPRENEUR' as UserRole;
+              console.log(`[Users API] Custom role '${role}' has no enum mapping, defaulting to ENTREPRENEUR`);
+            }
           }
         } catch (error) {
           console.error(`[Users API] Error checking custom role: ${error}`);

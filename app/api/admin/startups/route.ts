@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { UserRole } from '@/lib/auth';
 
 // GET /api/admin/startups - Get all startups with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -38,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
     
     if (status) {
-      where.status = status;
+      where.status = status.toUpperCase(); // Status is uppercase in schema (PENDING, APPROVED, REJECTED)
     }
     
     if (industry) {
@@ -95,6 +94,7 @@ export async function GET(request: NextRequest) {
         status: startup.status,
         createdAt: startup.createdAt,
         updatedAt: startup.updatedAt,
+        creatorId: startup.creatorId,
         creator: {
           id: startup.creator.id,
           name: startup.creator.name,
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!name || !industry || !stage || !description || !problem || !solution || !creatorId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name, industry, stage, description, problem, solution, creatorId' },
         { status: 400 }
       );
     }
@@ -185,8 +185,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-    
-    // No longer requiring ENTREPRENEUR role - any user can be a creator
     
     // Create the startup
     const startup = await prisma.startup.create({
@@ -217,7 +215,7 @@ export async function POST(request: NextRequest) {
       }
     });
     
-    return NextResponse.json(startup, { status: 201 });
+    return NextResponse.json({ startup }, { status: 201 });
   } catch (error) {
     console.error('Error creating startup:', error);
     return NextResponse.json(
@@ -272,7 +270,7 @@ export async function PUT(request: NextRequest) {
           startupIds.map(id => 
             prisma.startup.update({
               where: { id },
-              data: { status: data.status },
+              data: { status: data.status.toUpperCase() },
               select: { id: true }
             })
           )
@@ -335,7 +333,7 @@ async function getStartupStatistics() {
   // Get total startups
   const totalStartups = await prisma.startup.count();
   
-  // Get startups by status
+  // Get startups by status (uppercase values)
   const activeStartups = await prisma.startup.count({
     where: { status: 'APPROVED' }
   });

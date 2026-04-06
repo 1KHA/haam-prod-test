@@ -329,7 +329,7 @@ export default function EntrepreneurEvents() {
   };
 
   return (
-    <div className="space-y-6 text-right">
+    <div className="space-y-6 text-right" dir="rtl">
       <h1 className="text-3xl font-bold">الفعاليات</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -463,14 +463,14 @@ export default function EntrepreneurEvents() {
                 </div>
               </CardContent>
               
-              <CardFooter className="flex justify-end gap-2 pt-2">
+              <CardFooter className="flex justify-start gap-2 pt-2">
+                {getRegistrationButton(event)}
                 <Button 
                   variant="outline" 
                   onClick={() => router.push(`/entrepreneur-dashboard/events/${event.id}`)}
                 >
                   التفاصيل
                 </Button>
-                {getRegistrationButton(event)}
               </CardFooter>
             </Card>
           ))}
@@ -486,33 +486,32 @@ export default function EntrepreneurEvents() {
               .filter(event => event.status !== "past")
               .map(event => (
                 <Card key={`my-${event.id}`} className="relative overflow-hidden">
-                  <div className="flex p-6">
+                  <div className="flex p-6 gap-4">
+                    <div className="hidden md:flex items-center justify-center min-w-24">
+                      {getRegistrationBadge(event)}
+                    </div>
                     <div className="flex-1">
                       <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <Button 
-                          variant="outline" 
-                          className="md:order-last"
-                          onClick={() => router.push(`/entrepreneur-dashboard/events/${event.id}`)}
-                        >
-                          التفاصيل
-                        </Button>
-                        <div className="space-y-1 text-right">
+                        <div className="space-y-1 text-right flex-1">
                           <div className="font-medium text-lg">{event.title}</div>
                           <div className="flex flex-col text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 justify-end">
                               <span>{event.formattedStartDate} • {event.startTime} - {event.endTime}</span>
                               <CalendarIcon className="h-3.5 w-3.5" />
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 justify-end">
                               <span>{event.location}</span>
                               <MapPin className="h-3.5 w-3.5" />
                             </div>
                           </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => router.push(`/entrepreneur-dashboard/events/${event.id}`)}
+                        >
+                          التفاصيل
+                        </Button>
                       </div>
-                    </div>
-                    <div className="hidden md:flex items-center justify-center min-w-24">
-                      {getRegistrationBadge(event)}
                     </div>
                   </div>
                   <div className={`h-1 w-full absolute bottom-0 left-0 ${

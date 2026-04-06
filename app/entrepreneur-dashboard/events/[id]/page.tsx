@@ -237,7 +237,7 @@ export default function EventDetail() {
         onClick={cancelRegistration}
         disabled={actionLoading}
       >
-        {actionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
+        {actionLoading ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <XCircle className="h-4 w-4 ml-2" />}
         إلغاء التسجيل
       </Button>;
     }
@@ -247,7 +247,7 @@ export default function EventDetail() {
       onClick={registerForEvent}
       disabled={actionLoading}
     >
-      {actionLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UserPlus className="h-4 w-4 mr-2" />}
+      {actionLoading ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <UserPlus className="h-4 w-4 ml-2" />}
       التسجيل
     </Button>;
   };
@@ -275,7 +275,7 @@ export default function EventDetail() {
             className="mt-4"
             onClick={() => router.back()}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 mr-2" />
             العودة
           </Button>
         </div>
@@ -295,7 +295,7 @@ export default function EventDetail() {
             className="mt-4"
             onClick={() => router.push("/entrepreneur-dashboard/events")}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 mr-2" />
             العودة إلى صفحة الفعاليات
           </Button>
         </div>
@@ -304,14 +304,14 @@ export default function EventDetail() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="flex flex-col lg:flex-row justify-between gap-4 items-start">
         <Button 
           variant="outline" 
           onClick={() => router.push("/entrepreneur-dashboard/events")}
           className="order-2 lg:order-1"
         >
-          <ArrowRight className="h-4 w-4 ml-2" />
+          <ArrowRight className="h-4 w-4 mr-2" />
           العودة إلى الفعاليات
         </Button>
         <h1 className="text-3xl font-bold order-1 lg:order-2 text-right">{event.title}</h1>

@@ -131,7 +131,7 @@ export default function NewStartup() {
     setSaving(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/program-manager/startups', {
+      const response = await fetch('/api/program-manager/startups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

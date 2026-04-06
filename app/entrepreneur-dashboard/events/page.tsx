@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +37,7 @@ interface Event {
 }
 
 export default function EntrepreneurEvents() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [events, setEvents] = useState<any[]>([]);
@@ -111,7 +113,7 @@ export default function EntrepreneurEvents() {
     async function fetchEvents() {
       setLoading(true);
       try {
-        const eventsResponse = await fetchWithAuth('/api/events');
+        const eventsResponse = await fetchWithAuth('/api/events?limit=100');
         
         if (!eventsResponse.ok) {
           throw new Error('Failed to fetch events');
@@ -140,42 +142,9 @@ export default function EntrepreneurEvents() {
       } catch (err) {
         console.error('Failed to fetch events:', err);
         setError('Failed to load events. Please try again later.');
-        
-        // For demo purposes, use sample data if API fails
-        const sampleEvents = [
-          {
-            id: "1",
-            title: "هاكاثون الذكاء الاصطناعي",
-            eventType: "هاكاثون",
-            description: "انضم إلينا في هذا الهاكاثون المثير لتطوير حلول مبتكرة باستخدام تقنيات الذكاء الاصطناعي.",
-            startDate: "2025-04-15T09:00:00.000Z",
-            endDate: "2025-04-15T18:00:00.000Z",
-            location: "مركز الابتكار، الرياض",
-            organizer: "إدارة المنصة",
-            registrationDeadline: "2025-04-10T23:59:59.000Z",
-            isRegistered: false
-          },
-          {
-            id: "2",
-            title: "ورشة عمل: تطوير نموذج العمل",
-            eventType: "ورشة عمل",
-            description: "ورشة عمل متخصصة لمساعدة الشركات الناشئة في تطوير وتحسين نماذج أعمالها.",
-            startDate: "2025-04-25T10:00:00.000Z",
-            endDate: "2025-04-25T14:00:00.000Z",
-            location: "مقر المسرع، الرياض",
-            organizer: "مسرع التقنية المالية",
-            registrationDeadline: "2025-04-20T23:59:59.000Z",
-            isRegistered: true,
-            registrationStatus: "confirmed"
-          }
-        ];
-        
-        const processedSampleEvents = sampleEvents.map((event) => {
-          return processEvent(event, event.isRegistered, event.isRegistered ? "confirmed" : null);
-        });
-        
-        setEvents(processedSampleEvents);
-        setMyEvents(processedSampleEvents.filter((event) => event.isRegistered));
+        toast.error('فشل تحميل الفعاليات');
+        setEvents([]);
+        setMyEvents([]);
       } finally {
         setLoading(false);
       }
@@ -188,7 +157,8 @@ export default function EntrepreneurEvents() {
   const registerForEvent = async (eventId: string) => {
     try {
       const response = await fetchWithAuth(`/api/events/${eventId}/register`, {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({})
       });
       
       if (!response.ok) {
@@ -275,8 +245,10 @@ export default function EntrepreneurEvents() {
     if (activeTab === "ongoing" && event.status !== "ongoing") return false;
     if (activeTab === "past" && event.status !== "past") return false;
     if (activeTab === "registered" && !event.isRegistered) return false;
-    if (activeTab === "hackathons" && event.eventType !== "هاكاثون") return false;
-    if (activeTab === "workshops" && event.eventType !== "ورشة عمل") return false;
+    // Normalize eventType for filtering (API returns English values)
+    const normalizedEventType = event.eventType?.toLowerCase();
+    if (activeTab === "hackathons" && normalizedEventType !== "hackathon") return false;
+    if (activeTab === "workshops" && normalizedEventType !== "workshop") return false;
     
     // Filter by search query
     if (searchQuery) {
@@ -494,7 +466,7 @@ export default function EntrepreneurEvents() {
               <CardFooter className="flex justify-end gap-2 pt-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => window.location.href = `/entrepreneur-dashboard/events/${event.id}`}
+                  onClick={() => router.push(`/entrepreneur-dashboard/events/${event.id}`)}
                 >
                   التفاصيل
                 </Button>
@@ -520,7 +492,7 @@ export default function EntrepreneurEvents() {
                         <Button 
                           variant="outline" 
                           className="md:order-last"
-                          onClick={() => window.location.href = `/entrepreneur-dashboard/events/${event.id}`}
+                          onClick={() => router.push(`/entrepreneur-dashboard/events/${event.id}`)}
                         >
                           التفاصيل
                         </Button>

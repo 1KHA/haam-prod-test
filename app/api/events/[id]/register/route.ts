@@ -85,7 +85,17 @@ export async function POST(
     }
     
     const { id: eventId } = params;
-    const body = await request.json();
+    
+    // Parse body if present (registration may not require any additional data)
+    let body = {};
+    try {
+      const text = await request.text();
+      if (text) {
+        body = JSON.parse(text);
+      }
+    } catch {
+      // Body is empty or invalid, use empty object
+    }
     
     // Check if event exists and is published
     const event = await prisma.event.findUnique({

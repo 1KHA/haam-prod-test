@@ -136,8 +136,6 @@ export default function EventsManagement() {
     async function fetchEvents() {
       setLoading(true);
       try {
-        // Import and use fetchWithAuth for authenticated request
-        const { fetchWithAuth } = await import('@/lib/api-client');
         const response = await fetchWithAuth('/api/admin/events');
         
         if (!response.ok) {

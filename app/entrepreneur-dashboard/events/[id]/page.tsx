@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -51,6 +51,7 @@ interface EventResponse {
 
 export default function EventDetail() {
   const params = useParams();
+  const router = useRouter();
   const eventId = params.id as string;
   
   const [event, setEvent] = useState<EventResponse["event"] | null>(null);
@@ -272,7 +273,7 @@ export default function EventDetail() {
           <Button 
             variant="outline" 
             className="mt-4"
-            onClick={() => window.history.back()}
+            onClick={() => router.back()}
           >
             <ArrowRight className="h-4 w-4 ml-2" />
             العودة
@@ -292,7 +293,7 @@ export default function EventDetail() {
           <Button 
             variant="outline" 
             className="mt-4"
-            onClick={() => window.location.href = "/entrepreneur-dashboard/events"}
+            onClick={() => router.push("/entrepreneur-dashboard/events")}
           >
             <ArrowRight className="h-4 w-4 ml-2" />
             العودة إلى صفحة الفعاليات
@@ -307,7 +308,7 @@ export default function EventDetail() {
       <div className="flex flex-col lg:flex-row justify-between gap-4 items-start">
         <Button 
           variant="outline" 
-          onClick={() => window.location.href = "/entrepreneur-dashboard/events"}
+          onClick={() => router.push("/entrepreneur-dashboard/events")}
           className="order-2 lg:order-1"
         >
           <ArrowRight className="h-4 w-4 ml-2" />

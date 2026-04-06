@@ -68,18 +68,6 @@ const navItems = [
     permission: { category: 'events', action: 'view' }
   },
   { 
-    name: "الموارد التعليمية", 
-    href: "/entrepreneur-dashboard/resources",
-    icon: FileText,
-    permission: { category: 'resources', action: 'view' }
-  },
-  { 
-    name: "طلبات التمويل", 
-    href: "/entrepreneur-dashboard/funding",
-    icon: DollarSign,
-    permission: { category: 'funding', action: 'view' }
-  },
-  { 
     name: "المراحل والتقدم", 
     href: "/entrepreneur-dashboard/milestones",
     icon: Target,

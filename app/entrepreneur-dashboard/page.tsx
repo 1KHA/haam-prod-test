@@ -52,7 +52,6 @@ export default function EntrepreneurDashboard() {
     { name: "إضافة أعضاء الفريق", path: "/entrepreneur-dashboard/team", icon: <Users className="h-4 w-4 ml-2" /> },
     { name: "التقديم للبرامج", path: "/entrepreneur-dashboard/apply", icon: <Rocket className="h-4 w-4 ml-2" /> },
     { name: "البحث عن موجهين", path: "/entrepreneur-dashboard/mentors", icon: <BookOpen className="h-4 w-4 ml-2" /> },
-    { name: "استكشاف الموارد", path: "/entrepreneur-dashboard/resources", icon: <FileText className="h-4 w-4 ml-2" /> },
     { name: "التسجيل في الفعاليات", path: "/entrepreneur-dashboard/events", icon: <Calendar className="h-4 w-4 ml-2" /> },
   ]
 
@@ -95,7 +94,6 @@ export default function EntrepreneurDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="justify-end">
-          <TabsTrigger value="resources">الموارد</TabsTrigger>
           <TabsTrigger value="events">الفعاليات</TabsTrigger>
           <TabsTrigger value="programs">البرامج</TabsTrigger>
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
@@ -274,50 +272,6 @@ export default function EntrepreneurDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="resources">
-          <Card>
-            <CardHeader>
-              <CardTitle>الموارد التعليمية</CardTitle>
-              <CardDescription>موارد لمساعدتك في بناء شركتك الناشئة</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="pr-4 py-2" style={{ borderRight: "4px solid #799dd7" }}>
-                  <h3 className="font-bold">دليل بناء نموذج الأعمال</h3>
-                  <p className="text-muted-foreground">دليل شامل لبناء نموذج أعمال قوي لشركتك الناشئة</p>
-                  <div className="flex justify-end mt-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push("/entrepreneur-dashboard/resources/1")}>
-                      تحميل الدليل
-                    </Button>
-                  </div>
-                </div>
-                <div className="pr-4 py-2" style={{ borderRight: "4px solid #f58f62" }}>
-                  <h3 className="font-bold">قالب خطة العمل</h3>
-                  <p className="text-muted-foreground">قالب جاهز لإعداد خطة عمل احترافية</p>
-                  <div className="flex justify-end mt-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push("/entrepreneur-dashboard/resources/2")}>
-                      تحميل القالب
-                    </Button>
-                  </div>
-                </div>
-                <div className="pr-4 py-2" style={{ borderRight: "4px solid #3f4249" }}>
-                  <h3 className="font-bold">دورة تدريبية: أساسيات التسويق للشركات الناشئة</h3>
-                  <p className="text-muted-foreground">دورة تدريبية لتعلم أساسيات التسويق للشركات الناشئة</p>
-                  <div className="flex justify-end mt-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push("/entrepreneur-dashboard/resources/3")}>
-                      بدء الدورة
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex justify-center mt-4">
-                  <Button variant="outline" onClick={() => router.push("/entrepreneur-dashboard/resources")}>
-                    عرض جميع الموارد
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   )

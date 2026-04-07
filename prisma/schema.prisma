@@ -36,6 +36,7 @@ model User {
   companyMemberships CompanyMember[] @relation("UserToCompanyMember")
   invitationsReceived Invitation[] @relation("InviteeToInvitation") // Added for clarity, though not strictly required by error
   milestonesCreated Milestone[] @relation("UserToMilestone")
+  milestoneResponses MilestoneResponse[] @relation("UserToMilestoneResponse")
   eventRegistrations EventRegistration[] // Relation to event registrations
   createdEvents Event[] // Relation to events created by this user
   createdFundings Funding[] @relation("UserToFunding") // Relation to funding created by this user
@@ -193,8 +194,24 @@ model Milestone {
   startup     Startup  @relation("StartupToMilestone", fields: [startupId], references: [id], onDelete: Cascade)
   createdBy   String
   creator     User     @relation("UserToMilestone", fields: [createdBy], references: [id], onDelete: Cascade)
+  responses   MilestoneResponse[] @relation("MilestoneToResponse")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model MilestoneResponse {
+  id          String    @id @default(uuid())
+  milestoneId String
+  milestone   Milestone @relation("MilestoneToResponse", fields: [milestoneId], references: [id], onDelete: Cascade)
+  submittedBy String
+  submitter   User      @relation("UserToMilestoneResponse", fields: [submittedBy], references: [id], onDelete: Cascade)
+  message     String?
+  fileName    String?
+  fileUrl     String?
+  fileType    String?
+  fileSize    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 

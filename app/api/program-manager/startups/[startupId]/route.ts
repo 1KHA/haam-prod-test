@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
+import { calculateStartupProgress, listMilestones } from '@/lib/milestones';
 
 export async function GET(
   request: NextRequest,
@@ -62,33 +63,7 @@ export async function GET(
       }
     });
 
-    // Get milestones (mock data since there's no milestone model)
-    const milestones = [
-      {
-        id: "1",
-        title: "عرض النموذج الأولي",
-        description: "تقديم النموذج الأولي للمنتج للمرشدين والمستثمرين",
-        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        status: "pending",
-        progress: 75
-      },
-      {
-        id: "2",
-        title: "اختبار المستخدمين",
-        description: "إجراء اختبارات مع مجموعة من المستخدمين المستهدفين",
-        dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-        status: "not-started",
-        progress: 0
-      },
-      {
-        id: "3",
-        title: "خطة التسويق",
-        description: "تطوير استراتيجية تسويق شاملة للمنتج",
-        dueDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-        status: "not-started",
-        progress: 0
-      }
-    ];
+    const milestones = await listMilestones({ startupId });
 
     // Get mentors (mock data)
     const mentors = [
@@ -129,8 +104,7 @@ export async function GET(
       ]
     };
 
-    // Calculate progress (mock data)
-    const progress = Math.floor(Math.random() * 60) + 30;
+    const progress = calculateStartupProgress(milestones);
     
     // Get cohort information
     const cohort = startup.cohortMemberships.length > 0 

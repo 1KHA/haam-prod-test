@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { UserRole, isAuthenticated } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
+import {
+  buildMilestoneStats,
+  canManageStartupMilestones,
+  canViewStartupMilestones,
+  listMilestones,
+} from '@/lib/milestones';
 
 // GET /api/milestones?startupId=...
 export async function GET(request: NextRequest) {
@@ -19,26 +25,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing startupId' }, { status: 400 });
     }
 
-    // Check if user is a member of the company
-    const isMember = await prisma.companyMember.findFirst({
-      where: {
-        startupId,
-        userId: user.userId,
-        status: 'ACTIVE',
-      },
-    });
-
-    if (!isMember) {
+    const access = await canViewStartupMilestones(startupId, user);
+    if (!access.canView) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // List all milestones for the company
-    const milestones = await prisma.milestone.findMany({
-      where: { startupId },
-      orderBy: { dueDate: 'asc' },
-    });
+    const milestones = await listMilestones({ startupId });
 
-    return NextResponse.json({ milestones });
+    return NextResponse.json({
+      milestones,
+      stats: buildMilestoneStats(milestones),
+      permissions: {
+        canRespond: user.role === UserRole.ENTREPRENEUR,
+        canManage: access.canManage && user.role !== UserRole.ENTREPRENEUR,
+      },
+    });
   } catch (error) {
     console.error('Get milestones error:', error);
     return NextResponse.json({ error: 'An error occurred while fetching milestones' }, { status: 500 });
@@ -55,6 +56,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (user.role === UserRole.ENTREPRENEUR) {
+      return NextResponse.json({ error: 'Entrepreneurs cannot create milestones' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { startupId, title, description, dueDate, priority, category } = body;
 
@@ -62,34 +67,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Only team leader can create milestones
-    const member = await prisma.companyMember.findFirst({
-      where: {
-        startupId,
-        userId: user.userId,
-        status: 'ACTIVE',
-      },
-    });
-
-    if (!member || member.role !== 'Leader') {
-      return NextResponse.json({ error: 'Only the team leader can create milestones' }, { status: 403 });
+    const access = await canManageStartupMilestones(startupId, user);
+    if (!access.canManage) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const milestone = await prisma.milestone.create({
       data: {
+        startupId,
         title,
         description,
         dueDate: new Date(dueDate),
-        status: 'upcoming',
-        progress: 0,
         priority,
         category,
-        startupId,
+        progress: 0,
+        status: 'upcoming',
         createdBy: user.userId,
       },
     });
 
-    return NextResponse.json({ milestone });
+    return NextResponse.json({ milestone }, { status: 201 });
   } catch (error) {
     console.error('Create milestone error:', error);
     return NextResponse.json({ error: 'An error occurred while creating the milestone' }, { status: 500 });

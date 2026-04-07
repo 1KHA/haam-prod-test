@@ -1,173 +1,74 @@
 # Active Context: Accelerator & Incubator Management Platform
 
-## Current Work Focus
+## Current Work Focus (as of 2026-04-07)
 
-### RBAC Implementation Completion
-The current development focus is on completing the Role-Based Access Control (RBAC) system implementation across the platform. This includes:
+### Recent Completions
+1. ✅ **Judge Role Removal** — Removed JUDGE from Prisma schema, seed scripts, auth context, and UI. Platform now has exactly 5 roles: ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR, ENTREPRENEUR.
+2. ✅ **Event System End-to-End** — PM and Admin event pages verified working. Fixed PM event pages to use top-level `fetchWithAuth` import. Fixed capacity field to optional in schema. Fixed cancelled status filter bug in PM events API.
+3. ✅ **Startups End-to-End** — Admin, PM, and Entrepreneur startup pages verified working.
+4. ✅ **Admin Programs API** — 79 tests passing. Fixed critical bug: hardcoded `user.role === ADMIN` checks replaced with proper `checkPermission()` in `app/api/admin/programs/[id]/route.ts`.
+5. ✅ **Program Manager Cohorts Fix** — Fixed filter value mismatch ("ALL" sent to backend), added missing pages (edit, members, mentors), enhanced API validation.
+6. ✅ **Logout Fix** — Added `signOut` handler to all dashboard Header components (previously only entrepreneur dashboard had it working).
+7. ✅ **Admin Cohort Management (Tasks 17-19)** — Tab label fixed ("المدفوعات" → "الدفعات"), cohort tab content replaced, admin cohorts API created, UI pages created.
 
-1. **API Route Protection**: Adding permission checks to all API endpoints
-2. **Page-Level Guards**: Implementing RouteGuard on all dashboard pages
-3. **Sidebar Navigation Filtering**: Ensuring navigation items are filtered based on permissions
-4. **Permission Management UI**: Developing the admin interface for managing role permissions
-5. **Testing**: Comprehensive testing of the RBAC system across all user roles
+### RBAC Issues Identified (Documented in analyze/)
 
-### Dashboard Refinement
-Alongside the RBAC implementation, work is being done to refine the role-specific dashboards:
+#### Critical Issues (Not Yet Fixed)
+1. **Auth Context Mock Users** (`contexts/auth-context.tsx`) — Still uses mock users (`admin@haam.com`, `provider@haam.com`, `beneficiary@haam.com`) with wrong role types (`"admin" | "provider" | "beneficiary"` instead of Prisma enum). Sign-in calls no real API. Task: task-01-fix-auth-context-roles.md.
+2. **Dashboard Routing Mismatch** — Auth context routes `admin` → not matched (should be `ADMIN`), `provider` → `/dashboard` (doesn't exist). PROGRAM_MANAGER, MENTOR, INVESTOR, PARTICIPANT have no routing. Task: task-02-fix-signin-dashboard-routing.md.
+3. **Dashboard Route Guards Missing** — Only `entrepreneur-dashboard` has `RouteGuard`. Admin, investor, PM, mentor, participant dashboards have no auth or role checks. Task: task-04-add-dashboard-route-guards.md.
+4. **User Creation Role Assignment Broken** — New user form sends Arabic role names to API, API expects enum values → all custom/Arabic roles fall back to PARTICIPANT. No Role record created on user creation. Task: task-03-fix-user-creation-role-assignment.md.
+5. **Dual Role System** — Two parallel role systems (UserRole enum + Role DB table) with no FK link. Bridged only by fragile hardcoded Arabic name mapping in `lib/permissions.ts`. Task: task-05-unify-role-system.md.
+6. **Permission Lookup Fragility** — `getUserPermissions()` has 4 fallback strategies but all fail silently, returning empty array with no logging. Task: task-06-fix-permission-lookup-logging.md.
+7. **Edit User Role Display** — `[id]/edit/page.tsx` now fetches from `/api/admin/roles`, but role change doesn't delete old role-specific profile. Task: task-07-fix-edit-user-roles.md.
 
-1. **Admin Dashboard**: User management, role management, and system settings
-2. **Program Manager Dashboard**: Program and cohort management
-3. **Startup Dashboard**: Profile, team, and milestone management
-4. **Mentor Dashboard**: Availability, sessions, and feedback management
-5. **Investor Dashboard**: Startup discovery and portfolio management
-6. **Accelerator Dashboard**: Program and startup management
+### TypeScript Issues Identified (Documented in analyze/)
 
-## Recent Changes
+| Issue | File(s) | Errors | Status |
+|-------|---------|--------|--------|
+| `fetchWithAuth` union type | 6 event pages | 29 | Pending (task-11) |
+| EventRegistration schema mismatch | 2 API routes | 5 | Pending (task-12) |
+| ReportShare/Notification schema | reports/share route | 3 | Pending (task-13) |
+| Missing SystemBackup model | system/restore route | 1 | Pending (task-14) |
+| `next-auth` + fundingType field | 2 funding routes | 6 | Pending (task-15) |
+| DialogClose `asChild` + securityLogs `ids` | 2 pages | 2 | Pending (task-16) |
 
-### RBAC System Implementation
-1. ✅ **Database Schema**: Added Role, Permission, and RolePermission models
-2. ✅ **Permission Seeding**: Created seed script for roles and permissions
-3. ✅ **Permission Library**: Implemented core permission checking functions
-4. ✅ **Frontend Hooks**: Created usePermissions hook for UI components
-5. ✅ **Route Guards**: Implemented RouteGuard component for page protection
-6. ✅ **Admin Sidebar**: Updated to filter navigation based on permissions
-7. ✅ **Role Management**: Added role management page for admins
+### Admin Dashboard Pages Status
 
-### Dashboard Development
-1. ✅ **Admin User Management**: Implemented user listing, creation, editing, and deletion
-2. ✅ **User Detail Page**: Created detailed user profile view
-3. ✅ **Role Assignment**: Added ability to change user roles
-4. ✅ **Arabic Localization**: Added Arabic translations for UI elements
-5. ✅ **RTL Layout**: Implemented right-to-left layout for Arabic
+| Page | Status |
+|------|--------|
+| `admin-dashboard/events/` | ✅ Working |
+| `admin-dashboard/users/` | ✅ Working |
+| `admin-dashboard/programs/` | ✅ Working |
+| `admin-dashboard/programs/[id]/cohorts/` | ✅ Implemented (Tasks 17-19) |
+| `admin-dashboard/startups/` | ✅ Working |
+| `admin-dashboard/payments/` | ✅ Working |
+| `admin-dashboard/notifications/` | ⬜ Pending mock data fix (task-02) |
+| `admin-dashboard/reports/` | ⬜ Pending mock data fix (task-03) |
+| `admin-dashboard/page.tsx` (main stats) | ⬜ Hardcoded stats, no real API |
+| `entrepreneur-dashboard/events/` | ⬜ Has hardcoded fallback + eventType filter mismatch (task-06) |
+| `admin-dashboard/events/page.tsx` | ⬜ Duplicate import pattern (task-07) |
 
-### Infrastructure Improvements
-1. ✅ **Script Automation**: Added scripts for route guard addition
-2. ✅ **Documentation**: Created comprehensive RBAC documentation
-3. ✅ **Database Fixes**: SQL script for fixing admin role assignments
+## Next Steps (Priority Order)
 
-## Next Steps
+### High Priority
+1. **Fix auth-context.tsx** (task-01) — Remove mock users, connect to real `/api/auth/signin` API, fix role types
+2. **Fix sign-in routing** (task-02) — Map ADMIN/PROGRAM_MANAGER/etc. to correct dashboards
+3. **Fix user creation role assignment** (task-03) — Send enum values, create Role record on user creation
+4. **Add dashboard route guards** (task-04) — Apply RouteGuard to admin, PM, mentor, investor layouts
+5. **Fix TypeScript errors** (tasks 11-16) — 46 total TypeScript errors identified
 
-### Immediate Tasks (Next 1-2 Weeks)
-1. **API Route Protection**: Add permission checks to remaining API endpoints
-   - Priority: `/api/programs/*`, `/api/startups/*`, `/api/funding/*`
-   - Implement consistent error handling across all endpoints
-   - Add logging for permission denied events
+### Medium Priority
+6. **Unify role system** (task-05) — Add `roleEnum` FK to Role table
+7. **Add permission lookup logging** (task-06) — Debug silent failures
+8. **Fix edit user role** (task-07) — Delete old profile before creating new one
+9. **Fix entrepreneur events page** (task-06-events) — Remove hardcoded fallback, fix eventType filter
+10. **Fix main dashboard stats** — Replace hardcoded numbers with real API
 
-2. **Dashboard Page Guards**: Add RouteGuard to all dashboard pages
-   - Use the add-route-guards.cjs script to automate the process
-   - Ensure proper permission categories for each page
-   - Test access with different user roles
-
-3. **Sidebar Navigation**: Update all role-specific sidebars
-   - Apply permission filtering to all sidebar components
-   - Ensure consistent navigation structure across dashboards
-   - Test visibility with different permission sets
-
-4. **Permission Management UI**: Complete the admin interface
-   - Add ability to edit role permissions
-   - Implement real-time permission updates
-   - Add user-specific permission overrides
-
-### Medium-Term Tasks (Next 2-4 Weeks)
-1. **Startup Dashboard Features**:
-   - Complete milestone tracking functionality
-   - Implement funding request workflow
-   - Add mentor session scheduling
-
-2. **Mentor Dashboard Features**:
-   - Finish availability management
-   - Implement feedback submission system
-   - Add resource sharing capabilities
-
-3. **Program Manager Features**:
-   - Complete application review system
-   - Implement cohort management
-   - Add startup progress tracking
-
-4. **Investor Dashboard Features**:
-   - Implement startup discovery and filtering
-   - Add due diligence workflow
-   - Create investment tracking system
-
-### Long-Term Tasks (Next 1-3 Months)
-1. **Analytics & Reporting**:
-   - Implement dashboard analytics
-   - Create exportable reports
-   - Add visualization components
-
-2. **Notification System**:
-   - Implement in-app notifications
-   - Add email notification integration
-   - Create notification preferences
-
-3. **Event Management**:
-   - Build event creation and management
-   - Implement RSVP functionality
-   - Add calendar integration
-
-4. **Mobile Responsiveness**:
-   - Optimize all dashboards for mobile
-   - Test on various devices
-   - Implement responsive design patterns
-
-## Active Decisions and Considerations
-
-### Technical Decisions
-1. **Permission Granularity**: 
-   - **Decision**: Use category/action pairs for permissions (e.g., `users/view`)
-   - **Consideration**: Balance between flexibility and complexity
-   - **Status**: Implemented and working well
-
-2. **Frontend Permission Checking**:
-   - **Decision**: Use custom hook for permission checks
-   - **Consideration**: Performance vs. security (backend is source of truth)
-   - **Status**: Implemented with caching for performance
-
-3. **Route Guard Implementation**:
-   - **Decision**: Use component-based approach with HOC option
-   - **Consideration**: Consistency vs. flexibility
-   - **Status**: Working well but needs to be applied to all pages
-
-4. **API Error Handling**:
-   - **Decision**: Standardize error responses across all endpoints
-   - **Consideration**: Developer experience and frontend integration
-   - **Status**: Partially implemented, needs consistency
-
-### UX Decisions
-1. **Permission Denied Experience**:
-   - **Decision**: Redirect to dashboard with toast notification
-   - **Consideration**: User frustration vs. security clarity
-   - **Status**: Implemented but may need refinement
-
-2. **Navigation Visibility**:
-   - **Decision**: Hide navigation items user doesn't have permission for
-   - **Consideration**: Discoverability vs. clean interface
-   - **Status**: Implemented in admin sidebar, needs to be applied to all
-
-3. **Arabic Support**:
-   - **Decision**: Full RTL layout with Arabic translations
-   - **Consideration**: Maintenance overhead vs. user experience
-   - **Status**: Basic implementation complete, needs refinement
-
-4. **Role-Specific Dashboards**:
-   - **Decision**: Separate dashboard for each role
-   - **Consideration**: Code duplication vs. user experience
-   - **Status**: Structure implemented, content needs completion
-
-### Business Decisions
-1. **Role Hierarchy**:
-   - **Decision**: No strict hierarchy, permission-based access
-   - **Consideration**: Simplicity vs. organizational structure
-   - **Status**: Working well for current requirements
-
-2. **Permission Management**:
-   - **Decision**: Admin can modify role permissions
-   - **Consideration**: Flexibility vs. security risks
-   - **Status**: UI in progress, backend implemented
-
-3. **Multi-Role Support**:
-   - **Decision**: Single role per user (for now)
-   - **Consideration**: Simplicity vs. flexibility
-   - **Status**: Implemented, may revisit for multi-role support later
+### Low Priority
+11. **Fix notifications page** (task-02-notifications) — Connect to real API
+12. **Fix reports page** (task-03-reports) — Connect to real API
+13. **Simplify registration flow** (task-10) — Remove hackathon path, ENTREPRENEUR only
 
 ## Important Patterns and Preferences
 
@@ -175,112 +76,64 @@ Alongside the RBAC implementation, work is being done to refine the role-specifi
 1. **API Route Pattern**:
    ```typescript
    export async function GET(req: NextRequest) {
-     // 1. Permission check
-     const permissionCheck = await checkPermission(req, { 
-       category: 'resource', 
-       action: 'view' 
+     const permissionCheck = await checkPermission(req, {
+       category: 'resource',
+       action: 'view'
      });
      if (!permissionCheck.authorized) {
        return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
      }
-     
-     // 2. Business logic
-     // 3. Response
+     // Business logic
    }
    ```
 
-2. **Component Permission Pattern**:
+2. **Data Fetching Pattern (Frontend)**:
    ```tsx
-   const { hasPermission } = usePermissions();
-   
-   return (
-     <PermissionGate requirement={{ category: 'resource', action: 'action' }}>
-       <Component />
-     </PermissionGate>
-   );
+   const fetchData = async () => {
+     setIsLoading(true);
+     try {
+       const data = await fetchWithAuth('/api/admin/...');
+       setItems(data.items || data || []);
+     } catch (error) {
+       toast.error('فشل تحميل البيانات');
+       setItems([]);
+     } finally {
+       setIsLoading(false);
+     }
+   };
    ```
 
-3. **Page Guard Pattern**:
-   ```tsx
-   export default function ResourcePage() {
-     return (
-       <RouteGuard 
-         requiredPermission={{ category: 'resource', action: 'view' }}
-         requiredRole={UserRole.ROLE}
-       >
-         <PageContent />
-       </RouteGuard>
-     );
-   }
-   ```
+3. **Import Pattern**: Always use top-level `import { fetchWithAuth } from "@/lib/api-client"` — never dynamic imports inside functions.
 
-4. **Sidebar Filtering Pattern**:
-   ```tsx
-   const filteredNavItems = useMemo(() => {
-     if (loading) return [];
-     
-     return navItems.filter(item => {
-       if (!item.permission) return true;
-       return hasPermission(item.permission);
-     });
-   }, [hasPermission, loading, navItems]);
-   ```
+4. **Reference Implementation**: `app/admin-dashboard/programs/page.tsx` is the gold standard for admin pages.
 
 ### Naming Conventions
 1. **Permission Categories**: Lowercase, plural nouns (e.g., `users`, `programs`)
 2. **Permission Actions**: Lowercase verbs (e.g., `view`, `edit`, `add`, `delete`)
-3. **Component Files**: PascalCase, descriptive of purpose (e.g., `UserTable.tsx`)
+3. **Component Files**: PascalCase (e.g., `UserTable.tsx`)
 4. **Hook Files**: camelCase with `use` prefix (e.g., `usePermissions.tsx`)
-5. **API Routes**: Nested folder structure matching endpoint path
 
 ### UI Preferences
-1. **Layout Direction**: RTL for Arabic, with proper bidirectional support
-2. **Color Scheme**: Based on Tailwind CSS color palette
-3. **Component Library**: shadcn/ui components with custom styling
-4. **Form Validation**: Client-side validation with server-side confirmation
-5. **Loading States**: Skeleton loaders for content, spinners for actions
+1. **Layout Direction**: RTL for Arabic
+2. **Component Library**: shadcn/ui with custom styling
+3. **Error Handling**: `toast.error()` for API failures, never silently fall back to hardcoded data
+4. **Empty State**: Show message + icon, never hardcoded placeholder data
 
-### Development Workflow
-1. **Feature Implementation**: Start with API routes, then UI components
-2. **Permission Integration**: Add permission checks early in development
-3. **Testing Approach**: Manual testing with different user roles
-4. **Documentation**: Update documentation alongside code changes
-5. **Code Review**: Focus on security, performance, and user experience
+## Valid Roles (as of 2026-04-07)
 
-## Learnings and Project Insights
+| Enum | Arabic | Dashboard |
+|------|--------|-----------|
+| ADMIN | مدير النظام | /admin-dashboard |
+| PROGRAM_MANAGER | مدير برنامج | /program-manager-dashboard |
+| MENTOR | موجه | /mentor-dashboard |
+| INVESTOR | مستثمر | /investor-dashboard |
+| ENTREPRENEUR | رائد أعمال | /entrepreneur-dashboard |
 
-### RBAC Implementation Insights
-1. **Permission Granularity**: Finding the right balance between too granular (complex) and too broad (inflexible) permissions is crucial. The category/action approach provides a good middle ground.
+Note: PARTICIPANT enum still exists in schema for legacy data but has no public dashboard (redirects to `/`). JUDGE has been fully removed.
 
-2. **Frontend vs. Backend Checks**: While frontend permission checks improve UX, they must always be backed by server-side validation. The current implementation handles this well.
+## Key Technical Decisions
 
-3. **Performance Considerations**: Permission checking can impact performance if not optimized. The current caching approach in the usePermissions hook helps mitigate this.
-
-4. **Developer Experience**: A consistent pattern for permission checks makes development more predictable and reduces errors.
-
-### Technical Challenges
-1. **Route Guard Automation**: Automatically adding route guards to all pages proved challenging due to the variety of page structures. The script approach helps but still requires some manual intervention.
-
-2. **Permission Data Structure**: Designing a flexible yet performant permission data structure took several iterations. The current approach with RolePermission junction table works well.
-
-3. **Real-time Permission Updates**: Ensuring permission changes take effect immediately without requiring logout/login is an ongoing challenge.
-
-4. **TypeScript Integration**: Ensuring type safety across the permission system required careful design of interfaces and types.
-
-### UX Learnings
-1. **Permission Visibility**: Users need to understand why certain features are unavailable. The current approach of hiding unavailable features works but may need supplemental explanation in some cases.
-
-2. **Role-Specific Experiences**: Each role has unique needs and workflows. The dashboard-per-role approach addresses this but requires significant development effort.
-
-3. **Localization Challenges**: Supporting RTL layouts and Arabic text requires attention to detail in component design and layout structure.
-
-4. **Form Feedback**: Clear validation messages and submission feedback are essential for a good user experience, especially in forms with complex validation rules.
-
-### Project Management Insights
-1. **Incremental Implementation**: The phased approach to RBAC implementation has worked well, starting with core infrastructure and gradually extending to all parts of the application.
-
-2. **Documentation Importance**: Comprehensive documentation of the RBAC system has been crucial for maintaining consistency across the implementation.
-
-3. **Testing Strategy**: Testing with different user roles and permission combinations is essential but time-consuming. A more automated approach may be needed as the system grows.
-
-4. **Stakeholder Communication**: Clearly communicating the RBAC model to stakeholders helps set expectations and gather valuable feedback on permission structures.
+1. **Auth**: Custom JWT-based auth in `lib/auth.ts` — NOT NextAuth/next-auth
+2. **Database**: Prisma ORM + SQLite (dev) / PostgreSQL (prod). SQLite doesn't support case-insensitive search (mode: 'insensitive' throws 500).
+3. **UI**: Next.js App Router + shadcn/ui + Tailwind CSS
+4. **Permissions**: category/action pairs (e.g., `programs:view`). Backend is source of truth.

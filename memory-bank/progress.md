@@ -1,282 +1,140 @@
 # Progress: Accelerator & Incubator Management Platform
 
-## What Works
+*Last Updated: 2026-04-07*
+
+## What Works ✅
 
 ### Core Infrastructure
-- ✅ **Next.js Application**: Basic application structure with app router
-- ✅ **Database Setup**: Prisma ORM with SQLite database
-- ✅ **Authentication**: JWT-based authentication system
-- ✅ **Authorization**: Role-based access control (RBAC) framework
+- ✅ **Next.js Application**: App router structure
+- ✅ **Database**: Prisma ORM with SQLite database
+- ✅ **Authentication**: JWT-based auth (`lib/auth.ts`) — custom, NOT NextAuth
+- ✅ **Authorization**: RBAC framework (`lib/permissions.ts`)
 - ✅ **UI Framework**: Tailwind CSS with shadcn/ui components
 - ✅ **Localization**: Arabic language support with RTL layout
+- ✅ **Build**: TypeScript compilation succeeds (ESLint warnings exist but non-blocking)
 
 ### RBAC System
-- ✅ **Database Models**: Role, Permission, and RolePermission models
-- ✅ **Permission Seeding**: Script to seed roles and permissions
-- ✅ **Permission Library**: Core permission checking functions
-- ✅ **Frontend Hooks**: usePermissions hook for UI components
-- ✅ **Route Guards**: RouteGuard component for page protection
-- ✅ **Admin Sidebar**: Navigation filtering based on permissions
-- ✅ **API Protection**: Permission checking in API routes (partial)
+- ✅ **Database Models**: Role, Permission, RolePermission in schema
+- ✅ **Permission Seeding**: `prisma/seed-roles.ts` seeds 5 valid roles
+- ✅ **Permission Library**: `lib/permissions.ts` — `checkPermission()`, `getUserPermissions()`, `getRoleNameInArabic()`
+- ✅ **Frontend Hook**: `usePermissions()` hook with caching
+- ✅ **RouteGuard**: Component in `components/auth/RouteGuard.tsx`
+- ✅ **Entrepreneur Dashboard**: Only dashboard with proper RouteGuard protection
+- ❌ **Other Dashboards**: Admin, PM, mentor, investor layouts have NO route guards
 
 ### Admin Dashboard
-- ✅ **User Management**: List, create, edit, and delete users
-- ✅ **User Details**: Detailed user profile view
+- ✅ **User Management**: List, create, edit, delete users (`/admin-dashboard/users/`)
 - ✅ **Role Management**: Change user roles
-- ✅ **Role Permissions**: View and edit role permissions (partial)
-- ✅ **Dashboard Layout**: Sidebar, header, and content layout
-
-### Other Dashboards (Basic Structure)
-- ✅ **Program Manager Dashboard**: Basic layout and navigation
-- ✅ **Startup Dashboard**: Basic layout and navigation
-- ✅ **Mentor Dashboard**: Basic layout and navigation
-- ✅ **Investor Dashboard**: Basic layout and navigation
-- ✅ **Accelerator Dashboard**: Basic layout and navigation
-
-### Documentation
-- ✅ **RBAC Implementation Guide**: Comprehensive guide for RBAC usage
-- ✅ **Permission Mapping**: Detailed mapping of routes to permissions
-- ✅ **Implementation Summary**: Summary of RBAC implementation status
-- ✅ **Page Locking Summary**: Documentation of page/tab locking functionality
-
-## What's Left to Build
-
-### RBAC System Completion
-- ⬜ **API Route Protection**: Add permission checks to remaining API endpoints
-- ⬜ **Dashboard Page Guards**: Add RouteGuard to all dashboard pages
-- ⬜ **Sidebar Navigation**: Update all role-specific sidebars with permission filtering
-- ⬜ **Permission Management UI**: Complete the admin interface for managing permissions
-- ⬜ **Testing**: Comprehensive testing of RBAC across all user roles
-
-### Admin Dashboard
-- ⬜ **System Settings**: Complete system configuration interface
-- ⬜ **Analytics Dashboard**: Implement platform analytics
-- ⬜ **Program Management**: Create program management interface
-- ⬜ **Startup Management**: Create startup management interface
-- ⬜ **Funding Management**: Create funding management interface
+- ✅ **Programs Management**: Full CRUD, filters, bulk actions, CSV export (`/admin-dashboard/programs/`)
+- ✅ **Cohort Management**: Tab fixed, API created, UI pages created (`/admin-dashboard/programs/[id]/cohorts/`)
+- ✅ **Events Management**: Full CRUD, registrations (`/admin-dashboard/events/`)
+- ✅ **Startups Management**: List, filter, bulk actions (`/admin-dashboard/startups/`)
+- ✅ **Payments Management**: Full CRUD with filtering and export
+- ✅ **Logout**: signOut handler wired to all dashboard headers
+- ❌ **Main Dashboard Stats**: Hardcoded (1,234 users etc.) — no real API
+- ❌ **Notifications Page**: Mock data, needs real API
+- ❌ **Reports Page**: Mock data, needs real API
+- ❌ **Dashboard Route Guard**: Admin layout has no auth check
 
 ### Program Manager Dashboard
-- ⬜ **Application Management**: Review and process applications
-- ⬜ **Cohort Management**: Create and manage cohorts
-- ⬜ **Mentor Assignment**: Assign mentors to startups
-- ⬜ **Event Management**: Create and manage events
-- ⬜ **Milestone Tracking**: Track startup milestones
-- ⬜ **Funding Approval**: Review and approve funding requests
+- ✅ **Events**: All PM event pages functional (page, create, edit, details, registrations)
+- ✅ **Cohorts**: Fixed — filter values, missing pages, API validation. Members and mentors pages created.
+- ❌ **Applications**: Not implemented
+- ❌ **Milestone Tracking**: Not implemented
 
-### Startup Dashboard
-- ⬜ **Profile Management**: Complete startup profile management
-- ⬜ **Team Management**: Manage startup team members
-- ⬜ **Milestone Management**: Set and track milestones
-- ⬜ **Mentor Sessions**: Schedule and manage mentor sessions
-- ⬜ **Funding Requests**: Submit and track funding requests
-- ⬜ **Resource Access**: Access learning resources and materials
+### Entrepreneur Dashboard
+- ✅ **Events Detail Page**: `/entrepreneur-dashboard/events/[id]/` working
+- ✅ **RouteGuard**: Properly protected
+- ❌ **Events List Page**: Has hardcoded fallback data + eventType filter mismatch (Arabic vs English values)
 
-### Mentor Dashboard
-- ⬜ **Availability Management**: Set and manage availability
-- ⬜ **Session Management**: Schedule and track mentorship sessions
-- ⬜ **Feedback System**: Provide feedback to startups
-- ⬜ **Resource Sharing**: Share resources with startups
-- ⬜ **Startup Tracking**: Track assigned startup progress
+### Other Dashboards (Mentor, Investor)
+- ✅ **Basic Structure**: Layout and navigation
+- ❌ **Route Guards**: No auth protection
+- ❌ **Features**: Not implemented
 
-### Investor Dashboard
-- ⬜ **Startup Discovery**: Browse and filter startups
-- ⬜ **Due Diligence**: Access startup information for evaluation
-- ⬜ **Investment Management**: Track investments and returns
-- ⬜ **Portfolio Management**: Manage startup portfolio
-- ⬜ **Performance Tracking**: Track startup performance metrics
+## Known Bugs / Issues
 
+### Critical Auth Issues
+1. **Mock Auth in auth-context.tsx**: `contexts/auth-context.tsx` still uses hardcoded MOCK_USERS. Real sign-in with DB users may not work properly. Role types are wrong (`"admin" | "provider" | "beneficiary"` instead of Prisma enum values).
+2. **Sign-in Routing Broken**: Only ENTREPRENEUR routing works (coincidentally). ADMIN, PROGRAM_MANAGER, MENTOR, INVESTOR don't route correctly after sign-in.
+3. **No Dashboard Protection**: Admin, PM, mentor, investor dashboards accessible by any authenticated user via URL.
+4. **User Creation Role Bug**: Admin-created users with Arabic role names fall back to PARTICIPANT due to enum mismatch.
 
-### Accelerator Dashboard
-- ⬜ **Program Management**: Manage accelerator programs
-- ⬜ **Startup Management**: Track startups in programs
-- ⬜ **Mentor Management**: Manage program mentors
-- ⬜ **Event Management**: Create and manage program events
-- ⬜ **Resource Management**: Manage program resources
+### TypeScript Errors (46 total)
+| Category | Count | Status |
+|----------|-------|--------|
+| fetchWithAuth union type (6 event pages) | 29 | Pending |
+| EventRegistration schema mismatch | 5 | Pending |
+| ReportShare/Notification field mismatch | 3 | Pending |
+| Missing SystemBackup model | 1 | Pending |
+| next-auth import + fundingType field + implicit any | 6 | Pending |
+| DialogClose asChild + securityLogs ids | 2 | Pending |
 
-### Cross-Cutting Features
-- ⬜ **Notification System**: In-app and email notifications
-- ⬜ **Messaging System**: Direct messaging between users
-- ⬜ **Calendar Integration**: Schedule and manage events
-- ⬜ **File Upload**: Document and file management
-- ⬜ **Reporting System**: Generate and export reports
-- ⬜ **Analytics**: Dashboard analytics and visualizations
-- ⬜ **Mobile Responsiveness**: Optimize for mobile devices
+### Permission System Issues
+1. **Dual Role System**: `UserRole` enum and `Role` DB table with no FK — bridged by fragile hardcoded Arabic name map
+2. **Silent Permission Failures**: `getUserPermissions()` returns empty array on all failures with no logging
+3. **Custom Roles**: STARTUP, JUDGE (removed), ACCELERATOR had no Arabic name mapping
 
-## Current Status
+### Data Issues
+1. **SQLite Case-Insensitive Search**: `mode: 'insensitive'` in Prisma throws 500 on SQLite (PostgreSQL required)
+2. **Profile Cleanup on Role Change**: Editing a user's role creates new profile but doesn't delete old one
 
-### Overall Project Status
-- **Phase**: Early Development
-- **Focus**: RBAC Implementation and Admin Dashboard
-- **Timeline**: On track for initial milestones
-- **Priority**: Completing core infrastructure before feature development
+## Completed Tasks (Tracked in newtasks/)
 
-### Component Status
+| Task | Description | Status |
+|------|-------------|--------|
+| task-01 (events-page) | Admin events page | ✅ Complete |
+| task-07 (admin-events-import) | Fix duplicate import | ⬜ Pending |
+| task-08 (startups-end-to-end) | Startups E2E | ✅ Complete |
+| task-09 (programs-test-report) | Programs API 79 tests + permission bug fix | ✅ Complete |
+| task-10 (judge-removal) | Judge role fully removed | ✅ Complete |
+| task-11 (pm-cohorts-end-to-end) | PM cohorts fixed | ✅ Complete |
+| task-17 (admin-cohort-tab-fix) | Tab label + content fixed | ✅ Complete |
+| task-18 (admin-cohort-api) | Admin cohorts API created | ✅ Complete |
+| task-19 (admin-cohort-ui) | Admin cohorts UI pages created | ✅ Complete |
+| task-01 (fix-auth-context-roles) | Fix mock auth | ⬜ Pending |
+| task-02 (fix-signin-routing) | Fix dashboard routing | ⬜ Pending |
+| task-03 (fix-user-creation) | Fix role assignment on create | ⬜ Pending |
+| task-04 (dashboard-route-guards) | Add guards to all dashboards | ⬜ Pending |
+| task-05 (unify-role-system) | Add roleEnum FK to Role table | ⬜ Pending |
+| task-06 (permission-lookup-logging) | Add debug logging | ⬜ Pending |
+| task-07 (fix-edit-user-roles) | Delete old profile on role change | ⬜ Pending |
+| task-11 (fetchWithAuth-types) | Fix 29 TS type errors | ⬜ Pending |
+| task-12 (event-registration-schema) | Fix EventRegistration schema | ⬜ Pending |
+| task-13 (report-share-schema) | Fix ReportShare/Notification fields | ⬜ Pending |
+| task-14 (system-backup-stub) | Stub restore endpoint | ⬜ Pending |
+| task-15 (funding-api-issues) | Fix next-auth import + fundingType | ⬜ Pending |
+| task-16 (ui-component-props) | Fix DialogClose + securityLogs | ⬜ Pending |
 
-| Component | Status | Priority | Notes |
-|-----------|--------|----------|-------|
-| RBAC System | 70% Complete | High | Core functionality working, needs to be applied across all areas |
-| Admin Dashboard | 40% Complete | High | User management working, other sections in progress |
-| Program Manager Dashboard | 10% Complete | Medium | Basic structure only |
-| Startup Dashboard | 10% Complete | Medium | Basic structure only |
-| Mentor Dashboard | 10% Complete | Medium | Basic structure only |
-| Investor Dashboard | 10% Complete | Medium | Basic structure only |
-| Accelerator Dashboard | 10% Complete | Medium | Basic structure only |
-| Documentation | 60% Complete | High | Good progress on technical documentation |
+## Architecture Overview
 
-### Recent Milestones
-- ✅ **RBAC Database Schema**: Completed on May 15, 2025
-- ✅ **Permission Seeding**: Completed on May 18, 2025
-- ✅ **Admin User Management**: Completed on May 22, 2025
-- ✅ **Route Guard Component**: Completed on May 25, 2025
-- ✅ **RBAC Documentation**: Completed on May 27, 2025
+### Tech Stack
+- **Framework**: Next.js (App Router)
+- **Database**: Prisma ORM + SQLite (dev) → PostgreSQL (prod)
+- **Auth**: Custom JWT (`lib/auth.ts`) — NOT NextAuth
+- **UI**: shadcn/ui + Tailwind CSS
+- **Language**: TypeScript + Arabic RTL
 
-### Upcoming Milestones
-- ⬜ **API Route Protection**: Target: June 5, 2025
-- ⬜ **Dashboard Page Guards**: Target: June 10, 2025
-- ⬜ **Sidebar Navigation Updates**: Target: June 15, 2025
-- ⬜ **Permission Management UI**: Target: June 20, 2025
-- ⬜ **RBAC Testing**: Target: June 25, 2025
+### Valid User Roles (5 total)
+1. ADMIN → `/admin-dashboard`
+2. PROGRAM_MANAGER → `/program-manager-dashboard`
+3. MENTOR → `/mentor-dashboard`
+4. INVESTOR → `/investor-dashboard`
+5. ENTREPRENEUR → `/entrepreneur-dashboard`
 
-## Known Issues
+### Key Files
+- Auth: `lib/auth.ts`, `contexts/auth-context.tsx`
+- Permissions: `lib/permissions.ts`, `components/auth/RouteGuard.tsx`
+- API Client: `lib/api-client.ts` (`fetchWithAuth`)
+- DB Schema: `prisma/schema.prisma`
+- Role Seeds: `prisma/seed-roles.ts`
 
-### Technical Issues
-1. **Permission Caching**: 
-   - **Issue**: Permission changes don't take effect immediately without logout/login
-   - **Severity**: Medium
-   - **Status**: Under investigation
-   - **Workaround**: Logout and login after permission changes
+### API Pattern
+All admin API routes should use `checkPermission()` from `lib/permissions.ts`:
+```typescript
+const permissionCheck = await checkPermission(req, { category: 'resource', action: 'view' });
+if (!permissionCheck.authorized) return NextResponse.json({ error: '...' }, { status: 403 });
+```
 
-2. **Route Guard Script**: 
-   - **Issue**: Script doesn't handle all page component structures
-   - **Severity**: Low
-   - **Status**: Known limitation
-   - **Workaround**: Manual addition of RouteGuard to complex pages
-
-3. **API Error Handling**: 
-   - **Issue**: Inconsistent error response format across endpoints
-   - **Severity**: Low
-   - **Status**: To be addressed
-   - **Workaround**: Handle different error formats in frontend
-
-4. **Role Assignment**: 
-   - **Issue**: Changing a user's role doesn't update their permissions in real-time
-   - **Severity**: Medium
-   - **Status**: To be fixed
-   - **Workaround**: User needs to logout and login after role change
-
-### UX Issues
-1. **RTL Layout**: 
-   - **Issue**: Some components don't properly support RTL layout
-   - **Severity**: Medium
-   - **Status**: In progress
-   - **Workaround**: Use LTR layout for problematic components
-
-2. **Permission Denied UX**: 
-   - **Issue**: Unclear feedback when permission is denied
-   - **Severity**: Low
-   - **Status**: To be improved
-   - **Workaround**: Check console for error messages
-
-3. **Form Validation**: 
-   - **Issue**: Inconsistent validation error messages
-   - **Severity**: Low
-   - **Status**: To be standardized
-   - **Workaround**: Check form fields carefully
-
-4. **Loading States**: 
-   - **Issue**: Some actions lack proper loading indicators
-   - **Severity**: Low
-   - **Status**: To be addressed
-   - **Workaround**: Wait for action completion
-
-### Performance Issues
-1. **Permission Checking**: 
-   - **Issue**: Multiple permission checks can impact performance
-   - **Severity**: Low
-   - **Status**: Monitoring
-   - **Workaround**: Caching implemented, but may need optimization
-
-2. **Database Queries**: 
-   - **Issue**: Some queries are not optimized for large datasets
-   - **Severity**: Low
-   - **Status**: To be optimized
-   - **Workaround**: Limit data size during development
-
-## Evolution of Project Decisions
-
-### Architecture Decisions
-
-#### Initial Approach (May 2025)
-- **Decision**: Use Next.js for both frontend and backend
-- **Rationale**: Unified development experience, built-in API routes
-- **Outcome**: Working well, simplified development workflow
-
-#### Database Selection (May 2025)
-- **Decision**: Use Prisma ORM with SQLite for development
-- **Rationale**: Type-safe queries, easy schema management
-- **Outcome**: Effective for development, will need migration plan for production
-
-#### Authentication Strategy (May 2025)
-- **Decision**: Implement custom JWT authentication
-- **Rationale**: More control over auth flow, integration with RBAC
-- **Outcome**: Working well, but considering NextAuth.js for additional features
-
-### RBAC Implementation
-
-#### Permission Structure (May 2025)
-- **Initial Approach**: Role-based permissions only
-- **Evolution**: Moved to category/action permission pairs
-- **Rationale**: More granular control over features
-- **Current Status**: Working well, provides good balance of flexibility and simplicity
-
-#### Frontend Permission Checking (May 2025)
-- **Initial Approach**: Check permissions only on backend
-- **Evolution**: Added frontend permission hook with caching
-- **Rationale**: Improve UX by hiding unavailable features
-- **Current Status**: Effective, but needs real-time updates
-
-#### Route Protection (May 2025)
-- **Initial Approach**: Manual protection in each page
-- **Evolution**: Created RouteGuard component and automation script
-- **Rationale**: Consistency and developer experience
-- **Current Status**: Working well, needs to be applied to all pages
-
-### UI/UX Decisions
-
-#### Component Library (May 2025)
-- **Initial Approach**: Custom components
-- **Evolution**: Adopted shadcn/ui components
-- **Rationale**: Consistent design, faster development
-- **Current Status**: Effective, good balance of customization and consistency
-
-#### Layout Direction (May 2025)
-- **Initial Approach**: LTR layout only
-- **Evolution**: Added RTL support for Arabic
-- **Rationale**: Support Arabic-speaking users
-- **Current Status**: Basic implementation working, needs refinement
-
-#### Dashboard Structure (May 2025)
-- **Initial Approach**: Single dashboard with role-based views
-- **Evolution**: Separate dashboard for each role
-- **Rationale**: Better user experience, clearer separation of concerns
-- **Current Status**: Structure implemented, content needs development
-
-### Development Workflow
-
-#### Permission Integration (May 2025)
-- **Initial Approach**: Add permissions after feature development
-- **Evolution**: Integrate permissions from the start
-- **Rationale**: Avoid retrofitting, ensure security by design
-- **Current Status**: Working well, more efficient development process
-
-#### Documentation Approach (May 2025)
-- **Initial Approach**: Minimal documentation
-- **Evolution**: Comprehensive documentation of RBAC system
-- **Rationale**: Ensure consistency and maintainability
-- **Current Status**: Good documentation coverage, needs to be maintained
-
-#### Testing Strategy (May 2025)
-- **Initial Approach**: Manual testing only
-- **Evolution**: Considering automated testing for permissions
-- **Rationale**: Ensure comprehensive coverage of permission combinations
-- **Current Status**: Still primarily manual, automation planned
+### Test Infrastructure
+Test files in `newtests/` — run with `node newtests/test-*.js`. No Jest/Vitest setup, custom HTTP test scripts against running dev server.

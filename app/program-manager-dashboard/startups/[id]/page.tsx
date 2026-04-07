@@ -41,7 +41,7 @@ interface Milestone {
   title: string
   description: string
   dueDate: string
-  status: string
+  status: "completed" | "in_progress" | "upcoming" | "overdue"
   progress: number
 }
 
@@ -185,9 +185,10 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
   
   const getMilestoneStatusColor = (status: string) => {
     switch (status) {
-      case "pending": return "text-amber-500"
+      case "upcoming": return "text-amber-500"
+      case "in_progress": return "text-blue-500"
       case "completed": return "text-green-500"
-      case "not-started": return "text-muted-foreground"
+      case "overdue": return "text-red-500"
       default: return "text-muted-foreground"
     }
   }
@@ -272,7 +273,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => router.push(`/program-manager-dashboard/startups/${startup.id}/milestones`)}
+                  onClick={() => router.push(`/program-manager-dashboard/milestones?startupId=${startup.id}`)}
                 >
                   إدارة المراحل
                 </Button>
@@ -383,7 +384,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <Button 
-                onClick={() => router.push(`/program-manager-dashboard/startups/${startup.id}/milestones/new`)}
+                onClick={() => router.push(`/program-manager-dashboard/milestones?startupId=${startup.id}`)}
               >
                 إضافة مرحلة جديدة
               </Button>
@@ -397,9 +398,10 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                       <div className="p-4 border-b">
                         <div className="flex items-center justify-between">
                           <div className={`${getMilestoneStatusColor(milestone.status)}`}>
-                            {milestone.status === "pending" && <Clock className="h-5 w-5" />}
+                            {milestone.status === "upcoming" && <Clock className="h-5 w-5" />}
+                            {milestone.status === "in_progress" && <Clock className="h-5 w-5" />}
                             {milestone.status === "completed" && <CheckCircle className="h-5 w-5" />}
-                            {milestone.status === "not-started" && <AlertCircle className="h-5 w-5" />}
+                            {milestone.status === "overdue" && <AlertCircle className="h-5 w-5" />}
                           </div>
                           <h3 className="font-bold text-lg">{milestone.title}</h3>
                         </div>
@@ -423,9 +425,10 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                             تاريخ الاستحقاق: {formatDate(milestone.dueDate)}
                           </div>
                           <div className="text-sm font-medium">
-                            {milestone.status === "pending" && "قيد التنفيذ"}
+                            {milestone.status === "upcoming" && "قادمة"}
+                            {milestone.status === "in_progress" && "قيد التنفيذ"}
                             {milestone.status === "completed" && "مكتمل"}
-                            {milestone.status === "not-started" && "لم يبدأ بعد"}
+                            {milestone.status === "overdue" && "متأخرة"}
                           </div>
                         </div>
                       </div>

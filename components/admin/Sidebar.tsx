@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
+import { LucideIcon } from "lucide-react"
 import { 
   Home, 
   Users, 
@@ -17,7 +18,7 @@ import {
   Bell,
   FileText,
   Plug,
-  CreditCard,
+  ClipboardList,
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
@@ -29,7 +30,7 @@ import { PermissionRequirement } from "@/lib/permissions"
 interface NavItem {
   name: string;
   href: string;
-  icon: any;
+  icon: LucideIcon;
   permission?: PermissionRequirement;
   hidden?: boolean;
 }
@@ -63,6 +64,12 @@ const navItems: NavItem[] = [
     name: "الشركات الناشئة", 
     href: "/admin-dashboard/startups", 
     icon: Building,
+    permission: { category: "startups", action: "view" }
+  },
+  {
+    name: "المراحل",
+    href: "/admin-dashboard/milestones",
+    icon: ClipboardList,
     permission: { category: "startups", action: "view" }
   },
   { 

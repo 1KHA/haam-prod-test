@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
-import { AlertCircle, ArrowLeft, Download, Edit, ExternalLink, User, Mail, Phone } from "lucide-react"
+import { AlertCircle, ArrowLeft, Download, Edit, User, Mail, Phone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 interface TeamMember {
@@ -36,14 +36,27 @@ interface StartupDetails {
   createdAt: string
 }
 
+interface Milestone {
+  id: string
+  title: string
+  description: string
+  dueDate: string
+  status: "completed" | "in_progress" | "upcoming" | "overdue"
+  progress: number
+  priority: string
+  category: string
+}
+
 export default function StartupDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { user, token } = useAuth()
+  const { token } = useAuth()
   const [company, setCompany] = useState<StartupDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [teamLoading, setTeamLoading] = useState(true)
+  const [milestones, setMilestones] = useState<Milestone[]>([])
+  const [milestonesLoading, setMilestonesLoading] = useState(true)
 
   useEffect(() => {
     const fetchStartupDetails = async () => {
@@ -85,15 +98,38 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
           const data = await response.json()
           setTeamMembers(data.teamMembers)
         }
-      } catch (err) {
+      } catch {
         // Optionally handle error
       } finally {
         setTeamLoading(false)
       }
     }
+
+    const fetchMilestones = async () => {
+      if (!token) return
+
+      try {
+        setMilestonesLoading(true)
+        const response = await fetch(`/api/milestones?startupId=${params.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setMilestones(data.milestones || [])
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setMilestonesLoading(false)
+      }
+    }
     
     fetchStartupDetails()
     fetchTeamMembers()
+    fetchMilestones()
   }, [token, params.id])
 
   const getStatusBadge = (status: string) => {
@@ -335,80 +371,70 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
         </CardContent>
       </Card>
 
-      {/* Milestones Section (Mock Data) */}
+      {/* Milestones Section */}
       <Card>
         <CardHeader>
           <CardTitle>المراحل والتقدم</CardTitle>
-          <CardDescription>عرض موجز لمراحل الشركة الناشئة (بيانات تجريبية)</CardDescription>
+          <CardDescription>مراحل الشركة الناشئة المحددة من مدير البرنامج</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Mock milestone data for now; replace with API integration when available */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                id: "1",
-                title: "إطلاق النسخة التجريبية",
-                dueDate: "15 أبريل 2025",
-                status: "in_progress",
-                progress: 75,
-                priority: "high"
-              },
-              {
-                id: "2",
-                title: "تأمين تمويل المرحلة الأولى",
-                dueDate: "30 مارس 2025",
-                status: "completed",
-                progress: 100,
-                priority: "high"
-              },
-              {
-                id: "3",
-                title: "توظيف فريق التطوير",
-                dueDate: "10 فبراير 2025",
-                status: "completed",
-                progress: 100,
-                priority: "medium"
-              }
-            ].map((milestone) => (
-              <Card key={milestone.id} className="w-full">
-                <CardHeader className="pb-2 flex flex-row items-center gap-4">
-                  <div className="flex flex-col items-start">
-                    <CardTitle className="text-lg">{milestone.title}</CardTitle>
-                    <CardDescription>تاريخ الاستحقاق: {milestone.dueDate}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      milestone.status === "completed" ? "bg-green-100 text-green-800" :
-                      milestone.status === "in_progress" ? "bg-blue-100 text-blue-800" :
-                      "bg-gray-100 text-gray-800"
-                    }`}>
-                      {milestone.status === "completed" ? "مكتملة" : milestone.status === "in_progress" ? "قيد التنفيذ" : "غير معروف"}
-                    </span>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      milestone.priority === "high" ? "bg-red-100 text-red-800" :
-                      milestone.priority === "medium" ? "bg-amber-100 text-amber-800" :
-                      "bg-gray-100 text-gray-800"
-                    }`}>
-                      {milestone.priority === "high" ? "عالية" : milestone.priority === "medium" ? "متوسطة" : "منخفضة"}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                    <div 
-                      className={`h-2.5 rounded-full ${
-                        milestone.status === "completed" ? "bg-green-500" :
-                        milestone.status === "in_progress" ? "bg-blue-500" :
-                        "bg-amber-500"
-                      }`}
-                      style={{ width: `${milestone.progress}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">نسبة الإنجاز: {milestone.progress}%</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {milestonesLoading ? (
+            <div className="flex justify-center items-center h-24">جاري تحميل المراحل...</div>
+          ) : milestones.length === 0 ? (
+            <div className="text-center text-muted-foreground py-6">لا توجد مراحل مضافة لهذه الشركة بعد</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {milestones.map((milestone) => (
+                <Card key={milestone.id} className="w-full">
+                  <CardHeader className="pb-2 flex flex-row items-center gap-4">
+                    <div className="flex flex-col items-start">
+                      <CardTitle className="text-lg">{milestone.title}</CardTitle>
+                      <CardDescription>
+                        تاريخ الاستحقاق: {new Date(milestone.dueDate).toLocaleDateString('ar-SA')}
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        milestone.status === "completed" ? "bg-green-100 text-green-800" :
+                        milestone.status === "in_progress" ? "bg-blue-100 text-blue-800" :
+                        milestone.status === "overdue" ? "bg-red-100 text-red-800" :
+                        "bg-amber-100 text-amber-800"
+                      }`}>
+                        {milestone.status === "completed"
+                          ? "مكتملة"
+                          : milestone.status === "in_progress"
+                          ? "قيد التنفيذ"
+                          : milestone.status === "overdue"
+                          ? "متأخرة"
+                          : "قادمة"}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        milestone.priority === "high" ? "bg-red-100 text-red-800" :
+                        milestone.priority === "medium" ? "bg-amber-100 text-amber-800" :
+                        "bg-green-100 text-green-800"
+                      }`}>
+                        {milestone.priority === "high" ? "عالية" : milestone.priority === "medium" ? "متوسطة" : "منخفضة"}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                      <div 
+                        className={`h-2.5 rounded-full ${
+                          milestone.status === "completed" ? "bg-green-500" :
+                          milestone.status === "in_progress" ? "bg-blue-500" :
+                          milestone.status === "overdue" ? "bg-red-500" :
+                          "bg-amber-500"
+                        }`}
+                        style={{ width: `${milestone.progress}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">نسبة الإنجاز: {milestone.progress}%</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
           <div className="flex justify-end mt-4">
             <Button variant="outline" onClick={() => router.push("/entrepreneur-dashboard/milestones")}>
               عرض جميع المراحل

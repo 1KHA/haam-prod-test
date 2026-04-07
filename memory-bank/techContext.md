@@ -21,7 +21,7 @@
 - **PostgreSQL**: Production database (planned)
 - **JWT**: JSON Web Tokens for authentication
 - **bcrypt**: Password hashing library
-- **NextAuth.js**: Authentication library (partial implementation)
+- **NextAuth.js**: ⚠️ NOT USED — was partially attempted but `next-auth` is NOT installed. Any import of `next-auth` is a bug. The project uses custom JWT auth exclusively via `lib/auth.ts`.
 
 ### Development Tools
 - **ESLint**: JavaScript linting
@@ -364,7 +364,14 @@ return (
 - **Error Logging**: Console errors in development, structured logging in production
 
 ### Testing Strategy
-- **Unit Testing**: Component and utility function tests
-- **Integration Testing**: API route and permission testing
-- **E2E Testing**: Critical user flows
+- **Custom HTTP Tests**: `newtests/` directory contains plain Node.js test scripts run with `node newtests/test-*.js` against a running dev server. No Jest/Vitest configured.
+- **Unit Testing**: Component and utility function tests (planned)
+- **Integration Testing**: API route and permission testing via custom HTTP scripts
+- **E2E Testing**: Critical user flows via custom scripts
 - **Manual Testing**: Role-based feature verification
+
+### Known Technical Issues (as of 2026-04-07)
+1. **`next-auth` import in funding route** — `app/api/funding/[id]/route.ts` imports from `next-auth` which is not installed. Replace with `@/lib/auth`.
+2. **SQLite case-insensitive search** — `mode: 'insensitive'` in Prisma throws 500 on SQLite. Requires PostgreSQL.
+3. **Dual role system** — `UserRole` enum (Prisma) and `Role` DB table are not FK-linked. Permission lookup is fragile.
+4. **46 TypeScript errors** in the codebase (non-blocking for build but should be fixed).

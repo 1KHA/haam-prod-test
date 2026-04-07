@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
+import {
+  calculateStartupProgress,
+  formatRelativeMilestoneDueDate,
+  getUpcomingMilestoneSeverity,
+  listMilestones,
+} from '@/lib/milestones';
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,42 +71,33 @@ export async function GET(request: NextRequest) {
       industries[startup.industry]++;
     });
 
-    // Get upcoming milestones (mock data since there's no milestone model)
-    const milestones = [
-      {
-        id: "1",
-        title: "عرض النموذج الأولي",
-        startupName: "شركة باي تك",
-        dueIn: "خلال 3 أيام",
-        status: "urgent"
-      },
-      {
-        id: "2",
-        title: "اختبار المستخدمين",
-        startupName: "شركة ميديكال إيه آي",
-        dueIn: "خلال 5 أيام",
-        status: "upcoming"
-      },
-      {
-        id: "3",
-        title: "عرض خطة التسويق",
-        startupName: "شركة تك سوليوشنز",
-        dueIn: "خلال أسبوع",
-        status: "normal"
-      },
-      {
-        id: "4",
-        title: "تقديم تقرير التقدم",
-        startupName: "شركة هيلث تك",
-        dueIn: "خلال 10 أيام",
-        status: "normal"
-      }
-    ];
+    const milestoneItems = await listMilestones(
+      startups.length > 0 ? { startupId: { in: startups.map((startup) => startup.id) } } : {}
+    );
+    const milestonesByStartup = new Map<string, typeof milestoneItems>();
+
+    milestoneItems.forEach((milestone) => {
+      const current = milestonesByStartup.get(milestone.startupId) || [];
+      current.push(milestone);
+      milestonesByStartup.set(milestone.startupId, current);
+    });
+
+    const milestones = milestoneItems
+      .filter((milestone) => milestone.status !== 'completed')
+      .sort((left, right) => new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime())
+      .slice(0, 4)
+      .map((milestone) => ({
+        id: milestone.id,
+        title: milestone.title,
+        startupName: milestone.startupName,
+        dueIn: formatRelativeMilestoneDueDate(milestone.dueDate),
+        status: getUpcomingMilestoneSeverity(milestone.dueDate, milestone.status),
+      }));
     
     // Format the response
     const formattedStartups = startups.map(startup => {
-      // Calculate progress (mock data since there's no progress field)
-      const progress = Math.floor(Math.random() * 60) + 30;
+      const startupMilestones = milestonesByStartup.get(startup.id) || [];
+      const progress = calculateStartupProgress(startupMilestones);
       
       // Get cohort information
       const cohort = startup.cohortMemberships.length > 0 

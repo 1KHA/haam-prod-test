@@ -92,6 +92,9 @@
 | task-17 (admin-cohort-tab-fix) | Tab label + content fixed | ✅ Complete |
 | task-18 (admin-cohort-api) | Admin cohorts API created | ✅ Complete |
 | task-19 (admin-cohort-ui) | Admin cohorts UI pages created | ✅ Complete |
+| task-20 (milestones-shared-platform) | `MilestoneResponse` model, `lib/milestones.ts` shared utils, Prisma migration | ✅ Complete |
+| task-21 (milestones-manager-admin) | `/api/program-manager/milestones`, `/api/admin/milestones`, live PM milestone dashboard, admin milestone page + sidebar, real progress in PM startup APIs | ✅ Complete |
+| task-22 (milestones-entrepreneur-flow) | Entrepreneur can only view + respond (no CRUD), response/file submission APIs, rebuilt milestone detail UI | ✅ Complete |
 | task-01 (fix-auth-context-roles) | Fix mock auth | ⬜ Pending |
 | task-02 (fix-signin-routing) | Fix dashboard routing | ⬜ Pending |
 | task-03 (fix-user-creation) | Fix role assignment on create | ⬜ Pending |

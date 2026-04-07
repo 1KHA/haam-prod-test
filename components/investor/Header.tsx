@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Search } from "lucide-react"
+import { Bell, User, Search, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,9 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function Header() {
   const { setTheme, theme } = useTheme()
+  const { signOut } = useAuth()
 
   return (
     <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4 text-right">
@@ -44,7 +46,10 @@ export default function Header() {
               تبديل المظهر
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>تسجيل الخروج</DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut}>
+              <LogOut className="ml-2 h-4 w-4" />
+              تسجيل الخروج
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -19,11 +19,15 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const search = searchParams.get('search') || '';
-    const status = searchParams.get('status') || undefined;
+    const statusParam = searchParams.get('status');
     const programId = searchParams.get('programId') || undefined;
+    
+    // Validate status parameter - only allow valid enum values
+    const validStatuses = ['UPCOMING', 'ACTIVE', 'COMPLETED'];
+    const status = statusParam && validStatuses.includes(statusParam) ? statusParam : undefined;
     
     const skip = (page - 1) * limit;
     

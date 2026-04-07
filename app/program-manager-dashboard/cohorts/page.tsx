@@ -98,11 +98,13 @@ export default function CohortsPage() {
           queryParams.append('search', searchQuery);
         }
         
-        if (statusFilter) {
+        // Only add status filter if it's a valid status (not "ALL")
+        if (statusFilter && statusFilter !== 'ALL') {
           queryParams.append('status', statusFilter);
         }
         
-        if (programFilter) {
+        // Only add program filter if it's a valid program ID (not "ALL")
+        if (programFilter && programFilter !== 'ALL') {
           queryParams.append('programId', programFilter);
         }
         

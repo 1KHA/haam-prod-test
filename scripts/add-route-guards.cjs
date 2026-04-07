@@ -2,14 +2,13 @@ const fs = require('fs');
 const path = require('path');
 
 // Define dashboard directories and their corresponding roles
+// Note: Only dashboards that exist and have valid UserRole enum values are listed
 const dashboards = [
-  { dir: 'startup-dashboard', role: 'STARTUP' },
   { dir: 'mentor-dashboard', role: 'MENTOR' },
   { dir: 'investor-dashboard', role: 'INVESTOR' },
-  { dir: 'judge-dashboard', role: 'JUDGE' },
-  { dir: 'participant-dashboard', role: 'PARTICIPANT' },
-  { dir: 'accelerator-dashboard', role: 'ACCELERATOR' },
-  { dir: 'admin-dashboard', role: 'ADMIN' }
+  { dir: 'admin-dashboard', role: 'ADMIN' },
+  { dir: 'entrepreneur-dashboard', role: 'ENTREPRENEUR' },
+  { dir: 'program-manager-dashboard', role: 'PROGRAM_MANAGER' }
 ];
 
 // Function to add RouteGuard to a page file

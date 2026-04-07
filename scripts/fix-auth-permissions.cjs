@@ -13,9 +13,7 @@ async function fixAuthPermissions() {
       { name: 'مدير برنامج', englishName: 'PROGRAM_MANAGER' },
       { name: 'رائد أعمال', englishName: 'ENTREPRENEUR' },
       { name: 'مستثمر', englishName: 'INVESTOR' },
-      { name: 'موجه', englishName: 'MENTOR' },
-      { name: 'مشارك', englishName: 'PARTICIPANT' },
-      { name: 'محكم', englishName: 'JUDGE' }
+      { name: 'موجه', englishName: 'MENTOR' }
     ];
 
     for (const roleData of rolesData) {

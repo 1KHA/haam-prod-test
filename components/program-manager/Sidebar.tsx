@@ -67,7 +67,8 @@ const navItems = [
     name: "جدولة الجلسات", 
     href: "/program-manager-dashboard/sessions", 
     icon: Handshake,
-    permission: { category: 'mentorship', action: 'view' }
+    permission: { category: 'mentorship', action: 'view' },
+    hidden: true
   },
   { 
     name: "إدارة الفعاليات", 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth';
+import { checkPermission } from '@/lib/permissions';
 
 // GET /api/admin/programs/[id] - Get a specific program by ID
 export async function GET(
@@ -8,15 +9,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
+    // Check if user has permission to view programs
+    const permissionCheck = await checkPermission(request, {
+      category: 'programs',
+      action: 'view'
+    });
     
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 403 }
       );
     }
 
@@ -126,15 +128,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
+    // Check if user has permission to edit programs
+    const permissionCheck = await checkPermission(request, {
+      category: 'programs',
+      action: 'edit'
+    });
     
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 403 }
       );
     }
 
@@ -217,15 +220,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
+    // Check if user has permission to delete programs
+    const permissionCheck = await checkPermission(request, {
+      category: 'programs',
+      action: 'delete'
+    });
     
-    // Check if user is authenticated and is an admin
-    const user = await isAuthenticated(authHeader || undefined);
-    if (!user || user.role !== UserRole.ADMIN) {
+    if (!permissionCheck.authorized) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401 }
+        { status: 403 }
       );
     }
 

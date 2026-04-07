@@ -13,14 +13,13 @@ import {
   Edit, 
   Trash2, 
   Users, 
-  Download,
-  DollarSign,
-  CreditCard,
   Eye,
-  Search,
-  RefreshCw
+  Plus,
+  RefreshCw,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
-import { Input } from "@/components/ui/input"
 
 interface Program {
   id: string
@@ -40,39 +39,34 @@ interface Program {
     name: string
     email: string
   }
+  cohorts: Cohort[]
   stats: {
     cohortsCount: number
     activeCohortsCount: number
     totalStartups: number
+    totalMentors: number
   }
   createdAt: string
   updatedAt: string
 }
 
-interface Payment {
+interface Cohort {
   id: string
-  referenceNumber: string
-  paymentDate: string
-  amount: number
-  currency: string
+  name: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
   status: string
-  type: string
-  description: string
-  payerName: string
-  payerEmail?: string
-  paymentMethod: string
-  metadata?: {
-    programId?: string
-    startupId?: string
-    invoiceId?: string
+  capacity: number | null
+  manager: {
+    id: string
+    name: string
+    email: string
   }
-}
-
-interface PaginationInfo {
-  page: number
-  pageSize: number
-  totalItems: number
-  totalPages: number
+  stats: {
+    membersCount: number
+    mentorsCount: number
+  }
 }
 
 export default function ProgramDetailsPage({ params }: { params: { id: string } }) {
@@ -81,15 +75,7 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
   const [program, setProgram] = useState<Program | null>(null)
   const [loading, setLoading] = useState(true)
   const [token, setToken] = useState<string | null>(null)
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [paymentsLoading, setPaymentsLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    page: 1,
-    pageSize: 10,
-    totalItems: 0,
-    totalPages: 0
-  })
+  const [cohortSearchQuery, setCohortSearchQuery] = useState("")
   
   // Get token from localStorage
   useEffect(() => {
@@ -99,7 +85,7 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
     }
   }, []);
   
-  // Fetch program details
+  // Fetch program details (includes cohorts)
   useEffect(() => {
     if (!token) return;
     
@@ -133,58 +119,6 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
     
     fetchProgram();
   }, [token, params.id]);
-  
-  // Fetch program payments when payments tab is active
-  useEffect(() => {
-    if (!token || activeTab !== "payments") return;
-    
-    const fetchPayments = async () => {
-      setPaymentsLoading(true);
-      
-      try {
-        // Build query parameters
-        const queryParams = new URLSearchParams();
-        queryParams.append("page", pagination.page.toString());
-        queryParams.append("pageSize", pagination.pageSize.toString());
-        // Ensure programId is sent to filter payments by program
-        queryParams.append("programId", params.id);
-        
-        if (searchQuery) {
-          queryParams.append("search", searchQuery);
-        }
-        
-        const response = await fetch(`/api/admin/payments?${queryParams.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch payments');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          setPayments(data.data.payments);
-          setPagination(data.data.pagination);
-        } else {
-          throw new Error(data.error || 'Failed to fetch payments');
-        }
-      } catch (error) {
-        console.error('Error fetching payments:', error);
-        showAdminToast({
-          title: "خطأ",
-          description: "فشل في جلب بيانات المدفوعات",
-          variant: "destructive"
-        });
-      } finally {
-        setPaymentsLoading(false);
-      }
-    };
-    
-    fetchPayments();
-  }, [token, params.id, activeTab, pagination.page, searchQuery]);
   
   // Handle delete program
   const handleDelete = async () => {
@@ -236,6 +170,20 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
     }
   };
   
+  // Get cohort status badge
+  const getCohortStatusBadge = (status: string) => {
+    switch (status) {
+      case 'UPCOMING':
+        return <Badge variant="outline">قادم</Badge>;
+      case 'ACTIVE':
+        return <Badge className="bg-green-500">نشط</Badge>;
+      case 'COMPLETED':
+        return <Badge variant="secondary">مكتمل</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+  
   if (!token) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -247,7 +195,7 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <p>جاري التحميل...</p>
+        <RefreshCw className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -260,66 +208,11 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
     );
   }
   
-  // Handle page change for payments
-  const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
-  };
-  
-  // Format currency
-  const formatCurrency = (amount: number, currency: string = 'SAR') => {
-    return `${amount.toLocaleString('ar-SA')} ${currency === 'SAR' ? 'ريال' : currency}`;
-  }
-  
-  // Map payment type to Arabic
-  const getPaymentTypeArabic = (type: string) => {
-    switch(type) {
-      case 'program_fee': return 'رسوم اشتراك';
-      case 'mentorship_fee': return 'رسوم إرشاد';
-      case 'event_registration': return 'رسوم فعالية';
-      case 'service_fee': return 'رسوم خدمات';
-      default: return type;
-    }
-  }
-  
-  // Map payment status to Arabic
-  const getPaymentStatusArabic = (status: string) => {
-    switch(status) {
-      case 'completed': return 'مكتمل';
-      case 'pending': return 'معلق';
-      case 'failed': return 'فشل';
-      case 'rejected': return 'مرفوض';
-      case 'refunded': return 'مسترجع';
-      default: return status;
-    }
-  }
-  
-  // Get payment status color
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-amber-100 text-amber-800';
-      case 'failed':
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'refunded': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  }
-  
-  // Export payments
-  const handleExportPayments = () => {
-    if (!token) return;
-    
-    // Build export URL with query parameters
-    let exportUrl = `/api/admin/payments/export?programId=${params.id}`;
-    
-    // Add search parameter if provided
-    if (searchQuery) {
-      exportUrl += `&search=${encodeURIComponent(searchQuery)}`;
-    }
-    
-    // Open in new tab
-    window.open(exportUrl, '_blank');
-  }
+  // Filter cohorts based on search query
+  const filteredCohorts = program.cohorts?.filter(cohort => 
+    !cohortSearchQuery || 
+    cohort.name.toLowerCase().includes(cohortSearchQuery.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6 text-right">
@@ -366,7 +259,7 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
       >
         <TabsList className="grid grid-cols-2 w-full">
           <TabsTrigger value="details">تفاصيل البرنامج</TabsTrigger>
-          <TabsTrigger value="payments">المدفوعات</TabsTrigger>
+          <TabsTrigger value="cohorts">الدفعات</TabsTrigger>
         </TabsList>
         
         <TabsContent value="details" className="space-y-6 mt-6">
@@ -512,174 +405,116 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
               className="w-full"
               onClick={() => router.push(`/admin-dashboard/programs/${params.id}/cohorts`)}
             >
-              عرض الدفعات
+              إدارة الدفعات
             </Button>
           </div>
         </div>
       </div>
         </TabsContent>
         
-        <TabsContent value="payments" className="space-y-6 mt-6">
+        <TabsContent value="cohorts" className="space-y-6 mt-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center gap-1"
-                onClick={handleExportPayments}
-              >
-                <Download className="h-4 w-4" />
-                <span>تصدير</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center gap-1"
-                onClick={() => {
-                  setPagination(prev => ({ ...prev, page: 1 }));
-                  // Re-fetch will happen due to useEffect dependencies
-                }}
-                disabled={paymentsLoading}
-              >
-                {paymentsLoading ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-                <span>تحديث</span>
-              </Button>
-            </div>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="flex items-center gap-1"
+              onClick={() => router.push(`/admin-dashboard/programs/${params.id}/cohorts/new`)}
+            >
+              <Plus className="h-4 w-4" />
+              <span>إضافة دفعة</span>
+            </Button>
             
             <div className="relative w-64">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="البحث عن معاملة..." 
-                className="pl-3 pr-10 w-full" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setPagination(prev => ({ ...prev, page: 1 }));
-                    // Re-fetch will happen due to useEffect dependencies
-                  }
-                }}
+              <input
+                type="text"
+                placeholder="البحث عن دفعة..."
+                className="w-full px-4 py-2 pr-10 border rounded-md"
+                value={cohortSearchQuery}
+                onChange={(e) => setCohortSearchQuery(e.target.value)}
               />
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                🔍
+              </span>
             </div>
           </div>
           
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-primary" />
-                <span>المدفوعات المرتبطة بالبرنامج</span>
+                <Calendar className="h-5 w-5 text-primary" />
+                <span>قائمة الدفعات ({filteredCohorts.length})</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {paymentsLoading ? (
+              {loading ? (
                 <div className="py-8 text-center">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
-                  <p className="text-muted-foreground">جاري تحميل المدفوعات...</p>
+                  <p className="text-muted-foreground">جاري تحميل الدفعات...</p>
                 </div>
-              ) : payments.length === 0 ? (
+              ) : filteredCohorts.length === 0 ? (
                 <div className="py-8 text-center">
-                  <CreditCard className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p>لا توجد مدفوعات مرتبطة بهذا البرنامج</p>
+                  <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p>لا توجد دفعات{cohortSearchQuery ? ' مطابقة لبحثك' : ' في هذا البرنامج'}</p>
                   <Button 
                     variant="link" 
                     className="mt-2"
-                    onClick={() => router.push('/admin-dashboard/payments/create')}
+                    onClick={() => router.push(`/admin-dashboard/programs/${params.id}/cohorts/new`)}
                   >
                     إضافة دفعة جديدة
                   </Button>
                 </div>
               ) : (
                 <div className="border rounded-md">
-                  <div className="grid grid-cols-7 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
+                  <div className="grid grid-cols-6 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
                     <div className="col-span-1">الإجراءات</div>
-                    <div className="col-span-1">الحالة</div>
-                    <div className="col-span-1">المبلغ</div>
-                    <div className="col-span-1">النوع</div>
-                    <div className="col-span-1">الجهة</div>
-                    <div className="col-span-1">التاريخ</div>
-                    <div className="col-span-1">رقم المرجع</div>
+                    <div className="col-span-1">عدد المرشدين</div>
+                    <div className="col-span-1">عدد الشركات</div>
+                    <div className="col-span-1">تاريخ الانتهاء</div>
+                    <div className="col-span-1">تاريخ البدء</div>
+                    <div className="col-span-1">اسم الدفعة</div>
                   </div>
                   
-                  {/* Check payment metadata for programId to ensure we only show payments for this program */}
-                  {payments.filter(p => 
-                    p.metadata && 
-                    p.metadata.programId && 
-                    p.metadata.programId.toString() === params.id
-                  ).map((payment) => (
-                    <div key={payment.id} className="grid grid-cols-7 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
+                  {filteredCohorts.map((cohort) => (
+                    <div key={cohort.id} className="grid grid-cols-6 gap-4 p-4 border-b hover:bg-muted/20 text-sm">
                       <div className="col-span-1 flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <button 
-                            className="text-blue-500 hover:text-blue-700"
-                            onClick={() => router.push(`/admin-dashboard/payments/${payment.id}`)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="text-amber-500 hover:text-amber-700"
-                            onClick={() => router.push(`/admin-dashboard/payments/${payment.id}/edit`)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <button 
+                          className="text-blue-500 hover:text-blue-700"
+                          onClick={() => router.push(`/admin-dashboard/programs/${params.id}/cohorts/${cohort.id}`)}
+                          title="عرض التفاصيل"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button 
+                          className="text-amber-500 hover:text-amber-700"
+                          onClick={() => router.push(`/admin-dashboard/programs/${params.id}/cohorts/${cohort.id}/edit`)}
+                          title="تعديل"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="col-span-1 flex items-center">
+                        {getCohortStatusBadge(cohort.status)}
+                      </div>
+                      <div className="col-span-1">{cohort.stats?.mentorsCount || 0}</div>
+                      <div className="col-span-1">{cohort.stats?.membersCount || 0}</div>
+                      <div className="col-span-1">
+                        {cohort.endDate 
+                          ? new Date(cohort.endDate).toLocaleDateString('ar-SA')
+                          : '-'}
                       </div>
                       <div className="col-span-1">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
-                          {getPaymentStatusArabic(payment.status)}
-                        </span>
+                        {cohort.startDate 
+                          ? new Date(cohort.startDate).toLocaleDateString('ar-SA')
+                          : '-'}
                       </div>
-                      <div className="col-span-1">{formatCurrency(payment.amount, payment.currency)}</div>
-                      <div className="col-span-1">{getPaymentTypeArabic(payment.type)}</div>
-                      <div className="col-span-1">{payment.payerName}</div>
-                      <div className="col-span-1">{new Date(payment.paymentDate).toLocaleDateString('ar-SA')}</div>
-                      <div className="col-span-1">{payment.referenceNumber}</div>
+                      <div 
+                        className="col-span-1 font-medium cursor-pointer hover:text-primary" 
+                        onClick={() => router.push(`/admin-dashboard/programs/${params.id}/cohorts/${cohort.id}`)}
+                      >
+                        {cohort.name}
+                      </div>
                     </div>
                   ))}
-                </div>
-              )}
-              
-              {/* Pagination */}
-              {!paymentsLoading && pagination.totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(1)}
-                    disabled={pagination.page === 1 || paymentsLoading}
-                  >
-                    الأول
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1 || paymentsLoading}
-                  >
-                    السابق
-                  </Button>
-                  <span className="px-3 py-2 mx-1 rounded-md bg-muted">
-                    صفحة {pagination.page} من {pagination.totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === pagination.totalPages || paymentsLoading}
-                  >
-                    التالي
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.totalPages)}
-                    disabled={pagination.page === pagination.totalPages || paymentsLoading}
-                  >
-                    الأخير
-                  </Button>
                 </div>
               )}
             </CardContent>

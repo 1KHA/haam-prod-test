@@ -109,6 +109,25 @@ export default function NewUserPage() {
       })
       return
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "خطأ",
+        description: "صيغة البريد الإلكتروني غير صحيحة",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (password.length < 8) {
+      toast({
+        title: "خطأ",
+        description: "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+        variant: "destructive"
+      })
+      return
+    }
     
     setIsLoading(true)
     

@@ -47,14 +47,6 @@ export default function EntrepreneurDashboard() {
     { id: 3, name: "لقاء مع المستثمرين", date: "25 مارس 2025", time: "4:00 مساءً", type: "شبكات" },
   ]
 
-  const quickActions = [
-    { name: "إكمال الملف الشخصي", path: "/entrepreneur-dashboard/profile", icon: <Users className="h-4 w-4 ml-2" /> },
-    { name: "إضافة أعضاء الفريق", path: "/entrepreneur-dashboard/team", icon: <Users className="h-4 w-4 ml-2" /> },
-    { name: "التقديم للبرامج", path: "/entrepreneur-dashboard/apply", icon: <Rocket className="h-4 w-4 ml-2" /> },
-    { name: "البحث عن موجهين", path: "/entrepreneur-dashboard/mentors", icon: <BookOpen className="h-4 w-4 ml-2" /> },
-    { name: "التسجيل في الفعاليات", path: "/entrepreneur-dashboard/events", icon: <Calendar className="h-4 w-4 ml-2" /> },
-  ]
-
   const tasks = [
     { 
       id: 1, 
@@ -173,26 +165,7 @@ export default function EntrepreneurDashboard() {
             </Card>
           </div>
           
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>إجراءات سريعة</CardTitle>
-              <CardDescription>ابدأ رحلة شركتك الناشئة</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {quickActions.map((action, index) => (
-                  <Button 
-                    key={index}
-                    variant="outline" 
-                    className="justify-end h-auto py-3" 
-                    onClick={() => router.push(action.path)}
-                  >
-                    {action.name} {action.icon}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Quick Actions removed — duplicated in sidebar navigation */}
         </TabsContent>
 
         <TabsContent value="programs">

@@ -242,7 +242,17 @@ export default function ProgramsPage() {
     {
       accessorKey: "type",
       header: "النوع",
-      cell: ({ row }) => <div>{row.original.type}</div>,
+      cell: ({ row }) => {
+        const typeMap: Record<string, string> = {
+          ACCELERATOR: "مسرع أعمال",
+          INCUBATOR: "حاضنة أعمال",
+          WORKSHOP: "ورشة عمل",
+          BOOTCAMP: "معسكر تدريبي",
+          HACKATHON: "هاكاثون",
+          OTHER: "أخرى",
+        };
+        return <div>{typeMap[row.original.type] || row.original.type}</div>;
+      },
     },
     {
       accessorKey: "status",

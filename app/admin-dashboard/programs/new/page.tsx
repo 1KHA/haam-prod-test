@@ -48,6 +48,24 @@ export default function NewProgramPage() {
       });
       return;
     }
+
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      showAdminToast({
+        title: "خطأ في التاريخ",
+        description: "تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (applicationDeadline && startDate && new Date(applicationDeadline) > new Date(startDate)) {
+      showAdminToast({
+        title: "تنبيه",
+        description: "الموعد النهائي للتقديم يجب أن يكون قبل أو في تاريخ بدء البرنامج",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setLoading(true);
     

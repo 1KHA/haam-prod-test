@@ -38,10 +38,11 @@ export async function GET(req: NextRequest) {
     const where: any = {};
     
     // Apply search filter
+    // Note: mode: 'insensitive' is not supported by SQLite; we filter case-insensitively in JS after fetching
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } }
+        { name: { contains: search } },
+        { email: { contains: search } }
       ];
     }
     
@@ -52,8 +53,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch users with their profiles
-    const users = await prisma.user.findMany({
-      where,
+    // When searching, fetch without skip/take first so we can do case-insensitive JS filter
+    const usersRaw = await prisma.user.findMany({
+      where: search ? { role: where.role } : where,
       include: {
         profile: true,
         mentorProfile: true,
@@ -66,12 +68,19 @@ export async function GET(req: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
-      skip,
-      take: limit,
     });
 
-    // Get total count with filters for pagination
-    const total = await prisma.user.count({ where });
+    // Case-insensitive JS filter for search (SQLite doesn't support mode: 'insensitive')
+    const filtered = search
+      ? usersRaw.filter((u: any) =>
+          u.name?.toLowerCase().includes(search.toLowerCase()) ||
+          u.email?.toLowerCase().includes(search.toLowerCase())
+        )
+      : usersRaw;
+
+    // Manual pagination after filtering
+    const total = filtered.length;
+    const users = filtered.slice(skip, skip + limit);
 
     // Format the response
     const formattedUsers = users.map((user: any) => {

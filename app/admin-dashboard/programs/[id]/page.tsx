@@ -282,7 +282,14 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">النوع</h3>
-                    <p className="text-muted-foreground">{program.type}</p>
+                    <p className="text-muted-foreground">{{
+                      ACCELERATOR: "مسرع أعمال",
+                      INCUBATOR: "حاضنة أعمال",
+                      WORKSHOP: "ورشة عمل",
+                      BOOTCAMP: "معسكر تدريبي",
+                      HACKATHON: "هاكاثون",
+                      OTHER: "أخرى",
+                    }[program.type] || program.type}</p>
                   </div>
                   
                   <div>

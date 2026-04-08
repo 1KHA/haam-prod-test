@@ -13,10 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
 
 export default function Header() {
   const { setTheme, theme } = useTheme()
   const { signOut } = useAuth()
+  const router = useRouter()
 
   return (
     <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4 text-right">
@@ -28,7 +30,7 @@ export default function Header() {
           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="بحث..." className="pr-8 w-full" />
         </div>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" onClick={() => router.push("/program-manager-dashboard/notifications")}>
           <Bell className="h-4 w-4" />
         </Button>
         <DropdownMenu>
@@ -40,8 +42,8 @@ export default function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>حسابي</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>الملف الشخصي</DropdownMenuItem>
-            <DropdownMenuItem>الإعدادات</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/program-manager-dashboard/profile")}>الملف الشخصي</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/program-manager-dashboard/settings")}>الإعدادات</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               تبديل المظهر
             </DropdownMenuItem>

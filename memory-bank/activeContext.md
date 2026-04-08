@@ -10,7 +10,17 @@
 5. ✅ **Program Manager Cohorts Fix** — Fixed filter value mismatch ("ALL" sent to backend), added missing pages (edit, members, mentors), enhanced API validation.
 6. ✅ **Logout Fix** — Added `signOut` handler to all dashboard Header components (previously only entrepreneur dashboard had it working).
 7. ✅ **Admin Cohort Management (Tasks 17-19)** — Tab label fixed ("المدفوعات" → "الدفعات"), cohort tab content replaced, admin cohorts API created, UI pages created.
-8. ✅ **Milestone Ownership Model (Tasks 20-22)** — Milestones moved to correct ownership: PM creates/manages, admin monitors, entrepreneur views and responds only.
+8. ✅ **WebTest Fixes (2026-04-08)** — Fixed 7 confirmed issues from webtest.xlsx:
+   - Search error in admin users (removed SQLite-incompatible `mode: 'insensitive'`, replaced with JS post-filter)
+   - Back button now uses `router.back()` instead of `router.push()`
+   - Program type displays Arabic names (ACCELERATOR → مسرع أعمال, etc.) in table and detail views
+   - Program date validation: end date cannot be before start date
+   - All 4 role headers (admin, PM, mentor, investor) now have working onClick for profile/settings/bell buttons
+   - Email regex + password length validation added to new user form
+   - Quick Actions card removed from entrepreneur dashboard (duplicated sidebar)
+   - Full report: `webtest/fix-report-2026-04-08.md`
+
+9. ✅ **Milestone Ownership Model (Tasks 20-22)** — Milestones moved to correct ownership: PM creates/manages, admin monitors, entrepreneur views and responds only.
    - Task 20: Added `MilestoneResponse` Prisma model, `lib/milestones.ts` shared utilities, normalized status from due date + progress, derived startup progress from live milestone data.
    - Task 21: Created `/api/program-manager/milestones` and `/api/admin/milestones`, replaced hardcoded PM milestone dashboard with live data, added admin milestone dashboard + sidebar entry, replaced mock progress in PM startup APIs.
    - Task 22: Removed entrepreneur milestone CRUD, added response submission API (text + optional file), rebuilt entrepreneur milestone detail UI around submissions, replaced mock milestone cards in entrepreneur startup detail page.

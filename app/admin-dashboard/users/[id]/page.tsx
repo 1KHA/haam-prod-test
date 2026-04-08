@@ -211,14 +211,14 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-1"
-            onClick={() => router.push("/admin-dashboard/users")}
+            onClick={() => router.back()}
           >
             <ArrowRight className="h-4 w-4" />
-            <span>العودة إلى قائمة المستخدمين</span>
+            <span>العودة</span>
           </Button>
           <Button 
             variant="outline" 

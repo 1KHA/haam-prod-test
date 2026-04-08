@@ -7,19 +7,45 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  ArrowRight,
   CheckCircle,
   Clock,
-  Download,
+  FileText,
   Loader2,
   Target,
   TrendingUp,
+  Upload,
 } from "lucide-react"
 import { RouteGuard } from "@/components/auth/RouteGuard"
 import { UserRole } from "@/lib/auth"
 import { useAuth } from "@/contexts/auth-context"
 
 type MilestoneStatus = "completed" | "in_progress" | "upcoming" | "overdue"
+type SubmissionStatus = "NOT_SUBMITTED" | "SUBMITTED" | "REOPENED" | "SUPERSEDED"
+
+interface MilestoneAttachment {
+  id: string
+  fileName: string
+  fileUrl: string
+  fileType: string | null
+  fileSize: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+interface MilestoneSubmission {
+  id: string
+  milestoneId: string
+  startupId: string
+  startupName: string
+  submittedBy: string
+  submitterName: string | null
+  message: string | null
+  status: SubmissionStatus
+  submissionNumber: number
+  attachments: MilestoneAttachment[]
+  createdAt: string
+  updatedAt: string
+}
 
 interface Milestone {
   id: string
@@ -30,40 +56,30 @@ interface Milestone {
   progress: number
   category: string
   priority: string
-  startupId: string
-  startupName: string
-  cohortName: string | null
-}
-
-interface MilestoneResponse {
-  id: string
-  message: string | null
-  fileName: string | null
-  fileUrl: string | null
-  fileType: string | null
-  fileSize: number | null
-  createdAt: string
-  submitter: {
-    id: string
-    name: string
-    email: string
-  }
+  cohortId: string
+  cohortName: string
+  programName: string | null
+  submissionStatus: SubmissionStatus
+  canSubmit: boolean
+  latestSubmission: MilestoneSubmission | null
 }
 
 export default function MilestonesPage() {
   const { token } = useAuth()
   const [companyId, setCompanyId] = useState<string | null>(null)
+  const [companyName, setCompanyName] = useState<string | null>(null)
   const [milestones, setMilestones] = useState<Milestone[]>([])
-  const [responses, setResponses] = useState<MilestoneResponse[]>([])
+  const [submissions, setSubmissions] = useState<MilestoneSubmission[]>([])
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
   const [loading, setLoading] = useState(false)
-  const [responsesLoading, setResponsesLoading] = useState(false)
+  const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [canSubmitResponse, setCanSubmitResponse] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [responseMessage, setResponseMessage] = useState("")
-  const [responseFile, setResponseFile] = useState<File | null>(null)
+  const [responseFiles, setResponseFiles] = useState<File[]>([])
 
   useEffect(() => {
     const fetchCompanyId = async () => {
@@ -81,6 +97,7 @@ export default function MilestonesPage() {
         const data = await response.json()
         if (data.companies?.length > 0) {
           setCompanyId(data.companies[0].id)
+          setCompanyName(data.companies[0].name)
         } else {
           setError("لم يتم العثور على شركة لهذا المستخدم.")
         }
@@ -109,7 +126,18 @@ export default function MilestonesPage() {
           throw new Error(data.error || "فشل في جلب بيانات المراحل")
         }
 
-        setMilestones(data.milestones || [])
+        const nextMilestones = data.milestones || []
+        setMilestones(nextMilestones)
+
+        if (nextMilestones.length > 0) {
+          setSelectedMilestoneId((current) =>
+            current && nextMilestones.some((milestone: Milestone) => milestone.id === current)
+              ? current
+              : nextMilestones[0].id
+          )
+        } else {
+          setSelectedMilestoneId(null)
+        }
       } catch (fetchError) {
         setError(fetchError instanceof Error ? fetchError.message : "حدث خطأ أثناء جلب بيانات المراحل.")
       } finally {
@@ -121,32 +149,38 @@ export default function MilestonesPage() {
   }, [token, companyId])
 
   useEffect(() => {
-    const fetchResponses = async () => {
-      if (!token || !selectedMilestoneId) return
+    const fetchSubmissions = async () => {
+      if (!token || !companyId || !selectedMilestoneId) return
 
-      setResponsesLoading(true)
+      setSubmissionsLoading(true)
       setError(null)
 
       try {
-        const response = await fetch(`/api/milestones/${selectedMilestoneId}/responses`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const response = await fetch(
+          `/api/milestones/${selectedMilestoneId}/submissions?startupId=${companyId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
 
         const data = await response.json()
         if (!response.ok) {
-          throw new Error(data.error || "فشل في جلب الردود")
+          throw new Error(data.error || "فشل في جلب عمليات التسليم")
         }
 
-        setResponses(data.responses || [])
+        setSubmissions(data.submissions || [])
+        setCanSubmitResponse(Boolean(data.canSubmit))
       } catch (fetchError) {
-        setError(fetchError instanceof Error ? fetchError.message : "حدث خطأ أثناء جلب الردود.")
+        setError(fetchError instanceof Error ? fetchError.message : "حدث خطأ أثناء جلب عمليات التسليم.")
+        setSubmissions([])
+        setCanSubmitResponse(false)
       } finally {
-        setResponsesLoading(false)
+        setSubmissionsLoading(false)
       }
     }
 
-    fetchResponses()
-  }, [token, selectedMilestoneId])
+    fetchSubmissions()
+  }, [token, companyId, selectedMilestoneId])
 
   const filteredMilestones = useMemo(() => {
     return milestones.filter((milestone) => {
@@ -154,7 +188,8 @@ export default function MilestonesPage() {
       const matchesSearch =
         query.length === 0 ||
         milestone.title.toLowerCase().includes(query) ||
-        milestone.description.toLowerCase().includes(query)
+        milestone.description.toLowerCase().includes(query) ||
+        milestone.cohortName.toLowerCase().includes(query)
 
       if (activeTab === "all") {
         return matchesSearch
@@ -168,12 +203,15 @@ export default function MilestonesPage() {
     milestones.find((milestone) => milestone.id === selectedMilestoneId) || null
 
   const totalMilestones = milestones.length
-  const completedMilestones = milestones.filter((milestone) => milestone.status === "completed").length
-  const inProgressMilestones = milestones.filter((milestone) => milestone.status === "in_progress").length
+  const submittedMilestones = milestones.filter(
+    (milestone) => milestone.submissionStatus === "SUBMITTED"
+  ).length
+  const pendingSubmissions = milestones.filter(
+    (milestone) =>
+      milestone.submissionStatus === "NOT_SUBMITTED" || milestone.submissionStatus === "REOPENED"
+  ).length
   const completionRate =
-    totalMilestones > 0
-      ? Math.round(milestones.reduce((sum, milestone) => sum + milestone.progress, 0) / totalMilestones)
-      : 0
+    totalMilestones > 0 ? Math.round((submittedMilestones / totalMilestones) * 100) : 0
 
   const getStatusText = (status: MilestoneStatus) => {
     switch (status) {
@@ -202,6 +240,36 @@ export default function MilestonesPage() {
         return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getSubmissionStatusText = (status: SubmissionStatus) => {
+    switch (status) {
+      case "SUBMITTED":
+        return "تم التسليم"
+      case "REOPENED":
+        return "مفتوح لإعادة التسليم"
+      case "SUPERSEDED":
+        return "إصدار سابق"
+      case "NOT_SUBMITTED":
+        return "لم يتم التسليم"
+      default:
+        return "غير معروف"
+    }
+  }
+
+  const getSubmissionStatusColor = (status: SubmissionStatus) => {
+    switch (status) {
+      case "SUBMITTED":
+        return "bg-green-100 text-green-800"
+      case "REOPENED":
+        return "bg-amber-100 text-amber-800"
+      case "SUPERSEDED":
+        return "bg-slate-100 text-slate-700"
+      case "NOT_SUBMITTED":
+        return "bg-gray-100 text-gray-700"
+      default:
+        return "bg-gray-100 text-gray-700"
     }
   }
 
@@ -253,6 +321,15 @@ export default function MilestonesPage() {
       day: "numeric",
     })
 
+  const formatDateTime = (value: string) =>
+    new Date(value).toLocaleString("ar-SA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+
   const formatFileSize = (size: number | null) => {
     if (!size) return ""
     if (size < 1024) return `${size} B`
@@ -260,8 +337,34 @@ export default function MilestonesPage() {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`
   }
 
+  const refreshData = async () => {
+    if (!token || !companyId) return
+
+    const milestoneResponse = await fetch(`/api/milestones?startupId=${companyId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const milestoneData = await milestoneResponse.json()
+    if (milestoneResponse.ok) {
+      setMilestones(milestoneData.milestones || [])
+    }
+
+    if (selectedMilestoneId) {
+      const submissionsResponse = await fetch(
+        `/api/milestones/${selectedMilestoneId}/submissions?startupId=${companyId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      const submissionData = await submissionsResponse.json()
+      if (submissionsResponse.ok) {
+        setSubmissions(submissionData.submissions || [])
+        setCanSubmitResponse(Boolean(submissionData.canSubmit))
+      }
+    }
+  }
+
   const handleSubmitResponse = async () => {
-    if (!token || !selectedMilestoneId || (!responseMessage.trim() && !responseFile)) {
+    if (!token || !companyId || !selectedMilestoneId || (!responseMessage.trim() && responseFiles.length === 0)) {
       return
     }
 
@@ -270,12 +373,13 @@ export default function MilestonesPage() {
 
     try {
       const formData = new FormData()
+      formData.append("startupId", companyId)
       formData.append("message", responseMessage)
-      if (responseFile) {
-        formData.append("file", responseFile)
-      }
+      responseFiles.forEach((file) => {
+        formData.append("files", file)
+      })
 
-      const response = await fetch(`/api/milestones/${selectedMilestoneId}/responses`, {
+      const response = await fetch(`/api/milestones/${selectedMilestoneId}/submissions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -285,14 +389,14 @@ export default function MilestonesPage() {
 
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || "فشل في إرسال الرد")
+        throw new Error(data.error || "فشل في إرسال التسليم")
       }
 
-      setResponses((current) => [data.response, ...current])
       setResponseMessage("")
-      setResponseFile(null)
+      setResponseFiles([])
+      await refreshData()
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "حدث خطأ أثناء إرسال الرد.")
+      setError(submitError instanceof Error ? submitError.message : "حدث خطأ أثناء إرسال التسليم.")
     } finally {
       setSubmitting(false)
     }
@@ -306,9 +410,9 @@ export default function MilestonesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="text-right">
-            <h1 className="text-3xl font-bold">المراحل والتقدم</h1>
+            <h1 className="text-3xl font-bold">مراحل الدفعة والتسليمات</h1>
             <p className="text-sm text-muted-foreground">
-              هذه المراحل يحددها مدير البرنامج، ويمكنك الرد عليها بتحديثات وملفات داعمة.
+              ترى شركتك كل مراحل الدفعة الحالية. يمكنك إرسال تسليم واحد لكل مرحلة، ولا يفتح إرسال جديد إلا إذا أعاد مدير البرنامج أو المشرف فتحها.
             </p>
           </div>
         </div>
@@ -331,25 +435,25 @@ export default function MilestonesPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">المراحل المكتملة</CardTitle>
+              <CardTitle className="text-sm font-medium">تم تسليمها</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{completedMilestones}</div>
+              <div className="text-2xl font-bold">{submittedMilestones}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">قيد التنفيذ</CardTitle>
-              <Clock className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium">بانتظار التسليم</CardTitle>
+              <Clock className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{inProgressMilestones}</div>
+              <div className="text-2xl font-bold">{pendingSubmissions}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">متوسط الإنجاز</CardTitle>
+              <CardTitle className="text-sm font-medium">نسبة التغطية</CardTitle>
               <TrendingUp className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -358,243 +462,275 @@ export default function MilestonesPage() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="relative w-full md:w-72">
-                <Input
-                  placeholder="ابحث في المراحل"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                />
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="relative w-full md:w-72">
+                  <Input
+                    placeholder="ابحث في مراحل الدفعة"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                  />
+                </div>
+                <CardTitle>مراحل {companyName || "الشركة"}</CardTitle>
               </div>
-              <CardTitle>المراحل المكلّف بها</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="justify-end">
-                <TabsTrigger value="overdue">متأخرة</TabsTrigger>
-                <TabsTrigger value="upcoming">قادمة</TabsTrigger>
-                <TabsTrigger value="in_progress">قيد التنفيذ</TabsTrigger>
-                <TabsTrigger value="completed">مكتملة</TabsTrigger>
-                <TabsTrigger value="all">الكل</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="justify-end">
+                  <TabsTrigger value="overdue">متأخرة</TabsTrigger>
+                  <TabsTrigger value="upcoming">قادمة</TabsTrigger>
+                  <TabsTrigger value="in_progress">قيد التنفيذ</TabsTrigger>
+                  <TabsTrigger value="completed">مكتملة</TabsTrigger>
+                  <TabsTrigger value="all">الكل</TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : selectedMilestone ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedMilestoneId(null)}>
-                      العودة للقائمة
-                    </Button>
-                    <div className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(selectedMilestone.status)}`}>
-                          {getStatusText(selectedMilestone.status)}
-                        </span>
-                        <CardTitle>{selectedMilestone.title}</CardTitle>
+              {loading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : filteredMilestones.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
+                  لا توجد مراحل متاحة لهذه الدفعة بعد
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredMilestones.map((milestone) => (
+                    <button
+                      key={milestone.id}
+                      type="button"
+                      className={`w-full rounded-lg border p-4 text-right transition ${
+                        selectedMilestoneId === milestone.id
+                          ? "border-primary bg-primary/5"
+                          : "hover:border-primary/40"
+                      }`}
+                      onClick={() => setSelectedMilestoneId(milestone.id)}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs ${getSubmissionStatusColor(
+                              milestone.submissionStatus
+                            )}`}
+                          >
+                            {getSubmissionStatusText(milestone.submissionStatus)}
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-end gap-2">
+                            <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(milestone.status)}`}>
+                              {getStatusText(milestone.status)}
+                            </span>
+                            <h3 className="font-semibold">{milestone.title}</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{milestone.description}</p>
+                          <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                            <span>{milestone.cohortName}</span>
+                            <span>•</span>
+                            <span>{formatDate(milestone.dueDate)}</span>
+                          </div>
+                        </div>
                       </div>
-                      <CardDescription className="mt-2">
-                        {getCategoryText(selectedMilestone.category)}
-                        <span className={`mr-2 rounded-full px-2 py-1 text-xs ${getPriorityColor(selectedMilestone.priority)}`}>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>تفاصيل المرحلة</CardTitle>
+              <CardDescription>
+                التسليم هنا يخص شركتك فقط، لكن المرحلة نفسها مشتركة لكل شركات الدفعة.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : !selectedMilestone ? (
+                <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
+                  اختر مرحلة من القائمة لعرض التفاصيل والتسليم
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs ${getSubmissionStatusColor(
+                          selectedMilestone.submissionStatus
+                        )}`}
+                      >
+                        {getSubmissionStatusText(selectedMilestone.submissionStatus)}
+                      </span>
+                      <div className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(selectedMilestone.status)}`}>
+                            {getStatusText(selectedMilestone.status)}
+                          </span>
+                          <CardTitle>{selectedMilestone.title}</CardTitle>
+                        </div>
+                        <CardDescription className="mt-2">
+                          {selectedMilestone.cohortName}
+                          {selectedMilestone.programName ? ` - ${selectedMilestone.programName}` : ""}
+                        </CardDescription>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">{selectedMilestone.description}</p>
+
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      <div className="rounded-lg border p-3 text-right">
+                        <div className="text-xs text-muted-foreground">تاريخ الاستحقاق</div>
+                        <div className="mt-1 font-medium">{formatDate(selectedMilestone.dueDate)}</div>
+                      </div>
+                      <div className="rounded-lg border p-3 text-right">
+                        <div className="text-xs text-muted-foreground">الفئة</div>
+                        <div className="mt-1 font-medium">{getCategoryText(selectedMilestone.category)}</div>
+                      </div>
+                      <div className="rounded-lg border p-3 text-right">
+                        <div className="text-xs text-muted-foreground">الأولوية</div>
+                        <div className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs ${getPriorityColor(selectedMilestone.priority)}`}>
                           {getPriorityText(selectedMilestone.priority)}
-                        </span>
-                      </CardDescription>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="mb-2 text-lg font-semibold">وصف المرحلة</h3>
-                    <p className="text-muted-foreground">{selectedMilestone.description}</p>
-                  </div>
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="text-right">
-                      <div className="text-sm font-medium">الشركة</div>
-                      <div className="text-sm text-muted-foreground">{selectedMilestone.startupName}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">تاريخ الاستحقاق</div>
-                      <div className="text-sm text-muted-foreground">{formatDate(selectedMilestone.dueDate)}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{selectedMilestone.progress}%</span>
-                      <span className="text-muted-foreground">نسبة الإنجاز الحالية</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={`h-full rounded-full ${
-                          selectedMilestone.status === "completed"
-                            ? "bg-green-500"
-                            : selectedMilestone.status === "overdue"
-                            ? "bg-red-500"
-                            : selectedMilestone.status === "in_progress"
-                            ? "bg-blue-500"
-                            : "bg-amber-500"
-                        }`}
-                        style={{ width: `${selectedMilestone.progress}%` }}
-                      />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>{selectedMilestone.progress}%</span>
+                        <span className="text-muted-foreground">تقدم المرحلة على مستوى الدفعة</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${selectedMilestone.progress}%` }} />
+                      </div>
                     </div>
                   </div>
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>إرسال رد أو مستند</CardTitle>
+                      <CardTitle>تسليم الشركة</CardTitle>
                       <CardDescription>
-                        أرسل تحديثًا نصيًا وارفِق ملفًا إن لزم ليراجعه مدير البرنامج.
+                        يُسمح بتسليم واحد فقط لكل مرحلة. إذا أُعيد فتح المرحلة لك ستظهر الاستمارة مرة أخرى.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Textarea
-                        rows={4}
-                        placeholder="اكتب تحديثك أو ردك على هذه المرحلة"
-                        value={responseMessage}
-                        onChange={(event) => setResponseMessage(event.target.value)}
-                      />
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">ملف مرفق</label>
-                        <Input
-                          type="file"
-                          onChange={(event) => setResponseFile(event.target.files?.[0] || null)}
-                        />
-                        {responseFile && (
-                          <p className="text-sm text-muted-foreground">{responseFile.name}</p>
-                        )}
-                      </div>
-                      <div className="flex justify-end">
-                        <Button
-                          disabled={submitting || (!responseMessage.trim() && !responseFile)}
-                          onClick={handleSubmitResponse}
-                        >
-                          {submitting ? "جاري الإرسال..." : "إرسال الرد"}
-                        </Button>
-                      </div>
+                      {canSubmitResponse ? (
+                        <>
+                          <Textarea
+                            rows={5}
+                            placeholder="اكتب تحديثك أو ملاحظاتك على هذه المرحلة"
+                            value={responseMessage}
+                            onChange={(event) => setResponseMessage(event.target.value)}
+                          />
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">ملفات مرفقة</label>
+                            <Input
+                              type="file"
+                              multiple
+                              onChange={(event) =>
+                                setResponseFiles(Array.from(event.target.files || []))
+                              }
+                            />
+                            {responseFiles.length > 0 ? (
+                              <div className="space-y-1 text-sm text-muted-foreground">
+                                {responseFiles.map((file) => (
+                                  <div key={`${file.name}-${file.size}`}>{file.name}</div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              disabled={submitting || (!responseMessage.trim() && responseFiles.length === 0)}
+                              onClick={handleSubmitResponse}
+                            >
+                              <Upload className="ml-2 h-4 w-4" />
+                              {submitting ? "جاري الإرسال..." : "إرسال التسليم"}
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                          تم إغلاق التسليم لهذه المرحلة بعد إرسال شركتك. أي تعديل أو فرصة لتسليم جديد يجب أن تأتي من مدير البرنامج أو المشرف.
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>الردود السابقة</CardTitle>
+                      <CardTitle>سجل التسليمات</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {responsesLoading ? (
+                      {submissionsLoading ? (
                         <div className="flex items-center justify-center py-6">
                           <Loader2 className="h-5 w-5 animate-spin" />
                         </div>
-                      ) : responses.length === 0 ? (
-                        <div className="py-4 text-center text-muted-foreground">لا توجد ردود مرفوعة بعد</div>
+                      ) : submissions.length === 0 ? (
+                        <div className="py-4 text-center text-muted-foreground">لا توجد أي تسليمات مرفوعة بعد</div>
                       ) : (
                         <div className="space-y-4">
-                          {responses.map((response) => (
-                            <div key={response.id} className="rounded-lg border p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                  {formatDate(response.createdAt)}
+                          {submissions.map((submission) => (
+                            <div key={submission.id} className="rounded-lg border p-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <span
+                                    className={`rounded-full px-2 py-1 text-xs ${getSubmissionStatusColor(
+                                      submission.status
+                                    )}`}
+                                  >
+                                    {getSubmissionStatusText(submission.status)}
+                                  </span>
                                 </div>
                                 <div className="text-right">
-                                  <div className="font-medium">{response.submitter.name}</div>
-                                  <div className="text-sm text-muted-foreground">{response.submitter.email}</div>
+                                  <div className="font-medium">الإصدار #{submission.submissionNumber}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {formatDateTime(submission.createdAt)}
+                                  </div>
                                 </div>
                               </div>
 
-                              {response.message && (
-                                <p className="mt-3 text-sm text-muted-foreground">{response.message}</p>
-                              )}
+                              {submission.message ? (
+                                <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">
+                                  {submission.message}
+                                </p>
+                              ) : null}
 
-                              {response.fileUrl && (
-                                <div className="mt-3 flex items-center justify-between rounded-md bg-muted px-3 py-2">
-                                  <a
-                                    href={response.fileUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-2 text-sm"
-                                  >
-                                    <Download className="h-4 w-4" />
-                                    تنزيل الملف
-                                  </a>
-                                  <div className="text-right text-sm">
-                                    <div>{response.fileName}</div>
-                                    <div className="text-muted-foreground">{formatFileSize(response.fileSize)}</div>
-                                  </div>
+                              {submission.attachments.length > 0 ? (
+                                <div className="mt-3 space-y-2">
+                                  {submission.attachments.map((attachment) => (
+                                    <a
+                                      key={attachment.id}
+                                      href={attachment.fileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm"
+                                    >
+                                      <span className="text-muted-foreground">{formatFileSize(attachment.fileSize)}</span>
+                                      <span className="inline-flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        {attachment.fileName}
+                                      </span>
+                                    </a>
+                                  ))}
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           ))}
                         </div>
                       )}
                     </CardContent>
                   </Card>
-                </CardContent>
-              </Card>
-            ) : filteredMilestones.length === 0 ? (
-              <div className="py-10 text-center text-muted-foreground">لا توجد مراحل مطابقة</div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6">
-                {filteredMilestones.map((milestone) => (
-                  <Card key={milestone.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(milestone.status)}`}>
-                            {getStatusText(milestone.status)}
-                          </span>
-                          <span className={`rounded-full px-2 py-1 text-xs ${getPriorityColor(milestone.priority)}`}>
-                            {getPriorityText(milestone.priority)}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <CardTitle className="text-lg">{milestone.title}</CardTitle>
-                          <CardDescription className="mt-1">{getCategoryText(milestone.category)}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="line-clamp-2 text-sm text-muted-foreground">{milestone.description}</p>
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{milestone.progress}%</span>
-                          <span className="text-muted-foreground">
-                            تاريخ الاستحقاق: {formatDate(milestone.dueDate)}
-                          </span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={`h-full rounded-full ${
-                              milestone.status === "completed"
-                                ? "bg-green-500"
-                                : milestone.status === "overdue"
-                                ? "bg-red-500"
-                                : milestone.status === "in_progress"
-                                ? "bg-blue-500"
-                                : "bg-amber-500"
-                            }`}
-                            style={{ width: `${milestone.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-4 flex justify-end">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedMilestoneId(milestone.id)}>
-                          عرض التفاصيل والرد
-                          <ArrowRight className="mr-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </RouteGuard>
   )

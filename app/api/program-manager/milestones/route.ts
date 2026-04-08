@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserRole, isAuthenticated } from '@/lib/auth';
 import {
   buildMilestoneStats,
+  canManageCohortMilestones,
   createMilestoneRecord,
-  listMilestoneStartupOptions,
+  listMilestoneCohorts,
   listMilestones,
 } from '@/lib/milestones';
 
@@ -20,18 +21,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const cohorts = await listMilestoneCohorts(user.userId);
+    const allowedCohortIds = cohorts.map((cohort) => cohort.id);
+
     const { searchParams } = new URL(request.url);
-    const startupId = searchParams.get('startupId') || undefined;
     const cohortId = searchParams.get('cohortId') || undefined;
     const status = searchParams.get('status') || undefined;
     const search = searchParams.get('search')?.trim() || '';
 
-    let milestones = await listMilestones(startupId ? { startupId } : {});
-    const startups = await listMilestoneStartupOptions();
-
-    if (cohortId) {
-      milestones = milestones.filter((milestone) => milestone.cohortId === cohortId);
-    }
+    let milestones = await listMilestones(
+      allowedCohortIds.length > 0
+        ? {
+            cohortId: {
+              in: cohortId ? [cohortId] : allowedCohortIds,
+            },
+          }
+        : {
+            cohortId: '__no_cohort__',
+          }
+    );
 
     if (status) {
       milestones = milestones.filter((milestone) => milestone.status === status);
@@ -42,8 +50,8 @@ export async function GET(request: NextRequest) {
         [
           milestone.title,
           milestone.description,
-          milestone.startupName,
-          milestone.cohortName || '',
+          milestone.cohortName,
+          milestone.programName || '',
         ].some((value) => matchesSearch(value, search))
       );
     }
@@ -51,7 +59,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       milestones,
       stats: buildMilestoneStats(milestones),
-      startups,
+      cohorts,
     });
   } catch (error) {
     console.error('Program manager milestones GET error:', error);
@@ -69,14 +77,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { startupId, title, description, dueDate, priority, category } = body;
+    const { cohortId, title, description, dueDate, priority, category } = body;
 
-    if (!startupId || !title || !description || !dueDate || !priority || !category) {
+    if (!cohortId || !title || !description || !dueDate || !priority || !category) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const permission = await canManageCohortMilestones(cohortId, user);
+    if (!permission.canManage) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const milestone = await createMilestoneRecord({
-      startupId,
+      cohortId,
       title,
       description,
       dueDate,

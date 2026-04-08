@@ -5,7 +5,7 @@ import {
   calculateStartupProgress,
   formatRelativeMilestoneDueDate,
   getUpcomingMilestoneSeverity,
-  listMilestones,
+  listStartupMilestones,
 } from '@/lib/milestones';
 
 export async function GET(request: NextRequest) {
@@ -71,19 +71,27 @@ export async function GET(request: NextRequest) {
       industries[startup.industry]++;
     });
 
-    const milestoneItems = await listMilestones(
-      startups.length > 0 ? { startupId: { in: startups.map((startup) => startup.id) } } : {}
+    const startupMilestonesEntries = await Promise.all(
+      startups.map(async (startup) => [startup.id, await listStartupMilestones(startup.id)] as const)
     );
-    const milestonesByStartup = new Map<string, typeof milestoneItems>();
+    const milestonesByStartup = new Map(startupMilestonesEntries);
 
-    milestoneItems.forEach((milestone) => {
-      const current = milestonesByStartup.get(milestone.startupId) || [];
-      current.push(milestone);
-      milestonesByStartup.set(milestone.startupId, current);
-    });
-
-    const milestones = milestoneItems
-      .filter((milestone) => milestone.status !== 'completed')
+    const milestones = Array.from(milestonesByStartup.entries())
+      .flatMap(([startupId, items]) =>
+        items
+          .filter(
+            (milestone) =>
+              milestone.submissionStatus === 'NOT_SUBMITTED' || milestone.submissionStatus === 'REOPENED'
+          )
+          .map((milestone) => ({
+            id: milestone.id,
+            title: milestone.title,
+            startupId,
+            startupName: milestone.startupName,
+            dueDate: milestone.dueDate,
+            status: milestone.status,
+          }))
+      )
       .sort((left, right) => new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime())
       .slice(0, 4)
       .map((milestone) => ({

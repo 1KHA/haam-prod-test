@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { listMilestones, updateMilestoneRecord } from '@/lib/milestones';
+import { getMilestoneDetail, updateMilestoneRecord } from '@/lib/milestones';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
     }
 
-    const milestone = (await listMilestones({ id: params.id }))[0];
+    const milestone = await getMilestoneDetail(params.id);
 
     if (!milestone) {
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
@@ -30,12 +30,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
     }
 
-    const body = await request.json();
-    const milestone = await updateMilestoneRecord(params.id, body);
+    const existingMilestone = await prisma.milestone.findUnique({
+      where: { id: params.id },
+      select: { id: true },
+    });
 
-    if (!milestone) {
+    if (!existingMilestone) {
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
+
+    const body = await request.json();
+    const milestone = await updateMilestoneRecord(params.id, body);
 
     return NextResponse.json({ milestone });
   } catch (error) {

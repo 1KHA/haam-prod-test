@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
-import { calculateStartupProgress, listMilestones } from '@/lib/milestones';
+import { calculateStartupProgress, listStartupMilestones } from '@/lib/milestones';
 
 export async function GET(
   request: NextRequest,
@@ -63,7 +63,7 @@ export async function GET(
       }
     });
 
-    const milestones = await listMilestones({ startupId });
+    const milestones = await listStartupMilestones(startupId);
 
     // Get mentors (mock data)
     const mentors = [

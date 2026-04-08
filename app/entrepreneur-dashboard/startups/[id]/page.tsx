@@ -45,6 +45,9 @@ interface Milestone {
   progress: number
   priority: string
   category: string
+  cohortName: string
+  submissionStatus?: "NOT_SUBMITTED" | "SUBMITTED" | "REOPENED" | "SUPERSEDED"
+  canSubmit?: boolean
 }
 
 export default function StartupDetailsPage({ params }: { params: { id: string } }) {
@@ -375,13 +378,13 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
       <Card>
         <CardHeader>
           <CardTitle>المراحل والتقدم</CardTitle>
-          <CardDescription>مراحل الشركة الناشئة المحددة من مدير البرنامج</CardDescription>
+          <CardDescription>مراحل الدفعة الحالية التي تظهر لكل شركات الدفعة نفسها</CardDescription>
         </CardHeader>
         <CardContent>
           {milestonesLoading ? (
             <div className="flex justify-center items-center h-24">جاري تحميل المراحل...</div>
           ) : milestones.length === 0 ? (
-            <div className="text-center text-muted-foreground py-6">لا توجد مراحل مضافة لهذه الشركة بعد</div>
+            <div className="text-center text-muted-foreground py-6">لا توجد مراحل مضافة لهذه الدفعة بعد</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {milestones.map((milestone) => (
@@ -392,6 +395,7 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
                       <CardDescription>
                         تاريخ الاستحقاق: {new Date(milestone.dueDate).toLocaleDateString('ar-SA')}
                       </CardDescription>
+                      <CardDescription>الدفعة: {milestone.cohortName}</CardDescription>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -416,6 +420,19 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
                         "bg-green-100 text-green-800"
                       }`}>
                         {milestone.priority === "high" ? "عالية" : milestone.priority === "medium" ? "متوسطة" : "منخفضة"}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        milestone.submissionStatus === "SUBMITTED"
+                          ? "bg-green-100 text-green-800"
+                          : milestone.submissionStatus === "REOPENED"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {milestone.submissionStatus === "SUBMITTED"
+                          ? "تم التسليم"
+                          : milestone.submissionStatus === "REOPENED"
+                          ? "مفتوح لإعادة التسليم"
+                          : "بانتظار التسليم"}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">

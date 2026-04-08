@@ -3,7 +3,7 @@ import { checkPermission } from '@/lib/permissions';
 import {
   buildMilestoneStats,
   createMilestoneRecord,
-  listMilestoneStartupOptions,
+  listMilestoneCohorts,
   listMilestones,
 } from '@/lib/milestones';
 
@@ -19,17 +19,18 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const startupId = searchParams.get('startupId') || undefined;
     const cohortId = searchParams.get('cohortId') || undefined;
     const status = searchParams.get('status') || undefined;
     const search = searchParams.get('search')?.trim() || '';
 
-    let milestones = await listMilestones(startupId ? { startupId } : {});
-    const startups = await listMilestoneStartupOptions();
-
-    if (cohortId) {
-      milestones = milestones.filter((milestone) => milestone.cohortId === cohortId);
-    }
+    let milestones = await listMilestones(
+      cohortId
+        ? {
+            cohortId,
+          }
+        : {}
+    );
+    const cohorts = await listMilestoneCohorts();
 
     if (status) {
       milestones = milestones.filter((milestone) => milestone.status === status);
@@ -40,8 +41,8 @@ export async function GET(request: NextRequest) {
         [
           milestone.title,
           milestone.description,
-          milestone.startupName,
-          milestone.cohortName || '',
+          milestone.cohortName,
+          milestone.programName || '',
         ].some((value) => matchesSearch(value, search))
       );
     }
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       milestones,
       stats: buildMilestoneStats(milestones),
-      startups,
+      cohorts,
     });
   } catch (error) {
     console.error('Admin milestones GET error:', error);
@@ -65,14 +66,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { startupId, title, description, dueDate, priority, category } = body;
+    const { cohortId, title, description, dueDate, priority, category } = body;
 
-    if (!startupId || !title || !description || !dueDate || !priority || !category) {
+    if (!cohortId || !title || !description || !dueDate || !priority || !category) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const milestone = await createMilestoneRecord({
-      startupId,
+      cohortId,
       title,
       description,
       dueDate,

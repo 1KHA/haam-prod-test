@@ -376,8 +376,9 @@ export async function DELETE(
       
       // Delete all related startup records first
       for (const startup of userStartups) {
-        // Delete milestones related to each startup
-        await tx.milestone.deleteMany({
+        // Delete milestone submissions owned by the startup. Cohort milestones
+        // are shared and must remain available to the rest of the cohort.
+        await tx.milestoneSubmission.deleteMany({
           where: { startupId: startup.id }
         });
         

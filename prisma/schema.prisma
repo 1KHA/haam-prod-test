@@ -36,7 +36,7 @@ model User {
   companyMemberships CompanyMember[] @relation("UserToCompanyMember")
   invitationsReceived Invitation[] @relation("InviteeToInvitation") // Added for clarity, though not strictly required by error
   milestonesCreated Milestone[] @relation("UserToMilestone")
-  milestoneResponses MilestoneResponse[] @relation("UserToMilestoneResponse")
+  milestoneSubmissions MilestoneSubmission[] @relation("UserToMilestoneSubmission")
   eventRegistrations EventRegistration[] // Relation to event registrations
   createdEvents Event[] // Relation to events created by this user
   createdFundings Funding[] @relation("UserToFunding") // Relation to funding created by this user
@@ -175,7 +175,7 @@ model Startup {
   cohortMemberships   CohortMember[]
   invitations         Invitation[] @relation("StartupToInvitation")
   members             CompanyMember[] @relation("StartupToCompanyMember")
-  milestones          Milestone[] @relation("StartupToMilestone")
+  milestoneSubmissions MilestoneSubmission[] @relation("StartupToMilestoneSubmission")
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 }
@@ -190,28 +190,44 @@ model Milestone {
   progress    Int      // 0-100
   priority    String   // "high", "medium", "low"
   category    String   // e.g., "product", "business", "funding", "team", "other"
-  startupId   String
-  startup     Startup  @relation("StartupToMilestone", fields: [startupId], references: [id], onDelete: Cascade)
+  cohortId    String
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   createdBy   String
   creator     User     @relation("UserToMilestone", fields: [createdBy], references: [id], onDelete: Cascade)
-  responses   MilestoneResponse[] @relation("MilestoneToResponse")
+  submissions MilestoneSubmission[] @relation("MilestoneToSubmission")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-model MilestoneResponse {
-  id          String    @id @default(uuid())
-  milestoneId String
-  milestone   Milestone @relation("MilestoneToResponse", fields: [milestoneId], references: [id], onDelete: Cascade)
-  submittedBy String
-  submitter   User      @relation("UserToMilestoneResponse", fields: [submittedBy], references: [id], onDelete: Cascade)
-  message     String?
-  fileName    String?
-  fileUrl     String?
-  fileType    String?
-  fileSize    Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model MilestoneSubmission {
+  id               String   @id @default(uuid())
+  milestoneId      String
+  milestone        Milestone @relation("MilestoneToSubmission", fields: [milestoneId], references: [id], onDelete: Cascade)
+  startupId        String
+  startup          Startup  @relation("StartupToMilestoneSubmission", fields: [startupId], references: [id], onDelete: Cascade)
+  submittedBy      String
+  submitter        User     @relation("UserToMilestoneSubmission", fields: [submittedBy], references: [id], onDelete: Cascade)
+  message          String?
+  status           String   @default("SUBMITTED") // SUBMITTED, REOPENED, SUPERSEDED
+  submissionNumber Int      @default(1)
+  attachments      MilestoneSubmissionAttachment[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([milestoneId, startupId])
+  @@unique([milestoneId, startupId, submissionNumber])
+}
+
+model MilestoneSubmissionAttachment {
+  id           String   @id @default(uuid())
+  submissionId String
+  submission   MilestoneSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileUrl      String
+  fileType     String?
+  fileSize     Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 
@@ -312,6 +328,7 @@ model Cohort {
   manager     User           @relation(fields: [managerId], references: [id], onDelete: Cascade)
   members     CohortMember[]
   mentors     CohortMentor[]
+  milestones  Milestone[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 }

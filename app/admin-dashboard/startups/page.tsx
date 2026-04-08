@@ -568,8 +568,8 @@ export default function StartupsManagement() {
               {error}
             </div>
           ) : (
-            <div className="border rounded-md">
-              <div className="grid grid-cols-9 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
+            <div className="border dark:border-gray-700 rounded-md">
+              <div className="grid grid-cols-9 gap-4 p-4 border-b dark:border-gray-700 bg-muted/50 text-sm font-medium">
                 <div className="col-span-1 flex items-center">
                   <input 
                     type="checkbox" 

@@ -73,7 +73,7 @@ export default function MilestonesPage() {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [canSubmitResponse, setCanSubmitResponse] = useState(false)
@@ -100,9 +100,11 @@ export default function MilestonesPage() {
           setCompanyName(data.companies[0].name)
         } else {
           setError("لم يتم العثور على شركة لهذا المستخدم.")
+          setLoading(false)
         }
       } catch (fetchError) {
         setError(fetchError instanceof Error ? fetchError.message : "حدث خطأ أثناء جلب بيانات الشركة.")
+        setLoading(false)
       }
     }
 
@@ -417,7 +419,7 @@ export default function MilestonesPage() {
           </div>
         </div>
 
-        {error && (
+        {!loading && error && (
           <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
             {error}
           </div>

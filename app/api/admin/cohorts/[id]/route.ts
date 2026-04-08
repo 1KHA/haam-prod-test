@@ -23,13 +23,13 @@ export async function GET(
         members: {
           include: {
             startup: {
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true }
             }
           }
         },
         mentors: {
           include: {
-            mentor: {
+            user: {
               select: { id: true, name: true, email: true }
             }
           }
@@ -56,14 +56,14 @@ export async function GET(
       manager: cohort.manager,
       members: cohort.members.map(m => ({
         id: m.id,
-        role: m.role,
-        joinedAt: m.joinedAt,
+        status: m.status,
+        joinedAt: m.joinDate,
         startup: m.startup
       })),
       mentors: cohort.mentors.map(m => ({
         id: m.id,
-        assignedAt: m.assignedAt,
-        mentor: m.mentor
+        assignedAt: m.createdAt,
+        mentor: m.user
       })),
       stats: {
         membersCount: cohort._count.members,

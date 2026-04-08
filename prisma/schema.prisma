@@ -149,7 +149,7 @@ model TeamMember {
   avatar        String?
   department    String
   creatorId     String
-  creator       User      @relation(fields: [creatorId], references: [id])
+  creator       User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -171,7 +171,7 @@ model Startup {
   pitchDeckUrl        String?
   status              String         @default("PENDING") // PENDING, APPROVED, REJECTED
   creatorId           String
-  creator             User           @relation(fields: [creatorId], references: [id])
+  creator             User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   cohortMemberships   CohortMember[]
   invitations         Invitation[] @relation("StartupToInvitation")
   members             CompanyMember[] @relation("StartupToCompanyMember")
@@ -482,7 +482,7 @@ model Payment {
   metadata        Json?     // Flexible JSON for additional data
   history         Json?     // Array of payment status change history
   creatorId       String
-  creator         User      @relation("UserToPayment", fields: [creatorId], references: [id])
+  creator         User      @relation("UserToPayment", fields: [creatorId], references: [id], onDelete: Cascade)
   relatedDocuments Json?    // Array of related document metadata
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -522,7 +522,7 @@ model Report {
   viewCount       Int       @default(0)
   shareCount      Int       @default(0)
   createdById     String
-  createdBy       User      @relation(fields: [createdById], references: [id])
+  createdBy       User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
   shares          ReportShare[] // Relation to shared reports
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -560,7 +560,7 @@ model Notification {
   createdAt       DateTime      @default(now()) // Creation timestamp
   updatedAt       DateTime      @updatedAt // Last update timestamp
   createdById     String        // User who created the notification
-  createdBy       User          @relation("CreatedNotifications", fields: [createdById], references: [id])
+  createdBy       User          @relation("CreatedNotifications", fields: [createdById], references: [id], onDelete: Cascade)
   recipients      NotificationRecipient[] // Link to recipients
 }
 

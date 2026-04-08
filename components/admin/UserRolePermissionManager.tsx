@@ -64,6 +64,14 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
 
+  const getAuthHeaders = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   // Load user data and permissions
   useEffect(() => {
     if (userId) {
@@ -78,21 +86,21 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
       setLoading(true);
       
       // Load user basic info
-      const userResponse = await fetch(`/api/admin/users/${userId}`);
+      const userResponse = await fetch(`/api/admin/users/${userId}`, { headers: getAuthHeaders() });
       if (userResponse.ok) {
         const userData = await userResponse.json();
         setUser(userData);
       }
 
       // Load user roles
-      const rolesResponse = await fetch(`/api/admin/users/${userId}/roles`);
+      const rolesResponse = await fetch(`/api/admin/users/${userId}/roles`, { headers: getAuthHeaders() });
       if (rolesResponse.ok) {
         const rolesData = await rolesResponse.json();
         setUserRoles(rolesData.userRoles || []);
       }
 
       // Load user permissions
-      const permissionsResponse = await fetch(`/api/admin/users/${userId}/permissions`);
+      const permissionsResponse = await fetch(`/api/admin/users/${userId}/permissions`, { headers: getAuthHeaders() });
       if (permissionsResponse.ok) {
         const permissionsData = await permissionsResponse.json();
         setUserPermissions(permissionsData.allPermissions || []);
@@ -112,7 +120,7 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
 
   const loadAvailableRoles = async () => {
     try {
-      const response = await fetch('/api/admin/roles');
+      const response = await fetch('/api/admin/roles', { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setAvailableRoles(data);
@@ -124,7 +132,7 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
 
   const loadAvailablePermissions = async () => {
     try {
-      const response = await fetch('/api/admin/permissions');
+      const response = await fetch('/api/admin/permissions', { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setAvailablePermissions(data);
@@ -148,7 +156,7 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
       setLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/roles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ roleIds: [selectedRole] }),
       });
 
@@ -184,6 +192,7 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
       setLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/roles?roleIds=${roleId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
@@ -226,7 +235,7 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
       setLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/permissions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ permissionIds: selectedPermissions }),
       });
 
@@ -262,6 +271,7 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
       setLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/permissions?permissionIds=${permissionId}&type=direct`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {

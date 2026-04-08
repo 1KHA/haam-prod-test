@@ -164,7 +164,7 @@ export default function NewCohortPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="name">اسم الدفعة *</Label>
+                <Label htmlFor="name">اسم الدفعة <span className="text-red-500">*</span></Label>
                 <Input 
                   id="name" 
                   value={name} 
@@ -175,7 +175,7 @@ export default function NewCohortPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="program">البرنامج *</Label>
+                <Label htmlFor="program">البرنامج <span className="text-red-500">*</span></Label>
                 <Select value={programId} onValueChange={setProgramId} required>
                   <SelectTrigger id="program">
                     <SelectValue placeholder="اختر البرنامج" />
@@ -209,7 +209,7 @@ export default function NewCohortPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="status">الحالة *</Label>
+                <Label htmlFor="status">الحالة <span className="text-red-500">*</span></Label>
                 <Select value={status} onValueChange={setStatus} required>
                   <SelectTrigger id="status">
                     <SelectValue placeholder="اختر حالة الدفعة" />
@@ -223,7 +223,7 @@ export default function NewCohortPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="startDate">تاريخ البدء *</Label>
+                <Label htmlFor="startDate">تاريخ البدء <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Input 
                     id="startDate" 
@@ -237,7 +237,7 @@ export default function NewCohortPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="endDate">تاريخ الانتهاء *</Label>
+                <Label htmlFor="endDate">تاريخ الانتهاء <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Input 
                     id="endDate" 

@@ -225,8 +225,8 @@ export default function NewStartup() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">اسم الشركة</label>
-                <Input 
+                <label className="text-sm font-medium">اسم الشركة <span className="text-red-500">*</span></label>
+                <Input
                   name="name"
                   value={startup.name}
                   onChange={handleChange}
@@ -236,8 +236,8 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">القطاع</label>
-                <Input 
+                <label className="text-sm font-medium">القطاع <span className="text-red-500">*</span></label>
+                <Input
                   name="industry"
                   value={startup.industry}
                   onChange={handleChange}
@@ -247,8 +247,8 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">المرحلة</label>
-                <Input 
+                <label className="text-sm font-medium">المرحلة <span className="text-red-500">*</span></label>
+                <Input
                   name="stage"
                   value={startup.stage}
                   onChange={handleChange}
@@ -258,7 +258,7 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">حجم الفريق</label>
+                <label className="text-sm font-medium">حجم الفريق <span className="text-red-500">*</span></label>
                 <Input 
                   name="teamSize"
                   type="number"
@@ -307,7 +307,7 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">المستخدم المسرع</label>
+                <label className="text-sm font-medium">المستخدم المسرع <span className="text-red-500">*</span></label>
                 {loading ? (
                   <div className="flex items-center justify-center py-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -344,8 +344,8 @@ export default function NewStartup() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">الوصف</label>
-                <Textarea 
+                <label className="text-sm font-medium">الوصف <span className="text-red-500">*</span></label>
+                <Textarea
                   name="description"
                   value={startup.description}
                   onChange={handleChange}
@@ -356,8 +356,8 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">المشكلة</label>
-                <Textarea 
+                <label className="text-sm font-medium">المشكلة <span className="text-red-500">*</span></label>
+                <Textarea
                   name="problem"
                   value={startup.problem}
                   onChange={handleChange}
@@ -368,8 +368,8 @@ export default function NewStartup() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">الحل</label>
-                <Textarea 
+                <label className="text-sm font-medium">الحل <span className="text-red-500">*</span></label>
+                <Textarea
                   name="solution"
                   value={startup.solution}
                   onChange={handleChange}

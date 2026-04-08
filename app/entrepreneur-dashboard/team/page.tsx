@@ -10,6 +10,15 @@ import { RouteGuard } from "@/components/auth/RouteGuard"
 import { PermissionGate } from "@/hooks/usePermissions"
 import { Button } from "@/components/ui/button"
 import { UserRole } from "@/lib/auth"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
 
 interface CompanyMember {
   id: string;
@@ -36,6 +45,7 @@ interface Invitation {
 
 export default function TeamPage() {
   const { token } = useAuth();
+  const { toast } = useToast();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +53,9 @@ export default function TeamPage() {
 
   const [members, setMembers] = useState<CompanyMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
 
   // Fetch entrepreneur's companies and set companyId
   useEffect(() => {
@@ -94,6 +107,31 @@ export default function TeamPage() {
     fetchMembers();
   }, [token, companyId]);
 
+  const handleInvite = async () => {
+    if (!inviteEmail || !companyId || !token) return;
+    setInviting(true);
+    try {
+      const res = await fetch(`/api/company/${companyId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "خطأ", description: data.error || "فشل في إرسال الدعوة", variant: "destructive" });
+      } else {
+        toast({ title: "تم الإرسال", description: `تم إرسال الدعوة إلى ${inviteEmail}` });
+        setInvitations(prev => [...prev, data.invitation]);
+        setShowInviteDialog(false);
+        setInviteEmail("");
+      }
+    } catch {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إرسال الدعوة", variant: "destructive" });
+    } finally {
+      setInviting(false);
+    }
+  };
+
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
       (member.name && member.name.includes(searchQuery)) ||
@@ -113,7 +151,7 @@ export default function TeamPage() {
           <PermissionGate
             requirement={{ category: 'users', action: 'add' }}
           >
-            <Button>
+            <Button onClick={() => setShowInviteDialog(true)}>
               <UserPlus className="ml-2 h-4 w-4" />
               إضافة عضو جديد
             </Button>
@@ -246,6 +284,34 @@ export default function TeamPage() {
           }
         `}</style>
       </div>
+
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent>
+          <div dir="rtl">
+          <DialogHeader>
+            <DialogTitle>دعوة عضو جديد</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">البريد الإلكتروني <span className="text-red-500">*</span></Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="example@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>إلغاء</Button>
+            <Button onClick={handleInvite} disabled={inviting || !inviteEmail}>
+              {inviting ? "جاري الإرسال..." : "إرسال الدعوة"}
+            </Button>
+          </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </RouteGuard>
   );
 }

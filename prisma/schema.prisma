@@ -39,6 +39,8 @@ model User {
   milestoneSubmissions MilestoneSubmission[] @relation("UserToMilestoneSubmission")
   eventRegistrations EventRegistration[] // Relation to event registrations
   createdEvents Event[] // Relation to events created by this user
+  mentorSessions MentorSession[] @relation("MentorToSession")
+  createdSessions MentorSession[] @relation("SessionCreator")
   createdFundings Funding[] @relation("UserToFunding") // Relation to funding created by this user
   fundingOpportunities FundingOpportunity[] @relation("UserToFundingOpportunity") // Relation to funding opportunities
   reports Report[] // Relation to reports created by this user
@@ -175,6 +177,7 @@ model Startup {
   cohortMemberships   CohortMember[]
   invitations         Invitation[] @relation("StartupToInvitation")
   members             CompanyMember[] @relation("StartupToCompanyMember")
+  mentorSessions      MentorSession[]
   milestoneSubmissions MilestoneSubmission[] @relation("StartupToMilestoneSubmission")
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
@@ -326,11 +329,12 @@ model Cohort {
   program     Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
   managerId   String
   manager     User           @relation(fields: [managerId], references: [id], onDelete: Cascade)
-  members     CohortMember[]
-  mentors     CohortMentor[]
-  milestones  Milestone[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  members        CohortMember[]
+  mentors        CohortMentor[]
+  milestones     Milestone[]
+  mentorSessions MentorSession[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model CohortMember {
@@ -609,6 +613,28 @@ model Integration {
   updatedAt         DateTime          @updatedAt
   syncs             IntegrationSync[] // Relation to sync history
   webhooks          IntegrationWebhook[] // Relation to webhook logs
+}
+
+// Model for mentor sessions
+model MentorSession {
+  id          String   @id @default(uuid())
+  startupId   String
+  startup     Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  mentorId    String
+  mentor      User     @relation("MentorToSession", fields: [mentorId], references: [id], onDelete: Cascade)
+  cohortId    String?
+  cohort      Cohort?  @relation(fields: [cohortId], references: [id])
+  topic       String
+  sessionType String   @default("INDIVIDUAL") // "INDIVIDUAL" or "GROUP"
+  status      String   @default("scheduled")  // "scheduled", "completed", "cancelled"
+  date        DateTime
+  duration    Int      @default(60)           // minutes
+  location    String?
+  notes       String?
+  createdById String
+  createdBy   User     @relation("SessionCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // Model for integration sync history

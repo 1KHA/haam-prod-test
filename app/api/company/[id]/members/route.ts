@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
@@ -96,5 +96,58 @@ export async function GET(
       { error: 'An error occurred while fetching company members' },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    const user = await isAuthenticated(authHeader || undefined);
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: companyId } = params;
+
+    const company = await prisma.startup.findUnique({ where: { id: companyId } });
+    if (!company) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    if (company.creatorId !== user.userId) {
+      return NextResponse.json({ error: 'Only the company creator can invite members' }, { status: 403 });
+    }
+
+    const { email, role } = await request.json();
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    }
+
+    // Check for existing pending invitation
+    const existing = await prisma.invitation.findFirst({
+      where: { startupId: companyId, inviteeEmail: email, status: 'PENDING' },
+    });
+    if (existing) {
+      return NextResponse.json({ error: 'دعوة معلقة موجودة بالفعل لهذا البريد الإلكتروني' }, { status: 409 });
+    }
+
+    const invitation = await prisma.invitation.create({
+      data: {
+        type: 'COMPANY',
+        inviterId: user.userId,
+        inviteeEmail: email,
+        startupId: companyId,
+        status: 'PENDING',
+      },
+    });
+
+    return NextResponse.json({ success: true, invitation }, { status: 201 });
+  } catch (error) {
+    console.error('Invite member error:', error);
+    return NextResponse.json({ error: 'An error occurred while sending the invitation' }, { status: 500 });
   }
 }

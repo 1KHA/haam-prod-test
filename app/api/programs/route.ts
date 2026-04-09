@@ -22,19 +22,24 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const type = searchParams.get('type') || undefined;
-    
+    const status = searchParams.get('status') || undefined;
+
     // Build the where clause for filtering
     const where: any = {};
-    
+
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
+        { name: { contains: search } },
+        { description: { contains: search } }
       ];
     }
-    
+
     if (type) {
       where.type = type;
+    }
+
+    if (status) {
+      where.status = status;
     }
     
     // Get programs
@@ -49,6 +54,8 @@ export async function GET(request: NextRequest) {
         endDate: true,
         location: true,
         capacity: true,
+        status: true,
+        applicationDeadline: true,
         _count: {
           select: {
             cohorts: true
@@ -69,6 +76,8 @@ export async function GET(request: NextRequest) {
       endDate: program.endDate,
       location: program.location,
       capacity: program.capacity,
+      status: program.status,
+      applicationDeadline: program.applicationDeadline,
       cohortsCount: program._count.cohorts
     }));
     

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { fetchWithAuth } from "@/lib/api-client"
+import { useToast } from "@/components/ui/use-toast"
 import { exportPresets } from "@/lib/export-utils"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
@@ -38,6 +39,7 @@ import {
 } from "lucide-react"
 
 export default function ReportsManagement() {
+  const { toast } = useToast()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -264,7 +266,7 @@ export default function ReportsManagement() {
       await exportPresets.reports(filters);
     } catch (error) {
       console.error('Error exporting reports:', error);
-      alert('حدث خطأ أثناء تصدير التقارير');
+      toast({ title: "خطأ", description: "حدث خطأ أثناء تصدير التقارير", variant: "destructive" });
     }
   }
   
@@ -303,7 +305,7 @@ export default function ReportsManagement() {
       window.open(`/api/admin/reports/download?id=${reportId}&token=${encodeURIComponent(token || '')}`, '_blank')
     } catch (error) {
       console.error('Error viewing report:', error)
-      alert('حدث خطأ أثناء عرض التقرير')
+      toast({ title: "خطأ", description: "حدث خطأ أثناء عرض التقرير", variant: "destructive" })
     }
   }
   
@@ -421,10 +423,10 @@ export default function ReportsManagement() {
       }
       
       // Optionally show success notification
-      alert('تمت مشاركة التقرير بنجاح')
+      toast({ title: "تم", description: "تمت مشاركة التقرير بنجاح" })
     } catch (error) {
       console.error('Error sharing report:', error)
-      alert('حدث خطأ أثناء مشاركة التقرير')
+      toast({ title: "خطأ", description: "حدث خطأ أثناء مشاركة التقرير", variant: "destructive" })
     }
   }
   
@@ -656,7 +658,7 @@ export default function ReportsManagement() {
               if (selectedReports.length === 1) {
                 handlePrint(selectedReports[0])
               } else {
-                alert('الرجاء تحديد تقرير واحد للطباعة')
+                toast({ title: "تنبيه", description: "الرجاء تحديد تقرير واحد للطباعة" })
               }
             }}
             disabled={isLoading || selectedReports.length !== 1}
@@ -673,7 +675,7 @@ export default function ReportsManagement() {
                 // In a real implementation, we would show a sharing modal here
                 handleShare(selectedReports[0], ['user1', 'user2'])
               } else {
-                alert('الرجاء تحديد تقرير واحد للمشاركة')
+                toast({ title: "تنبيه", description: "الرجاء تحديد تقرير واحد للمشاركة" })
               }
             }}
             disabled={isLoading || selectedReports.length !== 1}
@@ -970,10 +972,10 @@ export default function ReportsManagement() {
                       await handleUpdate(selectedScheduleReport, schedulingData);
                       
                       setShowScheduleModal(false);
-                      alert('تم تحديث جدولة التقرير بنجاح');
+                      toast({ title: "تم", description: "تم تحديث جدولة التقرير بنجاح" });
                     } catch (error) {
                       console.error('Error updating schedule:', error);
-                      alert('حدث خطأ أثناء تحديث الجدولة');
+                      toast({ title: "خطأ", description: "حدث خطأ أثناء تحديث الجدولة", variant: "destructive" });
                     }
                   }}
                 >
@@ -1208,7 +1210,7 @@ export default function ReportsManagement() {
                             await exportPresets.reports({ ids: report.id });
                           } catch (error) {
                             console.error('Error exporting report:', error);
-                            alert('حدث خطأ أثناء تصدير التقرير');
+                            toast({ title: "خطأ", description: "حدث خطأ أثناء تصدير التقرير", variant: "destructive" });
                           }
                         }}
                       >

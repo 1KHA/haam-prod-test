@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
     
     if (search) {
       whereClause.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { message: { contains: search, mode: 'insensitive' } }
+        { title: { contains: search } },
+        { message: { contains: search } }
       ];
     }
     

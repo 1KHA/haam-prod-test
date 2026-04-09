@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,6 +45,7 @@ interface Resource {
 }
 
 export default function ResourcesPage() {
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -202,7 +204,7 @@ export default function ResourcesPage() {
     ))
     
     // In a real app, this would trigger a download
-    alert(`تم بدء تحميل المورد`)
+    toast({ title: "تحميل", description: "تم بدء تحميل المورد" })
   }
 
   const getResourceTypeIcon = (type: string) => {

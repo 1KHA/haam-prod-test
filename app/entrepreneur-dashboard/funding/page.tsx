@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +27,7 @@ import {
 } from "lucide-react"
 
 export default function FundingPage() {
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
@@ -151,7 +153,7 @@ export default function FundingPage() {
         : request
     ))
     
-    alert("تم تقديم طلب التمويل بنجاح")
+    toast({ title: "تم", description: "تم تقديم طلب التمويل بنجاح" })
   }
 
   const handleDeleteRequest = (requestId: string) => {

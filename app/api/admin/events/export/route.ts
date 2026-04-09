@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
     
     if (search) {
       filter.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { location: { contains: search, mode: 'insensitive' } },
-        { organizer: { contains: search, mode: 'insensitive' } }
+        { title: { contains: search } },
+        { description: { contains: search } },
+        { location: { contains: search } },
+        { organizer: { contains: search } }
       ];
     }
     

@@ -1,63 +1,34 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { UserRole } from "@/lib/auth"
+import { isAuthenticated, UserRole } from "@/lib/auth"
 
 export async function GET(req: NextRequest) {
   try {
-    // Get the token from the request headers
     const authHeader = req.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const user = await isAuthenticated(authHeader || undefined)
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== UserRole.MENTOR && user.role !== UserRole.ADMIN) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-    
-    const token = authHeader.split(" ")[1]
-    
-    // Verify the token and get the user
-    // In a real implementation, you would verify the JWT token
-    // For now, we'll just get the user from localStorage on the client side
-    
-    // Get the user from the database based on the token
-    // This is a simplified example - in a real app, you would decode the JWT
-    const user = await prisma.user.findFirst({
-      where: {
-        role: UserRole.MENTOR
-      },
-      include: {
-        mentorProfile: true
-      }
-    })
-    
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    
-    // Get all cohorts where the user is a mentor
+
+    // Get all cohorts where this mentor is assigned
     const mentorCohorts = await prisma.cohortMentor.findMany({
-      where: {
-        userId: user.id
-      },
-      include: {
-        cohort: true
-      }
+      where: { userId: user.userId },
+      include: { cohort: true },
     })
-    
-    const cohortIds = mentorCohorts.map(mc => mc.cohortId)
-    
+
+    const cohortIds = mentorCohorts.map((mc) => mc.cohortId)
+
     // Get all startups in those cohorts
     const cohortMembers = await prisma.cohortMember.findMany({
-      where: {
-        cohortId: {
-          in: cohortIds
-        }
-      },
+      where: { cohortId: { in: cohortIds } },
       include: {
         startup: true,
-        cohort: true
-      }
+        cohort: true,
+      },
     })
-    
-    // Format the startups data
-    const startups = cohortMembers.map(member => ({
+
+    const startups = cohortMembers.map((member) => ({
       id: member.startup.id,
       name: member.startup.name,
       industry: member.startup.industry,
@@ -69,16 +40,13 @@ export async function GET(req: NextRequest) {
         id: member.cohort.id,
         name: member.cohort.name,
         startDate: member.cohort.startDate.toISOString(),
-        endDate: member.cohort.endDate.toISOString()
-      }
+        endDate: member.cohort.endDate.toISOString(),
+      },
     }))
-    
+
     return NextResponse.json({ startups })
   } catch (error) {
     console.error("Error fetching mentor startups:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch startups" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch startups" }, { status: 500 })
   }
 }

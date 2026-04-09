@@ -60,9 +60,9 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       whereClause.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { industry: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search } },
+        { description: { contains: search } },
+        { industry: { contains: search } },
       ];
     }
 
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (industry) {
-      whereClause.industry = { contains: industry, mode: 'insensitive' };
+      whereClause.industry = { contains: industry };
     }
 
     // Fetch startups with their creator

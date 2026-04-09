@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useAuth } from "@/contexts/auth-context"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,6 +21,7 @@ import {
 import { RouteGuard } from "@/components/auth/RouteGuard"
 import { UserRole } from "@/lib/auth"
 export default function InvestorDashboard() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
 
   const cardVariants = {
@@ -34,7 +36,7 @@ export default function InvestorDashboard() {
     >
       
     <div className="space-y-6 text-right">
-      <h1 className="text-3xl font-bold">مرحباً بك م. فهد العتيبي</h1>
+      <h1 className="text-3xl font-bold">مرحباً بك {user?.name || "المستثمر"}</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="justify-end">
           <TabsTrigger value="portfolio">المحفظة</TabsTrigger>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Loader2, Plus, Trash2, Search } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import {
@@ -57,6 +58,7 @@ interface Mentor {
 }
 
 export default function CohortMentorsPage() {
+  const { toast } = useToast()
   const router = useRouter()
   const params = useParams()
   const cohortId = params.id as string
@@ -161,7 +163,7 @@ export default function CohortMentorsPage() {
       setMentorRole("MENTOR");
     } catch (error) {
       console.error('Error adding mentor:', error);
-      alert('حدث خطأ أثناء إضافة المرشد');
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إضافة المرشد", variant: "destructive" });
     } finally {
       setAdding(false);
     }
@@ -186,7 +188,7 @@ export default function CohortMentorsPage() {
       setMentors(mentors.filter(m => m.user.id !== userId));
     } catch (error) {
       console.error('Error removing mentor:', error);
-      alert('حدث خطأ أثناء إزالة المرشد');
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إزالة المرشد", variant: "destructive" });
     }
   };
 

@@ -101,7 +101,7 @@ export default function StartupsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
         <Button 
           onClick={() => router.push('/entrepreneur-dashboard/startup/new')}

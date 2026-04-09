@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { UserRole } from "@/lib/auth"
+import { isAuthenticated, UserRole } from "@/lib/auth"
 
 // Define the Feedback model
 interface Feedback {
@@ -19,36 +19,17 @@ interface Feedback {
 
 export async function GET(req: NextRequest) {
   try {
-    // Get the token from the request headers
     const authHeader = req.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const user = await isAuthenticated(authHeader || undefined)
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== UserRole.MENTOR && user.role !== UserRole.ADMIN) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
-    
-    const token = authHeader.split(" ")[1]
-    
-    // Get the user from the database based on the token
-    // This is a simplified example - in a real app, you would decode the JWT
-    const user = await prisma.user.findFirst({
-      where: {
-        role: UserRole.MENTOR
-      },
-      include: {
-        mentorProfile: true
-      }
-    })
-    
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    
-    // In a real implementation, we would have a feedback table in the database
-    // For now, we'll create mock data based on the startups the mentor is assigned to
-    
+
     // Get all cohorts where the user is a mentor
     const mentorCohorts = await prisma.cohortMentor.findMany({
       where: {
-        userId: user.id
+        userId: user.userId
       },
       include: {
         cohort: true
@@ -90,12 +71,12 @@ export async function GET(req: NextRequest) {
       for (let i = 0; i < 3; i++) {
         const feedbackDate = new Date(today)
         feedbackDate.setDate(today.getDate() - (i * 7 + index))
-        
+
         const feedbackEntry: Feedback = {
           id: `feedback-${index}-${i}`,
           startupId: member.startup.id,
           startupName: member.startup.name,
-          mentorId: user.id,
+          mentorId: user.userId,
           date: feedbackDate.toISOString().split('T')[0],
           rating: Math.floor(Math.random() * 3) + 3, // Random rating between 3-5
           content: getRandomFeedbackContent(i),
@@ -125,23 +106,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Get the token from the request headers
     const authHeader = req.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    
-    const token = authHeader.split(" ")[1]
-    
-    // Get the user from the database based on the token
-    const user = await prisma.user.findFirst({
-      where: {
-        role: UserRole.MENTOR
-      }
-    })
-    
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const user = await isAuthenticated(authHeader || undefined)
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (user.role !== UserRole.MENTOR && user.role !== UserRole.ADMIN) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
     
     // Parse the request body
@@ -177,7 +146,7 @@ export async function POST(req: NextRequest) {
       id: `new-${Date.now()}`,
       startupId: data.startupId,
       startupName: startup.name,
-      mentorId: user.id,
+      mentorId: user.userId,
       sessionId: data.sessionId,
       sessionTopic: data.sessionTopic,
       date: new Date().toISOString().split('T')[0],

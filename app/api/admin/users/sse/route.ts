@@ -142,8 +142,8 @@ export async function GET(req: NextRequest) {
             // Apply search filter
             if (searchQuery) {
               where.OR = [
-                { name: { contains: searchQuery, mode: 'insensitive' } },
-                { email: { contains: searchQuery, mode: 'insensitive' } }
+                { name: { contains: searchQuery } },
+                { email: { contains: searchQuery } }
               ];
             }
             

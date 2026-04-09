@@ -264,10 +264,10 @@ export async function GET(req: NextRequest) {
     // Search functionality
     if (search) {
       where.OR = [
-        { action: { contains: search, mode: 'insensitive' } },
-        { userName: { contains: search, mode: 'insensitive' } },
-        { details: { contains: search, mode: 'insensitive' } },
-        { ipAddress: { contains: search, mode: 'insensitive' } },
+        { action: { contains: search } },
+        { userName: { contains: search } },
+        { details: { contains: search } },
+        { ipAddress: { contains: search } },
       ];
     }
     

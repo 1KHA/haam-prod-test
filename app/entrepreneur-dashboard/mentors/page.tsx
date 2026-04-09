@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
 import { 
   User, 
   Mail, 
@@ -47,12 +48,13 @@ interface Mentor {
 }
 
 export default function MentorsPage() {
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null)
   const [selectedExpertise, setSelectedExpertise] = useState<string | null>(null)
-  
-  // Mock data for mentors
+
+  // Mock data for mentors (will be replaced by API data if available)
   const [mentors, setMentors] = useState<Mentor[]>([
     {
       id: "1",
@@ -213,6 +215,42 @@ export default function MentorsPage() {
     }
   ])
 
+  // Load real mentors from API (overrides mock data)
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    fetch("/api/mentor", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        const apiMentors = (data.mentors || []).map((m: {
+          id: string; name: string; email: string;
+          mentorProfile?: { expertise?: string; experience?: string; availability?: string };
+          profile?: { bio?: string; phone?: string; avatar?: string };
+        }) => ({
+          id: m.id,
+          name: m.name,
+          position: m.mentorProfile?.experience || "",
+          company: "",
+          email: m.email,
+          phone: m.profile?.phone || "",
+          avatar: m.profile?.avatar || "/placeholder-avatar.jpg",
+          expertise: m.mentorProfile?.expertise
+            ? m.mentorProfile.expertise.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : [],
+          bio: m.profile?.bio || "",
+          rating: 0,
+          availability: m.mentorProfile?.availability
+            ? [{ day: m.mentorProfile.availability, slots: [] }]
+            : [],
+          sessions: [],
+        }))
+        if (apiMentors.length > 0) {
+          setMentors(apiMentors)
+        }
+      })
+      .catch(console.error)
+  }, [])
+
   // Extract all unique expertise areas
   const allExpertise = Array.from(new Set(mentors.flatMap(mentor => mentor.expertise)))
 
@@ -245,8 +283,7 @@ export default function MentorsPage() {
   }
 
   const handleBookSession = (mentor: Mentor) => {
-    // In a real app, this would open a booking modal or navigate to a booking page
-    alert(`سيتم فتح نافذة حجز جلسة مع ${mentor.name}`)
+    toast({ title: "حجز جلسة", description: `تم طلب حجز جلسة مع ${mentor.name}` })
   }
 
   const handleFilterByExpertise = (expertise: string | null) => {

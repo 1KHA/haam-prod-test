@@ -120,8 +120,8 @@ export default function NewCohortPage() {
         description: "تم إنشاء الدفعة بنجاح"
       });
       
-      // Redirect to cohort details page
-      router.push(`/program-manager-dashboard/cohorts/${data.id}`);
+      // Redirect to cohorts list
+      router.push(`/program-manager-dashboard/cohorts`);
     } catch (error) {
       console.error('Error creating cohort:', error);
       showAdminToast({

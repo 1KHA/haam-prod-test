@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -27,24 +27,65 @@ export default function EntrepreneurDashboard() {
   const { user } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
+  const [dashboardStats, setDashboardStats] = useState({
+    mentorCount: 0,
+    programCount: 0,
+    eventCount: 0,
+    startupStatus: "-",
+  })
+  const [upcomingEvents, setUpcomingEvents] = useState<Array<{
+    id: string; title: string; startDate: string; eventType: string
+  }>>([])
+  const [programs, setPrograms] = useState<Array<{
+    id: string; name: string; description: string | null; applicationDeadline: string | null
+  }>>([])
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   }
 
-  // Mock data for the dashboard
-  const stats = [
-    { title: "حالة الطلب", value: "جديد", icon: <FileText className="h-4 w-4 text-muted-foreground" /> },
-    { title: "الموجهون المتاحون", value: 15, icon: <BookOpen className="h-4 w-4 text-muted-foreground" /> },
-    { title: "البرامج المفتوحة", value: 3, icon: <Rocket className="h-4 w-4 text-muted-foreground" /> },
-    { title: "الفعاليات القادمة", value: 4, icon: <Calendar className="h-4 w-4 text-muted-foreground" /> },
-  ]
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    const headers = { Authorization: `Bearer ${token}` }
 
-  const upcomingEvents = [
-    { id: 1, name: "ورشة عمل: كيفية بناء نموذج أعمال", date: "15 مارس 2025", time: "10:00 صباحاً", type: "ورشة عمل" },
-    { id: 2, name: "جلسة تعريفية: برنامج مسرع الأعمال", date: "20 مارس 2025", time: "2:00 مساءً", type: "جلسة تعريفية" },
-    { id: 3, name: "لقاء مع المستثمرين", date: "25 مارس 2025", time: "4:00 مساءً", type: "شبكات" },
+    Promise.all([
+      fetch("/api/mentor", { headers }).then((r) => r.json()),
+      fetch("/api/programs?status=ACTIVE&limit=100", { headers }).then((r) => r.json()),
+      fetch("/api/events?upcoming=true&limit=3", { headers }).then((r) => r.json()),
+      fetch("/api/startups", { headers }).then((r) => r.json()),
+    ])
+      .then(([mentorData, programData, eventData, startupData]) => {
+        const companies = startupData?.companies || []
+        const myStartup = companies[0]
+
+        const getStatusLabel = (status?: string) => {
+          if (!status) return "لا يوجد"
+          if (status === "APPROVED") return "موافق عليه"
+          if (status === "PENDING") return "قيد المراجعة"
+          if (status === "REJECTED") return "مرفوض"
+          return status
+        }
+
+        setDashboardStats({
+          mentorCount: (mentorData?.mentors || []).length,
+          programCount: programData?.pagination?.total ?? (programData?.programs || []).length,
+          eventCount: eventData?.pagination?.total ?? (eventData?.events || []).length,
+          startupStatus: myStartup ? getStatusLabel(myStartup.status) : "لا يوجد",
+        })
+
+        setUpcomingEvents((eventData?.events || []).slice(0, 3))
+        setPrograms((programData?.programs || []).slice(0, 5))
+      })
+      .catch(console.error)
+  }, [user?.id])
+
+  const stats = [
+    { title: "حالة الطلب", value: dashboardStats.startupStatus, icon: <FileText className="h-4 w-4 text-muted-foreground" /> },
+    { title: "الموجهون المتاحون", value: dashboardStats.mentorCount, icon: <BookOpen className="h-4 w-4 text-muted-foreground" /> },
+    { title: "البرامج المفتوحة", value: dashboardStats.programCount, icon: <Rocket className="h-4 w-4 text-muted-foreground" /> },
+    { title: "الفعاليات القادمة", value: dashboardStats.eventCount, icon: <Calendar className="h-4 w-4 text-muted-foreground" /> },
   ]
 
   const tasks = [
@@ -145,18 +186,22 @@ export default function EntrepreneurDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {upcomingEvents.map((event) => (
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">لا توجد فعاليات قادمة</p>
+                  ) : upcomingEvents.map((event) => (
                     <div key={event.id} className="flex items-start">
                       <div className="space-y-1 flex-grow">
                         <p className="text-sm font-medium">
-                          <span className="font-bold">{event.name}</span>
+                          <span className="font-bold">{event.title}</span>
                         </p>
-                        <p className="text-xs text-muted-foreground">{event.date} • {event.time}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(event.startDate).toLocaleDateString("ar-SA")}
+                        </p>
                       </div>
                       <div className="p-2 rounded-full mr-2 ml-2" style={{ backgroundColor: "#e0f2fe" }}>
-                        {event.type === "ورشة عمل" && <Wrench className="h-4 w-4" style={{ color: "#799dd7" }} />}
-                        {event.type === "جلسة تعريفية" && <Megaphone className="h-4 w-4" style={{ color: "#799dd7" }} />}
-                        {event.type === "شبكات" && <Handshake className="h-4 w-4" style={{ color: "#799dd7" }} />}
+                        {event.eventType === "workshop" && <Wrench className="h-4 w-4" style={{ color: "#799dd7" }} />}
+                        {event.eventType === "conference" && <Megaphone className="h-4 w-4" style={{ color: "#799dd7" }} />}
+                        {(!event.eventType || event.eventType === "networking") && <Handshake className="h-4 w-4" style={{ color: "#799dd7" }} />}
                       </div>
                     </div>
                   ))}
@@ -176,36 +221,29 @@ export default function EntrepreneurDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="pr-4 py-2" style={{ borderRight: "4px solid #f58f62" }}>
-                  <h3 className="font-bold">برنامج مسرع الأعمال الصيفي 2025</h3>
-                  <p className="text-muted-foreground">برنامج مكثف لمدة 3 أشهر للشركات الناشئة في مراحلها الأولى</p>
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-muted-foreground">الموعد النهائي للتقديم: 15 أبريل 2025</p>
-                    <Button size="sm" onClick={() => router.push("/entrepreneur-dashboard/apply/1")}>
-                      تقديم طلب
-                    </Button>
-                  </div>
-                </div>
-                <div className="pr-4 py-2" style={{ borderRight: "4px solid #799dd7" }}>
-                  <h3 className="font-bold">برنامج التقنية المالية</h3>
-                  <p className="text-muted-foreground">برنامج متخصص للشركات الناشئة في مجال التكنولوجيا المالية</p>
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-muted-foreground">الموعد النهائي للتقديم: 30 مارس 2025</p>
-                    <Button size="sm" onClick={() => router.push("/entrepreneur-dashboard/apply/2")}>
-                      تقديم طلب
-                    </Button>
-                  </div>
-                </div>
-                <div className="pr-4 py-2" style={{ borderRight: "4px solid #3f4249" }}>
-                  <h3 className="font-bold">برنامج ابتكار الرعاية الصحية</h3>
-                  <p className="text-muted-foreground">دعم الشركات الناشئة في قطاع الرعاية الصحية والعافية</p>
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-muted-foreground">الموعد النهائي للتقديم: 10 مايو 2025</p>
-                    <Button size="sm" onClick={() => router.push("/entrepreneur-dashboard/apply/3")}>
-                      تقديم طلب
-                    </Button>
-                  </div>
-                </div>
+                {programs.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">لا توجد برامج مفتوحة حالياً</p>
+                ) : programs.map((program, index) => {
+                  const colors = ["#f58f62", "#799dd7", "#3f4249", "#22c55e", "#a855f7"]
+                  return (
+                    <div key={program.id} className="pr-4 py-2" style={{ borderRight: `4px solid ${colors[index % colors.length]}` }}>
+                      <h3 className="font-bold">{program.name}</h3>
+                      {program.description && (
+                        <p className="text-muted-foreground">{program.description}</p>
+                      )}
+                      <div className="flex justify-between mt-2">
+                        {program.applicationDeadline && (
+                          <p className="text-xs text-muted-foreground">
+                            الموعد النهائي: {new Date(program.applicationDeadline).toLocaleDateString("ar-SA")}
+                          </p>
+                        )}
+                        <Button size="sm" onClick={() => router.push("/entrepreneur-dashboard/apply")}>
+                          تقديم طلب
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
@@ -219,16 +257,20 @@ export default function EntrepreneurDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {upcomingEvents.map((event) => (
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-4">لا توجد فعاليات قادمة</p>
+                ) : upcomingEvents.map((event) => (
                   <div key={event.id} className="pr-4 py-2" style={{ borderRight: "4px solid #f58f62" }}>
                     <div className="flex items-center">
-                      {event.type === "ورشة عمل" && <Wrench className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
-                      {event.type === "جلسة تعريفية" && <Megaphone className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
-                      {event.type === "شبكات" && <Handshake className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
-                      <h3 className="font-bold">{event.name}</h3>
+                      {event.eventType === "workshop" && <Wrench className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
+                      {event.eventType === "conference" && <Megaphone className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
+                      {(!event.eventType || !["workshop", "conference"].includes(event.eventType)) && <Handshake className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />}
+                      <h3 className="font-bold">{event.title}</h3>
                     </div>
                     <div className="flex justify-between mt-2">
-                      <p className="text-sm text-muted-foreground">{event.date} • {event.time}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(event.startDate).toLocaleDateString("ar-SA")}
+                      </p>
                       <Button size="sm" onClick={() => router.push(`/entrepreneur-dashboard/events/${event.id}`)}>
                         التسجيل
                       </Button>

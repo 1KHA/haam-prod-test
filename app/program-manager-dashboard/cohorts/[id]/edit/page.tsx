@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowRight, Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 interface Cohort {
   id: string
@@ -25,6 +26,7 @@ interface Cohort {
 }
 
 export default function EditCohortPage() {
+  const { toast } = useToast()
   const router = useRouter()
   const params = useParams()
   const cohortId = params.id as string
@@ -91,7 +93,7 @@ export default function EditCohortPage() {
     e.preventDefault();
     
     if (!formData.name || !formData.startDate || !formData.endDate) {
-      alert('يرجى ملء جميع الحقول المطلوبة');
+      toast({ title: "خطأ", description: "يرجى ملء جميع الحقول المطلوبة", variant: "destructive" });
       return;
     }
     
@@ -121,7 +123,7 @@ export default function EditCohortPage() {
       router.push('/program-manager-dashboard/cohorts');
     } catch (error) {
       console.error('Error updating cohort:', error);
-      alert('حدث خطأ أثناء حفظ التغييرات');
+      toast({ title: "خطأ", description: "حدث خطأ أثناء حفظ التغييرات", variant: "destructive" });
     } finally {
       setSaving(false);
     }

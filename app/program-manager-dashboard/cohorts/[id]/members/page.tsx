@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Loader2, Plus, Trash2, Search } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import {
@@ -54,6 +55,7 @@ interface Startup {
 }
 
 export default function CohortMembersPage() {
+  const { toast } = useToast()
   const router = useRouter()
   const params = useParams()
   const cohortId = params.id as string
@@ -155,7 +157,7 @@ export default function CohortMembersPage() {
       setSelectedStartup("");
     } catch (error) {
       console.error('Error adding member:', error);
-      alert('حدث خطأ أثناء إضافة العضو');
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إضافة العضو", variant: "destructive" });
     } finally {
       setAdding(false);
     }
@@ -180,7 +182,7 @@ export default function CohortMembersPage() {
       setMembers(members.filter(m => m.startup.id !== startupId));
     } catch (error) {
       console.error('Error removing member:', error);
-      alert('حدث خطأ أثناء إزالة العضو');
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إزالة العضو", variant: "destructive" });
     }
   };
 

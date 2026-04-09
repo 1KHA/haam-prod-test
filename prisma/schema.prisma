@@ -414,7 +414,7 @@ model Event {
   updatedAt           DateTime          @updatedAt
   registrations       EventRegistration[]
   creatorId           String?
-  creator             User?             @relation(fields: [creatorId], references: [id])
+  creator             User?             @relation(fields: [creatorId], references: [id], onDelete: SetNull)
 }
 
 model EventRegistration {
@@ -447,7 +447,7 @@ model Funding {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   createdBy       String?
-  creator         User?     @relation("UserToFunding", fields: [createdBy], references: [id])
+  creator         User?     @relation("UserToFunding", fields: [createdBy], references: [id], onDelete: SetNull)
 }
 
 model FundingOpportunity {
@@ -465,7 +465,7 @@ model FundingOpportunity {
   contactEmail    String?
   sectors         String?  // Comma-separated list of sectors
   entrepreneurId  String?
-  entrepreneur    User?     @relation("UserToFundingOpportunity", fields: [entrepreneurId], references: [id])
+  entrepreneur    User?     @relation("UserToFundingOpportunity", fields: [entrepreneurId], references: [id], onDelete: SetNull)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -608,7 +608,7 @@ model Integration {
   dataAccess        String?           // JSON string of data access permissions
   settings          String?           // JSON string of integration-specific settings
   connectedById     String?           // User who connected this integration
-  connectedBy       User?             @relation(fields: [connectedById], references: [id])
+  connectedBy       User?             @relation(fields: [connectedById], references: [id], onDelete: SetNull)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   syncs             IntegrationSync[] // Relation to sync history
@@ -632,7 +632,7 @@ model MentorSession {
   location    String?
   notes       String?
   createdById String
-  createdBy   User     @relation("SessionCreator", fields: [createdById], references: [id])
+  createdBy   User     @relation("SessionCreator", fields: [createdById], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -652,7 +652,7 @@ model IntegrationSync {
   itemsFailed     Int         @default(0)
   error           String?     // Error message if sync failed
   triggeredById   String?     // User who triggered the sync, null for automatic syncs
-  triggeredBy     User?       @relation(fields: [triggeredById], references: [id])
+  triggeredBy     User?       @relation(fields: [triggeredById], references: [id], onDelete: SetNull)
   createdAt       DateTime    @default(now())
 }
 

@@ -7,6 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { useAuth } from "@/contexts/auth-context"
 import { 
   User, 
   Mail, 
@@ -20,7 +28,8 @@ import {
   BookOpen,
   Briefcase,
   Award,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react"
 
 interface Mentor {
@@ -47,12 +56,50 @@ interface Mentor {
   }[]
 }
 
+interface BookedSession {
+  id: string
+  startupId: string
+  startupName: string
+  mentorId: string
+  mentorName: string
+  mentorAvatar?: string
+  topic: string
+  type: string
+  status: string
+  date: string
+  time: string
+  duration: number
+  location: string
+  notes: string
+}
+
 export default function MentorsPage() {
   const { toast } = useToast()
+  const { token } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null)
   const [selectedExpertise, setSelectedExpertise] = useState<string | null>(null)
+  
+  // Booking dialog state
+  const [showBookDialog, setShowBookDialog] = useState(false)
+  const [bookingMentor, setBookingMentor] = useState<Mentor | null>(null)
+  const [userStartups, setUserStartups] = useState<{id: string, name: string}[]>([])
+  const [isBooking, setIsBooking] = useState(false)
+  const [bookedSessions, setBookedSessions] = useState<BookedSession[]>([])
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false)
+  
+  // Booking form state
+  const [bookingForm, setBookingForm] = useState({
+    startupId: "",
+    topic: "",
+    date: "",
+    time: "10:00",
+    duration: 60,
+    location: "",
+    notes: "",
+    type: "INDIVIDUAL"
+  })
 
   // Mock data for mentors (will be replaced by API data if available)
   const [mentors, setMentors] = useState<Mentor[]>([
@@ -217,7 +264,6 @@ export default function MentorsPage() {
 
   // Load real mentors from API (overrides mock data)
   useEffect(() => {
-    const token = localStorage.getItem("token")
     if (!token) return
     fetch("/api/mentor", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
@@ -249,7 +295,35 @@ export default function MentorsPage() {
         }
       })
       .catch(console.error)
-  }, [])
+  }, [token])
+
+  // Load user's startups
+  useEffect(() => {
+    if (!token) return
+    fetch("/api/startups", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        const startups = data.companies || []
+        setUserStartups(startups.map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })))
+        if (startups.length > 0) {
+          setBookingForm(prev => ({ ...prev, startupId: startups[0].id }))
+        }
+      })
+      .catch(console.error)
+  }, [token])
+
+  // Load booked sessions
+  useEffect(() => {
+    if (!token || activeTab !== "sessions") return
+    setIsLoadingSessions(true)
+    fetch("/api/entrepreneur/sessions", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        setBookedSessions(data.sessions || [])
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingSessions(false))
+  }, [token, activeTab])
 
   // Extract all unique expertise areas
   const allExpertise = Array.from(new Set(mentors.flatMap(mentor => mentor.expertise)))
@@ -266,7 +340,7 @@ export default function MentorsPage() {
     return matchesSearch && matchesExpertise
   })
 
-  // Get upcoming sessions across all mentors
+  // Get upcoming sessions across all mentors (mock data)
   const upcomingSessions = mentors.flatMap(mentor => 
     mentor.sessions
       .filter(session => session.status === "upcoming")
@@ -283,7 +357,95 @@ export default function MentorsPage() {
   }
 
   const handleBookSession = (mentor: Mentor) => {
-    toast({ title: "حجز جلسة", description: `تم طلب حجز جلسة مع ${mentor.name}` })
+    setBookingMentor(mentor)
+    setShowBookDialog(true)
+  }
+
+  const handleSubmitBooking = async () => {
+    if (!token || !bookingMentor) return
+    if (!bookingForm.startupId || !bookingForm.topic || !bookingForm.date) {
+      toast({ title: "خطأ", description: "يرجى ملء جميع الحقول المطلوبة", variant: "destructive" })
+      return
+    }
+    
+    setIsBooking(true)
+    try {
+      const res = await fetch("/api/entrepreneur/sessions", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          mentorId: bookingMentor.id,
+          startupId: bookingForm.startupId,
+          topic: bookingForm.topic,
+          date: bookingForm.date,
+          time: bookingForm.time,
+          duration: bookingForm.duration,
+          location: bookingForm.location,
+          notes: bookingForm.notes,
+          type: bookingForm.type
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: "خطأ", description: data.error || "فشل في حجز الجلسة", variant: "destructive" })
+      } else {
+        toast({ title: "تم", description: `تم حجز جلسة مع ${bookingMentor.name} بنجاح` })
+        setShowBookDialog(false)
+        setBookingForm({
+          startupId: userStartups[0]?.id || "",
+          topic: "",
+          date: "",
+          time: "10:00",
+          duration: 60,
+          location: "",
+          notes: "",
+          type: "INDIVIDUAL"
+        })
+        // Refresh sessions if on sessions tab
+        if (activeTab === "sessions") {
+          setIsLoadingSessions(true)
+          fetch("/api/entrepreneur/sessions", { headers: { Authorization: `Bearer ${token}` } })
+            .then((r) => r.json())
+            .then((data) => setBookedSessions(data.sessions || []))
+            .finally(() => setIsLoadingSessions(false))
+        }
+      }
+    } catch (error) {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء حجز الجلسة", variant: "destructive" })
+    } finally {
+      setIsBooking(false)
+    }
+  }
+
+  const handleCancelSession = async (sessionId: string) => {
+    if (!token) return
+    try {
+      const res = await fetch("/api/entrepreneur/sessions", {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json", 
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ sessionId, action: "cancel" }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: "خطأ", description: data.error || "فشل في إلغاء الجلسة", variant: "destructive" })
+      } else {
+        toast({ title: "تم", description: "تم إلغاء الجلسة بنجاح" })
+        // Refresh sessions
+        setIsLoadingSessions(true)
+        fetch("/api/entrepreneur/sessions", { headers: { Authorization: `Bearer ${token}` } })
+          .then((r) => r.json())
+          .then((data) => setBookedSessions(data.sessions || []))
+          .finally(() => setIsLoadingSessions(false))
+      }
+    } catch (error) {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إلغاء الجلسة", variant: "destructive" })
+    }
   }
 
   const handleFilterByExpertise = (expertise: string | null) => {
@@ -504,64 +666,69 @@ export default function MentorsPage() {
           <div className="flex items-center justify-between">
             <div></div>
             <div className="text-sm text-muted-foreground">
-              الجلسات القادمة: {upcomingSessions.length}
+              الجلسات القادمة: {bookedSessions.filter(s => s.status === "SCHEDULED").length}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {upcomingSessions.map((session) => (
-              <Card key={session.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">قادمة</span>
+          {isLoadingSessions ? (
+            <div className="flex justify-center items-center h-32">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {bookedSessions.filter(s => s.status === "SCHEDULED").map((session) => (
+                <Card key={session.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">قادمة</span>
+                      </div>
+                      <div className="text-right">
+                        <CardTitle className="text-lg">{session.topic}</CardTitle>
+                        <CardDescription className="mt-1">{session.date} - {session.time}</CardDescription>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <CardTitle className="text-lg">جلسة مع {session.mentorName}</CardTitle>
-                      <CardDescription className="mt-1">{session.date} - {session.time}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-end gap-4">
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-medium">{session.mentorName}</span>
+                        <span className="text-sm text-muted-foreground">{session.startupName}</span>
+                        {session.location && (
+                          <span className="text-sm text-muted-foreground">📍 {session.location}</span>
+                        )}
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={session.mentorAvatar || "/placeholder-avatar.jpg"} 
+                          alt={session.mentorName} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://via.placeholder.com/150";
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-end gap-4">
-                    <div className="flex flex-col items-end">
-                      <span className="text-sm font-medium">الموجه</span>
-                      <span className="text-sm text-muted-foreground">{session.mentorName}</span>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={session.mentorAvatar} 
-                        alt={session.mentorName} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://via.placeholder.com/150";
-                        }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-end gap-2">
-                  <Button variant="outline">
-                    إلغاء الجلسة
-                  </Button>
-                  <Button>
-                    <MessageSquare className="h-4 w-4 ml-2" />
-                    إرسال رسالة
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  </CardContent>
+                  <CardFooter className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => handleCancelSession(session.id)}>
+                      إلغاء الجلسة
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
 
-            {upcomingSessions.length === 0 && (
-              <div className="col-span-full text-center py-10">
-                <p className="text-muted-foreground">لا توجد جلسات قادمة</p>
-                <Button className="mt-4" onClick={() => setActiveTab("all")}>
-                  حجز جلسة جديدة
-                </Button>
-              </div>
-            )}
-          </div>
+              {bookedSessions.filter(s => s.status === "SCHEDULED").length === 0 && (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-muted-foreground">لا توجد جلسات قادمة</p>
+                  <Button className="mt-4" onClick={() => setActiveTab("all")}>
+                    حجز جلسة جديدة
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           <Card>
             <CardHeader>
@@ -570,35 +737,158 @@ export default function MentorsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mentors.flatMap(mentor => 
-                  mentor.sessions
-                    .filter(session => session.status === "completed")
-                    .map(session => (
+                {isLoadingSessions ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    {bookedSessions.filter(s => s.status === "COMPLETED").map((session) => (
                       <div key={session.id} className="border-r-4 border-green-500 pr-4 py-2">
                         <div className="flex justify-between items-start">
                           <span className="text-xs text-muted-foreground">{session.date} - {session.time}</span>
                           <div className="text-right">
-                            <p className="font-medium">{mentor.name}</p>
-                            <p className="text-sm text-muted-foreground">{mentor.position}</p>
+                            <p className="font-medium">{session.topic}</p>
+                            <p className="text-sm text-muted-foreground">{session.mentorName}</p>
                           </div>
                         </div>
                         {session.notes && (
                           <p className="text-sm mt-2 text-right">{session.notes}</p>
                         )}
                       </div>
-                    ))
-                )}
+                    ))}
 
-                {mentors.flatMap(mentor => mentor.sessions).filter(session => session.status === "completed").length === 0 && (
-                  <div className="text-center py-4">
-                    <p className="text-muted-foreground">لا توجد جلسات سابقة</p>
-                  </div>
+                    {bookedSessions.filter(s => s.status === "COMPLETED").length === 0 && (
+                      <div className="text-center py-4">
+                        <p className="text-muted-foreground">لا توجد جلسات سابقة</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Booking Dialog */}
+      <Dialog open={showBookDialog} onOpenChange={setShowBookDialog}>
+        <DialogContent className="max-w-lg">
+          <div dir="rtl">
+            <DialogHeader>
+              <DialogTitle>حجز جلسة مع {bookingMentor?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="startup">الشركة <span className="text-red-500">*</span></Label>
+                <select
+                  id="startup"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={bookingForm.startupId}
+                  onChange={(e) => setBookingForm({ ...bookingForm, startupId: e.target.value })}
+                >
+                  {userStartups.map((startup) => (
+                    <option key={startup.id} value={startup.id}>{startup.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="topic">موضوع الجلسة <span className="text-red-500">*</span></Label>
+                <Input
+                  id="topic"
+                  placeholder="مثال: مراجعة خطة العمل"
+                  value={bookingForm.topic}
+                  onChange={(e) => setBookingForm({ ...bookingForm, topic: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">التاريخ <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={bookingForm.date}
+                    onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="time">الوقت</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={bookingForm.time}
+                    onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="duration">المدة (دقيقة)</Label>
+                  <select
+                    id="duration"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={bookingForm.duration}
+                    onChange={(e) => setBookingForm({ ...bookingForm, duration: Number(e.target.value) })}
+                  >
+                    <option value={30}>30 دقيقة</option>
+                    <option value={60}>60 دقيقة</option>
+                    <option value={90}>90 دقيقة</option>
+                    <option value={120}>120 دقيقة</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">نوع الجلسة</Label>
+                  <select
+                    id="type"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={bookingForm.type}
+                    onChange={(e) => setBookingForm({ ...bookingForm, type: e.target.value })}
+                  >
+                    <option value="INDIVIDUAL">فردية</option>
+                    <option value="GROUP">جماعية</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">مكان/رابط الجلسة</Label>
+                <Input
+                  id="location"
+                  placeholder="مثال: Zoom, Google Meet, أو عنوان المكتب"
+                  value={bookingForm.location}
+                  onChange={(e) => setBookingForm({ ...bookingForm, location: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">ملاحظات</Label>
+                <textarea
+                  id="notes"
+                  rows={3}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="أي ملاحظات إضافية للموجه..."
+                  value={bookingForm.notes}
+                  onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowBookDialog(false)}>إلغاء</Button>
+              <Button 
+                onClick={handleSubmitBooking} 
+                disabled={isBooking || !bookingForm.topic || !bookingForm.date}
+              >
+                {isBooking ? (
+                  <>
+                    <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                    جاري الحجز...
+                  </>
+                ) : (
+                  "تأكيد الحجز"
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

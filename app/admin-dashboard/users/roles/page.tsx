@@ -815,16 +815,7 @@ export default function RolesPermissions() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="default" 
-          size="sm" 
-          className="flex items-center gap-1"
-          onClick={() => setShowAddRole(true)}
-        >
-          <Plus className="h-4 w-4" />
-          <span>إضافة دور جديد</span>
-        </Button>
+      <div className="flex items-center justify-end">
         <h1 className="text-3xl font-bold">الأدوار والصلاحيات</h1>
       </div>
 
@@ -928,8 +919,17 @@ export default function RolesPermissions() {
           {filteredRoles.map(role => (
             <Card key={role.id} className={editingRole === role.id ? "border-primary" : ""}>
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-2">
+                <div className="flex justify-between items-start w-full">
+                  <div className="text-right">
+                    <CardTitle className="text-right">
+                      <div className="flex items-center gap-2 justify-start">
+                        <Shield className="h-5 w-5 text-primary shrink-0" />
+                        {role.name}
+                      </div>
+                    </CardTitle>
+                    <CardDescription className="text-right block">{role.description}</CardDescription>
+                  </div>
+                  <div className="flex gap-1 shrink-0 mr-0">
                     {editingRole === role.id ? (
                       <>
                         <Button variant="ghost" size="sm" onClick={() => setEditingRole(null)}>
@@ -949,13 +949,6 @@ export default function RolesPermissions() {
                         </Button>
                       </>
                     )}
-                  </div>
-                  <div className="text-right">
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-primary" />
-                      {role.name}
-                    </CardTitle>
-                    <CardDescription>{role.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>

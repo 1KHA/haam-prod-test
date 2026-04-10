@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/select"
 import {
   Search,
-  UserPlus,
   Download,
   Trash2,
   Edit,
@@ -381,12 +380,6 @@ export default function UsersTable() {
         <Button variant="outline" size="sm" className="gap-1" onClick={handleExport}>
           <Download className="h-4 w-4" />
           تصدير
-        </Button>
-
-        {/* Add user */}
-        <Button variant="default" size="sm" className="gap-1" onClick={() => router.push("/admin-dashboard/users/new")}>
-          <UserPlus className="h-4 w-4" />
-          إضافة مستخدم
         </Button>
       </div>
 

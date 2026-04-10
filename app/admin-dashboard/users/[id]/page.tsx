@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import UserRolePermissionManager from "@/components/admin/UserRolePermissionManager"
+
 
 interface UserProfile {
   id: string
@@ -278,9 +278,8 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:justify-end">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:justify-end">
           <TabsTrigger value="activity">النشاطات</TabsTrigger>
-          <TabsTrigger value="permissions">الأدوار والصلاحيات</TabsTrigger>
           <TabsTrigger value="profile">الملف الشخصي</TabsTrigger>
         </TabsList>
 
@@ -360,11 +359,6 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        {/* ── Permissions tab ── */}
-        <TabsContent value="permissions">
-          <UserRolePermissionManager userId={userId} />
         </TabsContent>
 
         {/* ── Activity tab ── */}

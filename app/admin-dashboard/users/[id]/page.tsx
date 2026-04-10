@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowRight, Loader2, Trash2, Edit, User, Mail, Briefcase, Calendar, Tag, Shield } from "lucide-react"
+import { ArrowRight, Loader2, Trash2, Edit, User, Mail, Briefcase, Calendar, Tag, Shield, CheckCircle, Clock, Ban } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import {
@@ -207,395 +207,253 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
     )
   }
   
+  // Status badge helper
+  const statusBadge = (status: string) => {
+    if (status === 'ACTIVE')
+      return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="h-3 w-3" />نشط</span>
+    if (status === 'PENDING_APPROVAL')
+      return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3" />قيد المراجعة</span>
+    return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"><Ban className="h-3 w-3" />معلق</span>
+  }
+
+  // Role-specific profile fields
+  const roleProfile = getRoleSpecificProfile(user)
+  const roleFields: { label: string; value: string }[] = (() => {
+    if (!roleProfile) return []
+    switch (user.role) {
+      case 'MENTOR':
+        return [
+          { label: 'مجال الخبرة', value: roleProfile.expertise || '-' },
+          { label: 'الخبرة', value: roleProfile.experience || '-' },
+          { label: 'الإتاحة', value: roleProfile.availability || '-' },
+        ]
+      case 'INVESTOR':
+        return [
+          { label: 'اسم الشركة', value: roleProfile.companyName || '-' },
+          { label: 'مجال الاستثمار', value: roleProfile.investmentFocus || '-' },
+          { label: 'مرحلة الاستثمار', value: roleProfile.investmentStage || '-' },
+          { label: 'حجم الاستثمار', value: roleProfile.investmentSize || '-' },
+        ]
+      case 'ENTREPRENEUR':
+        return [
+          { label: 'اسم المنظمة', value: roleProfile.organizationName || '-' },
+          { label: 'المجال', value: roleProfile.industry || '-' },
+          { label: 'مجالات التركيز', value: roleProfile.focusAreas || '-' },
+          { label: 'الموقع الإلكتروني', value: roleProfile.website || '-' },
+        ]
+      case 'PROGRAM_MANAGER':
+        return [
+          { label: 'البرامج', value: roleProfile.programs || '-' },
+          { label: 'المسؤوليات', value: roleProfile.responsibilities || '-' },
+        ]
+      case 'ADMIN':
+        return [
+          { label: 'القسم', value: roleProfile.department || '-' },
+          { label: 'الصلاحيات', value: roleProfile.permissions || '-' },
+        ]
+      default:
+        return []
+    }
+  })()
+
   return (
-    <div className="space-y-6 text-right">
+    <div className="space-y-6 text-right" dir="rtl">
+      {/* ── Page header ── */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => router.back()}
-          >
+        <h1 className="text-2xl font-bold">تفاصيل المستخدم</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => router.back()}>
             <ArrowRight className="h-4 w-4" />
-            <span>العودة</span>
+            العودة
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => router.push(`/admin-dashboard/users/${userId}/edit`)}
-          >
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => router.push(`/admin-dashboard/users/${userId}/edit`)}>
             <Edit className="h-4 w-4" />
-            <span>تعديل</span>
+            تعديل
           </Button>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
+          <Button variant="destructive" size="sm" className="gap-1" onClick={() => setIsDeleteDialogOpen(true)}>
             <Trash2 className="h-4 w-4" />
-            <span>حذف</span>
+            حذف
           </Button>
         </div>
-        <h1 className="text-3xl font-bold">تفاصيل المستخدم</h1>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile">الملف الشخصي</TabsTrigger>
-          <TabsTrigger value="permissions">الأدوار والصلاحيات</TabsTrigger>
+        <TabsList className="justify-end">
           <TabsTrigger value="activity">النشاطات</TabsTrigger>
+          <TabsTrigger value="permissions">الأدوار والصلاحيات</TabsTrigger>
+          <TabsTrigger value="profile">الملف الشخصي</TabsTrigger>
         </TabsList>
 
+        {/* ── Profile tab ── */}
         <TabsContent value="profile" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-1">
-              <CardHeader>
-                <CardTitle>المعلومات الأساسية</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">الاسم</p>
-                    <p className="text-lg">{user.name}</p>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Identity card */}
+            <Card className="lg:col-span-1">
+              <CardContent className="pt-6 flex flex-col items-center text-center gap-3">
+                {/* Avatar */}
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                  {user.name.charAt(0)}
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">البريد الإلكتروني</p>
-                    <p className="text-lg">{user.email}</p>
-                  </div>
+                <div>
+                  <p className="text-xl font-semibold">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">الدور</p>
-                    <p className="text-lg">{getRoleDisplayName(user.role)}</p>
-                  </div>
-                </div>
-                
-                {user.specialization && (
-                  <div className="flex items-center gap-2">
-                    <Tag className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">التخصص</p>
-                      <p className="text-lg">{user.specialization}</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">تاريخ التسجيل</p>
-                    <p className="text-lg">{formatDate(user.createdAt)}</p>
-                  </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    <Shield className="h-3 w-3" />
+                    {getRoleDisplayName(user.role)}
+                  </span>
+                  {statusBadge(user.status)}
                 </div>
               </CardContent>
+              <CardFooter className="border-t pt-4 flex flex-col gap-3 text-sm">
+                <div className="w-full flex items-start gap-2">
+                  <Tag className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div className="text-right">
+                    <p className="text-muted-foreground text-xs">التخصص</p>
+                    <p>{user.specialization || '-'}</p>
+                  </div>
+                </div>
+                <div className="w-full flex items-start gap-2">
+                  <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div className="text-right">
+                    <p className="text-muted-foreground text-xs">تاريخ التسجيل</p>
+                    <p>{formatDate(user.createdAt)}</p>
+                  </div>
+                </div>
+                <div className="w-full flex items-start gap-2">
+                  <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <div className="text-right">
+                    <p className="text-muted-foreground text-xs">آخر تحديث</p>
+                    <p>{formatDate(user.updatedAt)}</p>
+                  </div>
+                </div>
+              </CardFooter>
             </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>الملف الشخصي</CardTitle>
+
+            {/* Role profile */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-muted-foreground" />
+                  معلومات {getRoleDisplayName(user.role)}
+                </CardTitle>
+                <CardDescription>البيانات المرتبطة بدور المستخدم</CardDescription>
               </CardHeader>
               <CardContent>
-                {user.role === 'STARTUP' && user.startupProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات الشركة الناشئة</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">اسم الشركة</p>
-                        <p>{user.startupProfile.companyName}</p>
+                {roleFields.length > 0 ? (
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                    {roleFields.map(({ label, value }) => (
+                      <div key={label} className="border-b pb-3">
+                        <dt className="text-xs text-muted-foreground mb-1">{label}</dt>
+                        <dd className="font-medium">{value}</dd>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">المجال</p>
-                        <p>{user.startupProfile.industry || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">المرحلة</p>
-                        <p>{user.startupProfile.stage || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">تاريخ التأسيس</p>
-                        <p>{user.startupProfile.foundingDate ? formatDate(user.startupProfile.foundingDate) : '-'}</p>
-                      </div>
-                    </div>
-                    {user.startupProfile.description && (
-                      <div>
-                        <p className="text-sm font-medium">الوصف</p>
-                        <p>{user.startupProfile.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ) : user.role === 'MENTOR' && user.mentorProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات الموجه</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">مجال الخبرة</p>
-                        <p>{user.mentorProfile.expertise || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">الخبرة</p>
-                        <p>{user.mentorProfile.experience || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">الإتاحة</p>
-                        <p>{user.mentorProfile.availability || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : user.role === 'INVESTOR' && user.investorProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات المستثمر</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">اسم الشركة</p>
-                        <p>{user.investorProfile.companyName || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">مجال الاستثمار</p>
-                        <p>{user.investorProfile.investmentFocus || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">مرحلة الاستثمار</p>
-                        <p>{user.investorProfile.investmentStage || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">حجم الاستثمار</p>
-                        <p>{user.investorProfile.investmentSize || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : user.role === 'ENTREPRENEUR' && user.entrepreneurProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات رائد الأعمال</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">اسم المنظمة</p>
-                        <p>{user.entrepreneurProfile.organizationName || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">المجال</p>
-                        <p>{user.entrepreneurProfile.industry || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">مجالات التركيز</p>
-                        <p>{user.entrepreneurProfile.focusAreas || '-'}</p>
-                      </div>
-                      {user.entrepreneurProfile.website && (
-                        <div>
-                          <p className="text-sm font-medium">الموقع الإلكتروني</p>
-                          <p>{user.entrepreneurProfile.website}</p>
-                        </div>
-                      )}
-                    </div>
-                    {user.entrepreneurProfile.description && (
-                      <div>
-                        <p className="text-sm font-medium">الوصف</p>
-                        <p>{user.entrepreneurProfile.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ) : user.role === 'ACCELERATOR' && user.acceleratorProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات مسرع الأعمال</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">اسم المنظمة</p>
-                        <p>{user.acceleratorProfile.organizationName || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">المجال</p>
-                        <p>{user.acceleratorProfile.industry || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">مجالات التركيز</p>
-                        <p>{user.acceleratorProfile.focusAreas || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">مدة البرنامج</p>
-                        <p>{user.acceleratorProfile.programLength || '-'}</p>
-                      </div>
-                    </div>
-                    {user.acceleratorProfile.description && (
-                      <div>
-                        <p className="text-sm font-medium">الوصف</p>
-                        <p>{user.acceleratorProfile.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ) : user.role === 'PROGRAM_MANAGER' && user.programManagerProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات مدير البرنامج</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">البرامج</p>
-                        <p>{user.programManagerProfile.programs || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">المسؤوليات</p>
-                        <p>{user.programManagerProfile.responsibilities || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : user.role === 'ADMIN' && user.adminProfile ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">معلومات المدير</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">القسم</p>
-                        <p>{user.adminProfile.department || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">الصلاحيات</p>
-                        <p>{user.adminProfile.permissions || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
+                    ))}
+                  </dl>
                 ) : (
-                  <p className="text-muted-foreground">لم يتم إكمال الملف الشخصي بعد.</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                    <User className="h-10 w-10 opacity-30" />
+                    <p>لم يتم إكمال الملف الشخصي بعد</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="permissions" className="space-y-6">
+        {/* ── Permissions tab ── */}
+        <TabsContent value="permissions">
           <UserRolePermissionManager userId={userId} />
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-6">
+        {/* ── Activity tab ── */}
+        <TabsContent value="activity" className="space-y-4">
           {user.startups && user.startups.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>الشركات الناشئة</CardTitle>
+                <CardDescription>{user.startups.length} شركة مرتبطة بهذا المستخدم</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {user.startups.map((startup) => (
-                    <div key={startup.id} className="border rounded-md p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-muted-foreground">
-                          {startup.status === 'APPROVED' ? (
-                            <span className="text-green-600">معتمدة</span>
-                          ) : startup.status === 'REJECTED' ? (
-                            <span className="text-red-600">مرفوضة</span>
-                          ) : (
-                            <span className="text-amber-600">قيد المراجعة</span>
-                          )}
-                        </div>
-                        <h3 className="text-lg font-semibold">{startup.name}</h3>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 mt-4">
-                        <div>
-                          <p className="text-sm font-medium">المجال</p>
-                          <p>{startup.industry}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">المرحلة</p>
-                          <p>{startup.stage}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">تاريخ الإنشاء</p>
-                          <p>{formatDate(startup.createdAt)}</p>
-                        </div>
-                      </div>
+              <CardContent className="space-y-3">
+                {user.startups.map((startup) => (
+                  <div key={startup.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        startup.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                        startup.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {startup.status === 'APPROVED' ? 'معتمدة' : startup.status === 'REJECTED' ? 'مرفوضة' : 'قيد المراجعة'}
+                      </span>
+                      <h3 className="font-semibold">{startup.name}</h3>
                     </div>
-                  ))}
-                </div>
+                    <dl className="grid grid-cols-3 gap-4 text-sm">
+                      <div><dt className="text-muted-foreground text-xs">المجال</dt><dd>{startup.industry}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">المرحلة</dt><dd>{startup.stage}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">تاريخ الإنشاء</dt><dd>{formatDate(startup.createdAt)}</dd></div>
+                    </dl>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
-          
+
           {user.teamMembers && user.teamMembers.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>أعضاء الفريق</CardTitle>
+                <CardDescription>{user.teamMembers.length} عضو</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {user.teamMembers.map((member) => (
-                    <div key={member.id} className="border rounded-md p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-muted-foreground">
-                          {member.department}
-                        </div>
-                        <h3 className="text-lg font-semibold">{member.name}</h3>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4 mt-4">
-                        <div>
-                          <p className="text-sm font-medium">المنصب</p>
-                          <p>{member.position}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">البريد الإلكتروني</p>
-                          <p>{member.email}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">الهاتف</p>
-                          <p>{member.phone}</p>
-                        </div>
-                      </div>
+              <CardContent className="space-y-3">
+                {user.teamMembers.map((member) => (
+                  <div key={member.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{member.department}</span>
+                      <h3 className="font-semibold">{member.name}</h3>
                     </div>
-                  ))}
-                </div>
+                    <dl className="grid grid-cols-3 gap-4 text-sm">
+                      <div><dt className="text-muted-foreground text-xs">المنصب</dt><dd>{member.position}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">البريد</dt><dd className="truncate">{member.email}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">الهاتف</dt><dd>{member.phone}</dd></div>
+                    </dl>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
 
           {(!user.startups || user.startups.length === 0) && (!user.teamMembers || user.teamMembers.length === 0) && (
             <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">لا توجد نشاطات لعرضها.</p>
+              <CardContent className="py-12 flex flex-col items-center gap-2 text-muted-foreground">
+                <User className="h-10 w-10 opacity-30" />
+                <p>لا توجد نشاطات لعرضها</p>
               </CardContent>
             </Card>
           )}
         </TabsContent>
       </Tabs>
-      
-      {/* Delete Confirmation Dialog */}
+
+      {/* Delete dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>تأكيد حذف المستخدم</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من رغبتك في حذف المستخدم {user.name}؟ هذا الإجراء لا يمكن التراجع عنه وسيؤدي إلى حذف جميع بيانات المستخدم.
+              هل أنت متأكد من رغبتك في حذف <strong>{user.name}</strong>؟ هذا الإجراء لا يمكن التراجع عنه وسيحذف جميع بياناته.
             </DialogDescription>
           </DialogHeader>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
               إلغاء
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={deleteUser}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                  جاري الحذف...
-                </>
-              ) : (
-                'حذف'
-              )}
+            <Button variant="destructive" onClick={deleteUser} disabled={isDeleting}>
+              {isDeleting ? <><Loader2 className="h-4 w-4 ml-2 animate-spin" />جاري الحذف...</> : 'حذف'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       <Toaster />
     </div>
   )

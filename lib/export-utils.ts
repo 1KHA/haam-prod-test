@@ -97,8 +97,10 @@ export async function exportCSV(options: {
       throw new Error(errorData.error || `HTTP ${response.status}`);
     }
 
-    // Convert response to blob for download
-    const blob = await response.blob();
+    // Read as raw bytes and wrap with explicit charset so the browser does
+    // not re-encode the content.  The file is already UTF-16 LE with BOM.
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: 'text/csv;charset=utf-16le' });
     const downloadUrl = window.URL.createObjectURL(blob);
 
     // Create and trigger download

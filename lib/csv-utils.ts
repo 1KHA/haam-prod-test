@@ -55,33 +55,54 @@ export function generateCSV(options: CSVExportOptions): string {
 }
 
 /**
- * Creates a CSV download response with proper headers and encoding
+ * Encodes a JS string to UTF-16 Little-Endian bytes.
+ * UTF-16 LE is Excel's native "Unicode" encoding — the only CSV encoding
+ * that reliably displays Arabic (and all non-Latin) text in Excel on every
+ * Windows locale without the user needing to run the Text Import Wizard.
+ * All Arabic characters are in the BMP (U+0600–U+06FF), so no surrogate
+ * pairs are needed.
+ */
+function encodeUTF16LE(str: string): Uint8Array {
+  const bytes = new Uint8Array(str.length * 2);
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    bytes[i * 2]     = code & 0xff;        // low byte first (little-endian)
+    bytes[i * 2 + 1] = (code >> 8) & 0xff; // high byte second
+  }
+  return bytes;
+}
+
+/**
+ * Creates a CSV download response encoded in UTF-16 LE.
+ *
+ * Why UTF-16 LE instead of UTF-8?
+ * Excel on Windows reads CSV files using the system codepage by default.
+ * Even with a UTF-8 BOM, many Excel versions on Arabic/Gulf locales will
+ * still garble multi-byte characters.  UTF-16 LE with BOM (FF FE) is the
+ * one encoding Excel recognises and renders correctly for Arabic text on
+ * every version and locale — no Import Wizard required.
  */
 export function createCSVResponse(options: CSVExportOptions): Response {
-  const { filename = 'export.csv', includeUTF8BOM = true, delimiter = ',' } = options;
-  
-  // Generate CSV content
-  let csvContent = generateCSV(options);
-  
-  // Add Excel separator instruction to force Excel to use the correct delimiter
-  csvContent = `sep=${delimiter}\n` + csvContent;
-  
-  // Add UTF-8 BOM for proper Arabic text encoding
-  if (includeUTF8BOM) {
-    const bom = '\uFEFF';
-    csvContent = bom + csvContent;
-  }
-  
-  // Set response headers
+  const { filename = 'export.csv', delimiter = ',' } = options;
+
+  // Build CSV string (sep= hint tells Excel which delimiter to expect)
+  const csvContent = `sep=${delimiter}\n` + generateCSV(options);
+
+  // UTF-16 LE BOM: FF FE
+  const bom = new Uint8Array([0xff, 0xfe]);
+  const contentBytes = encodeUTF16LE(csvContent);
+
+  const bodyBytes = new Uint8Array(bom.length + contentBytes.length);
+  bodyBytes.set(bom, 0);
+  bodyBytes.set(contentBytes, bom.length);
+
   const headers = new Headers();
-  headers.set('Content-Type', 'text/csv; charset=utf-8');
-  headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+  // charset=utf-16le so the browser/OS also interprets the file correctly
+  headers.set('Content-Type', 'text/csv; charset=utf-16le');
+  headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
   headers.set('Cache-Control', 'no-cache');
-  
-  return new Response(csvContent, {
-    status: 200,
-    headers: headers,
-  });
+
+  return new Response(bodyBytes, { status: 200, headers });
 }
 
 /**

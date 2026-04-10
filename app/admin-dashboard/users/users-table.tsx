@@ -47,7 +47,8 @@ import {
   UserCheck,
   UserX,
   Shield,
-  RefreshCw
+  RefreshCw,
+  Ban
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 import { exportPresets } from "@/lib/export-utils"
@@ -250,9 +251,10 @@ export default function UsersTable() {
     }
   };
 
-  // Approve user
-  const approveUser = async (userId: string) => {
+  // Change user approval status (activate or suspend)
+  const changeUserStatus = async (userId: string, action: 'approve' | 'suspend') => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const successMsg = action === 'approve' ? "تم تفعيل حساب المستخدم" : "تم تعليق حساب المستخدم";
     try {
       const response = await fetch(`/api/admin/users/${userId}/approve`, {
         method: 'POST',
@@ -260,16 +262,16 @@ export default function UsersTable() {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ action: 'approve' })
+        body: JSON.stringify({ action })
       });
       if (response.ok) {
-        showAdminToast({ title: "تم بنجاح", description: "تم اعتماد حساب المستخدم" });
+        showAdminToast({ title: "تم بنجاح", description: successMsg });
         fetchUsers();
       } else {
-        showAdminToast({ title: "خطأ", description: "فشل في اعتماد الحساب", variant: "destructive" });
+        showAdminToast({ title: "خطأ", description: "فشل في تغيير حالة الحساب", variant: "destructive" });
       }
     } catch {
-      showAdminToast({ title: "خطأ", description: "فشل في اعتماد الحساب", variant: "destructive" });
+      showAdminToast({ title: "خطأ", description: "فشل في تغيير حالة الحساب", variant: "destructive" });
     }
   }
 
@@ -474,20 +476,32 @@ export default function UsersTable() {
                   <TableCell>{getRoleDisplayName(user.role)}</TableCell>
                   <TableCell>
                     {user.status === 'ACTIVE' ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <button
+                        title="انقر لتعليق الحساب"
+                        onClick={() => changeUserStatus(user.id, 'suspend')}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-red-100 hover:text-red-800 cursor-pointer transition-colors"
+                      >
                         <UserCheck className="h-3 w-3 ml-1" />
                         نشط
-                      </span>
+                      </button>
                     ) : user.status === 'PENDING_APPROVAL' ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <button
+                        title="انقر لاعتماد الحساب"
+                        onClick={() => changeUserStatus(user.id, 'approve')}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 hover:bg-green-100 hover:text-green-800 cursor-pointer transition-colors"
+                      >
                         <UserX className="h-3 w-3 ml-1" />
                         قيد المراجعة
-                      </span>
+                      </button>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                      <button
+                        title="انقر لتفعيل الحساب"
+                        onClick={() => changeUserStatus(user.id, 'approve')}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-green-100 hover:text-green-800 cursor-pointer transition-colors"
+                      >
                         <UserX className="h-3 w-3 ml-1" />
                         معلق
-                      </span>
+                      </button>
                     )}
                   </TableCell>
                   <TableCell>{formatDate(user.createdAt)}</TableCell>
@@ -510,14 +524,23 @@ export default function UsersTable() {
                           <Edit className="h-4 w-4 ml-2" />
                           تعديل
                         </DropdownMenuItem>
-                        {user.status === 'PENDING_APPROVAL' && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => approveUser(user.id)}>
-                              <CheckCircle className="h-4 w-4 ml-2" />
-                              اعتماد الحساب
-                            </DropdownMenuItem>
-                          </>
+                        <DropdownMenuSeparator />
+                        {user.status === 'ACTIVE' ? (
+                          <DropdownMenuItem
+                            className="text-amber-600"
+                            onClick={() => changeUserStatus(user.id, 'suspend')}
+                          >
+                            <Ban className="h-4 w-4 ml-2" />
+                            تعليق الحساب
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            className="text-green-600"
+                            onClick={() => changeUserStatus(user.id, 'approve')}
+                          >
+                            <CheckCircle className="h-4 w-4 ml-2" />
+                            {user.status === 'PENDING_APPROVAL' ? 'اعتماد الحساب' : 'تفعيل الحساب'}
+                          </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

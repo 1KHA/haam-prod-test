@@ -37,10 +37,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check approval status
+    // Block non-active accounts
     if (user.approvalStatus === 'PENDING_APPROVAL') {
       return NextResponse.json(
         { error: 'حسابك قيد المراجعة من قبل المسؤول. سيتم إعلامك عند الموافقة على طلبك.' },
+        { status: 403 }
+      );
+    }
+    if (user.approvalStatus === 'SUSPENDED') {
+      return NextResponse.json(
+        { error: 'تم تعليق حسابك. يرجى التواصل مع المسؤول.' },
         { status: 403 }
       );
     }

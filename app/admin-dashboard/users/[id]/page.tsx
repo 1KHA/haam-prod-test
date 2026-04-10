@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowRight, Loader2, Trash2, Edit, User, Mail, Briefcase, Calendar, Tag, Shield, CheckCircle, Clock, Ban } from "lucide-react"
+import { ArrowRight, Loader2, Trash2, Edit, User, Briefcase, Calendar, Tag, Shield, CheckCircle, Clock, Ban } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import {
@@ -211,7 +211,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
   const statusBadge = (status: string) => {
     if (status === 'ACTIVE')
       return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="h-3 w-3" />نشط</span>
-    if (status === 'PENDING_APPROVAL')
+    if (status === 'PENDING_APPROVAL' || status === 'PENDING')
       return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3" />قيد المراجعة</span>
     return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"><Ban className="h-3 w-3" />معلق</span>
   }
@@ -278,7 +278,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="justify-end">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:justify-end">
           <TabsTrigger value="activity">النشاطات</TabsTrigger>
           <TabsTrigger value="permissions">الأدوار والصلاحيات</TabsTrigger>
           <TabsTrigger value="profile">الملف الشخصي</TabsTrigger>
@@ -343,11 +343,11 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
               </CardHeader>
               <CardContent>
                 {roleFields.length > 0 ? (
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                  <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
                     {roleFields.map(({ label, value }) => (
                       <div key={label} className="border-b pb-3">
                         <dt className="text-xs text-muted-foreground mb-1">{label}</dt>
-                        <dd className="font-medium">{value}</dd>
+                        <dd className="font-medium break-words">{value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -388,10 +388,10 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                       </span>
                       <h3 className="font-semibold">{startup.name}</h3>
                     </div>
-                    <dl className="grid grid-cols-3 gap-4 text-sm">
-                      <div><dt className="text-muted-foreground text-xs">المجال</dt><dd>{startup.industry}</dd></div>
-                      <div><dt className="text-muted-foreground text-xs">المرحلة</dt><dd>{startup.stage}</dd></div>
-                      <div><dt className="text-muted-foreground text-xs">تاريخ الإنشاء</dt><dd>{formatDate(startup.createdAt)}</dd></div>
+                    <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                      <div><dt className="text-muted-foreground text-xs">المجال</dt><dd className="break-words">{startup.industry || '-'}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">المرحلة</dt><dd className="break-words">{startup.stage || '-'}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">تاريخ الإنشاء</dt><dd className="break-words">{formatDate(startup.createdAt)}</dd></div>
                     </dl>
                   </div>
                 ))}
@@ -412,10 +412,10 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                       <span className="text-xs text-muted-foreground">{member.department}</span>
                       <h3 className="font-semibold">{member.name}</h3>
                     </div>
-                    <dl className="grid grid-cols-3 gap-4 text-sm">
-                      <div><dt className="text-muted-foreground text-xs">المنصب</dt><dd>{member.position}</dd></div>
-                      <div><dt className="text-muted-foreground text-xs">البريد</dt><dd className="truncate">{member.email}</dd></div>
-                      <div><dt className="text-muted-foreground text-xs">الهاتف</dt><dd>{member.phone}</dd></div>
+                    <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                      <div><dt className="text-muted-foreground text-xs">المنصب</dt><dd className="break-words">{member.position || '-'}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">البريد</dt><dd className="break-all">{member.email || '-'}</dd></div>
+                      <div><dt className="text-muted-foreground text-xs">الهاتف</dt><dd className="break-words">{member.phone || '-'}</dd></div>
                     </dl>
                   </div>
                 ))}
@@ -436,7 +436,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
 
       {/* Delete dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle>تأكيد حذف المستخدم</DialogTitle>
             <DialogDescription>

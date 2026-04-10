@@ -100,8 +100,8 @@ export default function AdminDashboard() {
                 <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">إجمالي المستخدمين</CardTitle>
                       <Users className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-medium">إجمالي المستخدمين</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{stats?.users.total.toLocaleString() ?? "-"}</div>
@@ -117,8 +117,8 @@ export default function AdminDashboard() {
                 <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">البرامج النشطة</CardTitle>
                       <Building className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-medium">البرامج النشطة</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{stats?.programs.active ?? "-"}</div>
@@ -130,8 +130,8 @@ export default function AdminDashboard() {
                 <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">إجمالي الشركات الناشئة</CardTitle>
                       <Rocket className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-medium">إجمالي الشركات الناشئة</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{stats?.startups.total ?? "-"}</div>
@@ -143,8 +143,8 @@ export default function AdminDashboard() {
                 <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">الفعاليات القادمة</CardTitle>
                       <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-medium">الفعاليات القادمة</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{stats?.events.upcoming ?? "-"}</div>
@@ -209,24 +209,24 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                      <Users className="h-8 w-8 mb-2 text-primary" />
                       <h3 className="font-bold text-xl">{stats?.users.byRole.ENTREPRENEUR ?? 0}</h3>
                       <p className="text-muted-foreground">مؤسسي الشركات الناشئة</p>
+                      <Users className="h-8 w-8 mt-2 text-primary" />
                     </div>
                     <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                      <Award className="h-8 w-8 mb-2 text-primary" />
                       <h3 className="font-bold text-xl">{stats?.users.byRole.PROGRAM_MANAGER ?? 0}</h3>
                       <p className="text-muted-foreground">مديري البرامج</p>
+                      <Award className="h-8 w-8 mt-2 text-primary" />
                     </div>
                     <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                      <BookOpen className="h-8 w-8 mb-2 text-primary" />
                       <h3 className="font-bold text-xl">{stats?.users.byRole.MENTOR ?? 0}</h3>
                       <p className="text-muted-foreground">الموجهين</p>
+                      <BookOpen className="h-8 w-8 mt-2 text-primary" />
                     </div>
                     <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                      <DollarSign className="h-8 w-8 mb-2 text-primary" />
                       <h3 className="font-bold text-xl">{stats?.users.byRole.INVESTOR ?? 0}</h3>
                       <p className="text-muted-foreground">المستثمرين</p>
+                      <DollarSign className="h-8 w-8 mt-2 text-primary" />
                     </div>
                   </div>
                 </CardContent>

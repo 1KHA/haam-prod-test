@@ -3,6 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { emitPermissionsRefresh } from '@/lib/sse-helpers';
 
+interface AssignedRoleSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  assignedAt: Date;
+  permissionsCount: number;
+}
+
 // GET /api/admin/users/[id]/roles - Get all roles assigned to a user
 export async function GET(
   request: NextRequest,
@@ -55,18 +63,20 @@ export async function GET(
     });
 
     // Get unique roles assigned to this user
-    const assignedRoles = userRoles.reduce((acc, rp) => {
+    const assignedRoles = userRoles.reduce<AssignedRoleSummary[]>((acc, rp) => {
       const roleExists = acc.find(r => r.id === rp.role.id);
       if (!roleExists) {
+        const permissionCount = userRoles.filter((entry) => entry.roleId === rp.role.id).length;
         acc.push({
           id: rp.role.id,
           name: rp.role.name,
           description: rp.role.description,
-          assignedAt: rp.createdAt
+          assignedAt: rp.createdAt,
+          permissionsCount: permissionCount
         });
       }
       return acc;
-    }, [] as any[]);
+    }, []);
 
     return NextResponse.json({
       user: {
@@ -75,6 +85,16 @@ export async function GET(
         email: user.email,
         defaultRole: user.role
       },
+      userRoles: assignedRoles.map((role) => ({
+        id: role.id,
+        assignedAt: role.assignedAt,
+        role: {
+          id: role.id,
+          name: role.name,
+          description: role.description,
+          permissionsCount: role.permissionsCount
+        }
+      })),
       assignedRoles,
       totalRoles: assignedRoles.length
     });

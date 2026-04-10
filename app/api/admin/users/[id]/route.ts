@@ -66,7 +66,7 @@ export async function GET(
     // Add virtual status field
     const userWithStatus = {
       ...user,
-      status: hasProfile ? 'ACTIVE' : 'PENDING'
+      status: user.approvalStatus || (hasProfile ? 'ACTIVE' : 'PENDING_APPROVAL')
     };
     
     return NextResponse.json(userWithStatus);
@@ -231,7 +231,7 @@ export async function PUT(
     // Add virtual status field
     const userWithStatus = {
       ...updatedUser,
-      status: hasProfile ? 'ACTIVE' : 'PENDING'
+      status: updatedUser.approvalStatus || (hasProfile ? 'ACTIVE' : 'PENDING_APPROVAL')
     };
     
     // Remove password from response

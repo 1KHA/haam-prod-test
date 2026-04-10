@@ -3,6 +3,29 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { emitPermissionsRefresh } from '@/lib/sse-helpers';
 
+interface PermissionSummary {
+  id: string;
+  category: string;
+  action: string;
+  source: 'role' | 'direct';
+  roleName: string | null;
+}
+
+interface PermissionsByRoleMap {
+  [roleId: string]: {
+    role: {
+      id: string;
+      name: string;
+      description: string | null;
+    };
+    permissions: Array<{
+      id: string;
+      category: string;
+      action: string;
+    }>;
+  };
+}
+
 // GET /api/admin/users/[id]/permissions - Get all permissions for a user
 export async function GET(
   request: NextRequest,
@@ -42,7 +65,11 @@ export async function GET(
       );
     }
 
-    // Get all user permissions (both role-based and user-specific)
+    const directRole = await prisma.role.findFirst({
+      where: { name: 'Direct Permissions' }
+    });
+
+    // Get all user permissions (both role-based and direct)
     const userPermissions = await prisma.rolePermission.findMany({
       where: {
         userId: userId
@@ -53,12 +80,17 @@ export async function GET(
       }
     });
 
-    // Separate role-based and direct permissions
-    const roleBasedPermissions = userPermissions.filter(up => up.roleId !== null);
-    const directPermissions = userPermissions.filter(up => up.roleId === null);
+    // Separate role-based and direct permissions.
+    // Direct permissions are stored under the internal "Direct Permissions" role.
+    const directPermissions = userPermissions.filter(
+      up => up.roleId === directRole?.id || up.role?.name === 'Direct Permissions'
+    );
+    const roleBasedPermissions = userPermissions.filter(
+      up => up.roleId !== null && up.roleId !== directRole?.id && up.role?.name !== 'Direct Permissions'
+    );
 
     // Group role-based permissions by role
-    const permissionsByRole = roleBasedPermissions.reduce((acc, up) => {
+    const permissionsByRole = roleBasedPermissions.reduce<PermissionsByRoleMap>((acc, up) => {
       if (!acc[up.role.id]) {
         acc[up.role.id] = {
           role: {
@@ -77,22 +109,22 @@ export async function GET(
       });
       
       return acc;
-    }, {} as any);
+    }, {});
 
     // Get unique permissions (avoid duplicates)
-    const allPermissions = userPermissions.reduce((acc, up) => {
+    const allPermissions = userPermissions.reduce<PermissionSummary[]>((acc, up) => {
       const exists = acc.find(p => p.id === up.permission.id);
       if (!exists) {
         acc.push({
           id: up.permission.id,
           category: up.permission.category,
           action: up.permission.action,
-          source: up.roleId ? 'role' : 'direct',
-          roleName: up.role?.name || null
+          source: up.roleId === directRole?.id || up.role?.name === 'Direct Permissions' ? 'direct' : 'role',
+          roleName: up.role?.name === 'Direct Permissions' ? null : (up.role?.name || null)
         });
       }
       return acc;
-    }, [] as any[]);
+    }, []);
 
     return NextResponse.json({
       user: {

@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,18 +12,21 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Minus, Shield, User, Settings, Trash2, Save, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-interface User {
+interface UserSummary {
   id: string;
   name: string;
   email: string;
   role: string;
 }
 
-interface Role {
+type PermissionMap = Record<string, Record<string, boolean>>;
+
+interface RoleOption {
   id: string;
   name: string;
-  description?: string;
-  permissions: Permission[];
+  description?: string | null;
+  permissions?: PermissionMap | Permission[];
+  permissionsCount?: number;
 }
 
 interface Permission {
@@ -34,10 +35,12 @@ interface Permission {
   action: string;
 }
 
-interface UserRole {
+interface UserRoleAssignment {
   id: string;
-  role: Role;
-  assignedAt: string;
+  name: string;
+  description?: string | null;
+  assignedAt?: string;
+  permissionCount: number;
 }
 
 interface UserPermission {
@@ -45,22 +48,60 @@ interface UserPermission {
   category: string;
   action: string;
   source: 'role' | 'direct';
-  roleName?: string;
+  roleName?: string | null;
+}
+
+interface UserRolesResponseItem {
+  id?: string;
+  name?: string;
+  description?: string | null;
+  assignedAt?: string;
+  permissionsCount?: number;
+  permissions?: PermissionMap | Permission[];
+  role?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    permissions?: PermissionMap | Permission[];
+    permissionsCount?: number;
+  };
 }
 
 interface UserRolePermissionManagerProps {
   userId: string;
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'مدير النظام',
+  PROGRAM_MANAGER: 'مدير البرنامج',
+  MENTOR: 'موجه',
+  INVESTOR: 'مستثمر',
+  ENTREPRENEUR: 'رائد أعمال',
+};
+
+function getRoleLabel(role: string) {
+  return ROLE_LABELS[role] || role;
+}
+
+function countRolePermissions(permissions?: PermissionMap | Permission[]) {
+  if (!permissions) return 0;
+  if (Array.isArray(permissions)) return permissions.length;
+
+  return Object.values(permissions).reduce((total, actions) => {
+    return total + Object.values(actions).filter(Boolean).length;
+  }, 0);
+}
+
 export default function UserRolePermissionManager({ userId }: UserRolePermissionManagerProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [user, setUser] = useState<UserSummary | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRoleAssignment[]>([]);
   const [userPermissions, setUserPermissions] = useState<UserPermission[]>([]);
-  const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([]);
   const [availablePermissions, setAvailablePermissions] = useState<Permission[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
 
@@ -72,338 +113,393 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
     };
   };
 
-  // Load user data and permissions
   useEffect(() => {
-    if (userId) {
-      loadUserData();
-      loadAvailableRoles();
-      loadAvailablePermissions();
-    }
+    if (!userId) return;
+
+    void loadUserData();
+    void loadAvailableRoles();
+    void loadAvailablePermissions();
   }, [userId]);
 
   const loadUserData = async () => {
     try {
-      setLoading(true);
-      
-      // Load user basic info
-      const userResponse = await fetch(`/api/admin/users/${userId}`, { headers: getAuthHeaders() });
+      setIsLoadingData(true);
+
+      const [userResponse, rolesResponse, permissionsResponse] = await Promise.all([
+        fetch(`/api/admin/users/${userId}`, { headers: getAuthHeaders() }),
+        fetch(`/api/admin/users/${userId}/roles`, { headers: getAuthHeaders() }),
+        fetch(`/api/admin/users/${userId}/permissions`, { headers: getAuthHeaders() }),
+      ]);
+
       if (userResponse.ok) {
         const userData = await userResponse.json();
-        setUser(userData);
+        setUser({
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+        });
       }
 
-      // Load user roles
-      const rolesResponse = await fetch(`/api/admin/users/${userId}/roles`, { headers: getAuthHeaders() });
       if (rolesResponse.ok) {
         const rolesData = await rolesResponse.json();
-        setUserRoles(rolesData.userRoles || []);
+        const normalizedRoles = ((rolesData.assignedRoles || rolesData.userRoles || []) as UserRolesResponseItem[]).map((role) => ({
+          id: role.id || role.role?.id,
+          name: role.name || role.role?.name,
+          description: role.description || role.role?.description || null,
+          assignedAt: role.assignedAt,
+          permissionCount:
+            role.permissionsCount ||
+            countRolePermissions(role.permissions || role.role?.permissions),
+        }));
+        setUserRoles(normalizedRoles);
+      } else {
+        setUserRoles([]);
       }
 
-      // Load user permissions
-      const permissionsResponse = await fetch(`/api/admin/users/${userId}/permissions`, { headers: getAuthHeaders() });
       if (permissionsResponse.ok) {
         const permissionsData = await permissionsResponse.json();
         setUserPermissions(permissionsData.allPermissions || []);
+      } else {
+        setUserPermissions([]);
       }
-
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error('Error loading user role/permission data:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load user data',
+        title: 'خطأ',
+        description: 'تعذر تحميل بيانات الأدوار والصلاحيات.',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsLoadingData(false);
     }
   };
 
   const loadAvailableRoles = async () => {
     try {
       const response = await fetch('/api/admin/roles', { headers: getAuthHeaders() });
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableRoles(data);
+      if (!response.ok) {
+        setAvailableRoles([]);
+        return;
       }
+
+      const data = await response.json();
+      const roles = (Array.isArray(data) ? data : []).filter((role: RoleOption) => role.name !== 'Direct Permissions');
+      setAvailableRoles(roles);
     } catch (error) {
       console.error('Error loading roles:', error);
+      setAvailableRoles([]);
     }
   };
 
   const loadAvailablePermissions = async () => {
     try {
       const response = await fetch('/api/admin/permissions', { headers: getAuthHeaders() });
-      if (response.ok) {
-        const data = await response.json();
-        setAvailablePermissions(data);
+      if (!response.ok) {
+        setAvailablePermissions([]);
+        return;
       }
+
+      const data = await response.json();
+      setAvailablePermissions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading permissions:', error);
+      setAvailablePermissions([]);
     }
+  };
+
+  const refreshAll = async () => {
+    await Promise.all([loadUserData(), loadAvailableRoles(), loadAvailablePermissions()]);
   };
 
   const assignRole = async () => {
     if (!selectedRole) {
       toast({
-        title: 'Error',
-        description: 'Please select a role to assign',
+        title: 'تنبيه',
+        description: 'اختر الدور الذي تريد إسناده للمستخدم.',
         variant: 'destructive',
       });
       return;
     }
 
     try {
-      setLoading(true);
+      setIsMutating(true);
       const response = await fetch(`/api/admin/users/${userId}/roles`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ roleIds: [selectedRole] }),
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Role assigned successfully',
-        });
-        setSelectedRole('');
-        loadUserData(); // Refresh data
-      } else {
+      if (!response.ok) {
         const error = await response.json();
         toast({
-          title: 'Error',
-          description: error.error || 'Failed to assign role',
+          title: 'خطأ',
+          description: error.error || 'تعذر إسناد الدور.',
           variant: 'destructive',
         });
+        return;
       }
+
+      toast({
+        title: 'تم الحفظ',
+        description: 'تم إسناد الدور للمستخدم بنجاح.',
+      });
+      setSelectedRole('');
+      await loadUserData();
     } catch (error) {
       console.error('Error assigning role:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to assign role',
+        title: 'خطأ',
+        description: 'تعذر إسناد الدور.',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsMutating(false);
     }
   };
 
   const removeRole = async (roleId: string) => {
     try {
-      setLoading(true);
+      setIsMutating(true);
       const response = await fetch(`/api/admin/users/${userId}/roles?roleIds=${roleId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Role removed successfully',
-        });
-        loadUserData(); // Refresh data
-      } else {
+      if (!response.ok) {
         const error = await response.json();
         toast({
-          title: 'Error',
-          description: error.error || 'Failed to remove role',
+          title: 'خطأ',
+          description: error.error || 'تعذر إزالة الدور.',
           variant: 'destructive',
         });
+        return;
       }
+
+      toast({
+        title: 'تم الحذف',
+        description: 'تمت إزالة الدور من المستخدم.',
+      });
+      await loadUserData();
     } catch (error) {
       console.error('Error removing role:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to remove role',
+        title: 'خطأ',
+        description: 'تعذر إزالة الدور.',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsMutating(false);
     }
   };
 
   const assignPermissions = async () => {
     if (selectedPermissions.length === 0) {
       toast({
-        title: 'Error',
-        description: 'Please select permissions to assign',
+        title: 'تنبيه',
+        description: 'اختر صلاحية واحدة على الأقل قبل الحفظ.',
         variant: 'destructive',
       });
       return;
     }
 
     try {
-      setLoading(true);
+      setIsMutating(true);
       const response = await fetch(`/api/admin/users/${userId}/permissions`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ permissionIds: selectedPermissions }),
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Permissions assigned successfully',
-        });
-        setSelectedPermissions([]);
-        loadUserData(); // Refresh data
-      } else {
+      if (!response.ok) {
         const error = await response.json();
         toast({
-          title: 'Error',
-          description: error.error || 'Failed to assign permissions',
+          title: 'خطأ',
+          description: error.error || 'تعذر إسناد الصلاحيات.',
           variant: 'destructive',
         });
+        return;
       }
+
+      toast({
+        title: 'تم الحفظ',
+        description: 'تم إسناد الصلاحيات المحددة للمستخدم.',
+      });
+      setSelectedPermissions([]);
+      await loadUserData();
     } catch (error) {
       console.error('Error assigning permissions:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to assign permissions',
+        title: 'خطأ',
+        description: 'تعذر إسناد الصلاحيات.',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsMutating(false);
     }
   };
 
   const removePermission = async (permissionId: string) => {
     try {
-      setLoading(true);
+      setIsMutating(true);
       const response = await fetch(`/api/admin/users/${userId}/permissions?permissionIds=${permissionId}&type=direct`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Permission removed successfully',
-        });
-        loadUserData(); // Refresh data
-      } else {
+      if (!response.ok) {
         const error = await response.json();
         toast({
-          title: 'Error',
-          description: error.error || 'Failed to remove permission',
+          title: 'خطأ',
+          description: error.error || 'تعذر إزالة الصلاحية.',
           variant: 'destructive',
         });
+        return;
       }
+
+      toast({
+        title: 'تم الحذف',
+        description: 'تمت إزالة الصلاحية المباشرة من المستخدم.',
+      });
+      await loadUserData();
     } catch (error) {
       console.error('Error removing permission:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to remove permission',
+        title: 'خطأ',
+        description: 'تعذر إزالة الصلاحية.',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsMutating(false);
     }
   };
 
   const handlePermissionToggle = (permissionId: string) => {
-    setSelectedPermissions(prev => 
-      prev.includes(permissionId)
-        ? prev.filter(id => id !== permissionId)
-        : [...prev, permissionId]
+    setSelectedPermissions((current) =>
+      current.includes(permissionId)
+        ? current.filter((id) => id !== permissionId)
+        : [...current, permissionId]
     );
   };
 
+  const assignableRoles = availableRoles.filter((role) => !userRoles.some((assignedRole) => assignedRole.id === role.id));
+  const assignablePermissions = availablePermissions.filter(
+    (permission) => !userPermissions.some((userPermission) => userPermission.id === permission.id)
+  );
+
+  if (isLoadingData && !user) {
+    return (
+      <Card dir="rtl">
+        <CardContent className="p-6 text-center">
+          <RefreshCw className="mx-auto mb-2 h-6 w-6 animate-spin" />
+          <p>جاري تحميل بيانات الأدوار والصلاحيات...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!user) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-          <p>Loading user data...</p>
+      <Card dir="rtl">
+        <CardContent className="p-6 text-center text-muted-foreground">
+          تعذر تحميل بيانات المستخدم.
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* User Info Header */}
+    <div className="space-y-6 text-right" dir="rtl">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            {user.name}
-          </CardTitle>
-          <CardDescription>
-            {user.email} • Default Role: <Badge variant="outline">{user.role}</Badge>
-          </CardDescription>
+        <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center justify-end gap-2">
+              <User className="h-5 w-5" />
+              <span>{user.name}</span>
+            </CardTitle>
+            <CardDescription className="break-all">
+              {user.email}
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className="w-fit self-start">
+            {getRoleLabel(user.role)}
+          </Badge>
         </CardHeader>
       </Card>
 
-      {/* Tabs for different management sections */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="roles">Manage Roles</TabsTrigger>
-          <TabsTrigger value="permissions">Manage Permissions</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 sm:grid-cols-3">
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="roles">إدارة الأدوار</TabsTrigger>
+          <TabsTrigger value="permissions">إدارة الصلاحيات</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Current Roles */}
+          <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center justify-end gap-2">
                   <Shield className="h-4 w-4" />
-                  Assigned Roles ({userRoles.length})
+                  <span>الأدوار المسندة ({userRoles.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-32">
+                <ScrollArea className="h-48">
                   {userRoles.length > 0 ? (
                     <div className="space-y-2">
-                      {userRoles.map((ur) => (
-                        <div key={ur.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <div className="font-medium">{ur.role.name}</div>
-                            <div className="text-sm text-gray-500">
-                              {ur.role.permissions?.length || 0} permissions
+                      {userRoles.map((role) => (
+                        <div key={role.id} className="flex items-center justify-between rounded-lg border p-3">
+                          <Badge variant="secondary">دور</Badge>
+                          <div className="min-w-0 flex-1 text-right">
+                            <div className="font-medium">{role.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {role.permissionCount} صلاحية
                             </div>
+                            {role.description ? (
+                              <div className="text-xs text-muted-foreground">{role.description}</div>
+                            ) : null}
                           </div>
-                          <Badge variant="secondary">Role</Badge>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500">No roles assigned</p>
+                    <p className="py-8 text-center text-muted-foreground">لا توجد أدوار مسندة لهذا المستخدم.</p>
                   )}
                 </ScrollArea>
               </CardContent>
             </Card>
 
-            {/* Current Permissions */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center justify-end gap-2">
                   <Settings className="h-4 w-4" />
-                  All Permissions ({userPermissions.length})
+                  <span>كل الصلاحيات ({userPermissions.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-32">
+                <ScrollArea className="h-48">
                   {userPermissions.length > 0 ? (
                     <div className="space-y-2">
-                      {userPermissions.map((perm) => (
-                        <div key={perm.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <div className="font-medium">{perm.category}:{perm.action}</div>
-                            {perm.roleName && (
-                              <div className="text-sm text-gray-500">via {perm.roleName}</div>
-                            )}
-                          </div>
-                          <Badge variant={perm.source === 'role' ? 'secondary' : 'default'}>
-                            {perm.source}
+                      {userPermissions.map((permission) => (
+                        <div key={permission.id} className="flex items-center justify-between rounded-lg border p-3">
+                          <Badge variant={permission.source === 'role' ? 'secondary' : 'default'}>
+                            {permission.source === 'role' ? 'من دور' : 'مباشرة'}
                           </Badge>
+                          <div className="min-w-0 flex-1 text-right">
+                            <div className="font-medium" dir="ltr">
+                              {permission.category}:{permission.action}
+                            </div>
+                            {permission.roleName ? (
+                              <div className="text-sm text-muted-foreground">
+                                موروثة من الدور: {permission.roleName}
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500">No permissions assigned</p>
+                    <p className="py-8 text-center text-muted-foreground">لا توجد صلاحيات لهذا المستخدم.</p>
                   )}
                 </ScrollArea>
               </CardContent>
@@ -411,150 +507,160 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
           </div>
         </TabsContent>
 
-        {/* Roles Management Tab */}
         <TabsContent value="roles" className="space-y-6">
-          {/* Assign New Role */}
           <Card>
             <CardHeader>
-              <CardTitle>Assign Role</CardTitle>
-              <CardDescription>Assign a new role to this user</CardDescription>
+              <CardTitle>إسناد دور جديد</CardTitle>
+              <CardDescription>يمكنك إضافة دور إضافي للمستخدم من القائمة التالية.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button onClick={assignRole} disabled={isMutating || !selectedRole} className="sm:order-1">
+                  <Plus className="ml-2 h-4 w-4" />
+                  إسناد الدور
+                </Button>
                 <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select a role to assign" />
+                  <SelectTrigger className="flex-1 text-right">
+                    <SelectValue placeholder="اختر دوراً لإسناده" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableRoles.filter(role => !userRoles.some(ur => ur.role.id === role.id)).map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name} ({role.permissions?.length || 0} permissions)
+                    {assignableRoles.length > 0 ? (
+                      assignableRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name} ({role.permissionsCount ?? countRolePermissions(role.permissions)} صلاحية)
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-roles-left" disabled>
+                        لا توجد أدوار إضافية متاحة
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
-                <Button onClick={assignRole} disabled={loading || !selectedRole}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Assign
-                </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Current Roles with Remove Option */}
           <Card>
-            <CardHeader>
-              <CardTitle>Current Roles</CardTitle>
-              <CardDescription>Manage assigned roles for this user</CardDescription>
+            <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>الأدوار الحالية</CardTitle>
+                <CardDescription>إزالة الدور ستسحب الصلاحيات المرتبطة به من هذا المستخدم.</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={refreshAll} disabled={isLoadingData || isMutating}>
+                <RefreshCw className="ml-2 h-4 w-4" />
+                تحديث
+              </Button>
             </CardHeader>
             <CardContent>
               {userRoles.length > 0 ? (
                 <div className="space-y-3">
-                  {userRoles.map((ur) => (
-                    <div key={ur.id} className="flex items-center justify-between p-3 border rounded">
-                      <div className="flex-1">
-                        <div className="font-medium">{ur.role.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {ur.role.description}
-                        </div>
-                        <div className="text-sm text-blue-600">
-                          {ur.role.permissions?.length || 0} permissions included
-                        </div>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => removeRole(ur.role.id)}
-                        disabled={loading}
+                  {userRoles.map((role) => (
+                    <div key={role.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeRole(role.id)}
+                        disabled={isMutating}
+                        className="self-start sm:order-1"
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
+                      <div className="flex-1 text-right">
+                        <div className="font-medium">{role.name}</div>
+                        {role.description ? (
+                          <div className="text-sm text-muted-foreground">{role.description}</div>
+                        ) : null}
+                        <div className="text-sm text-blue-600">{role.permissionCount} صلاحية ضمن هذا الدور</div>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-4">No roles assigned to this user</p>
+                <p className="py-4 text-center text-muted-foreground">لا توجد أدوار حالية لهذا المستخدم.</p>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Permissions Management Tab */}
         <TabsContent value="permissions" className="space-y-6">
-          {/* Assign Direct Permissions */}
           <Card>
             <CardHeader>
-              <CardTitle>Assign Direct Permissions</CardTitle>
-              <CardDescription>Assign specific permissions directly to this user</CardDescription>
+              <CardTitle>إسناد صلاحيات مباشرة</CardTitle>
+              <CardDescription>هذه الصلاحيات تضاف للمستخدم مباشرة ولا تعتمد على الأدوار.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ScrollArea className="h-48 border rounded p-3">
-                <div className="space-y-2">
-                  {availablePermissions.map((permission) => (
-                    <div key={permission.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={permission.id}
-                        checked={selectedPermissions.includes(permission.id)}
-                        onCheckedChange={() => handlePermissionToggle(permission.id)}
-                      />
-                      <Label
-                        htmlFor={permission.id}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {permission.category}:{permission.action}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+              <ScrollArea className="h-56 rounded-lg border p-3">
+                {assignablePermissions.length > 0 ? (
+                  <div className="space-y-3">
+                    {assignablePermissions.map((permission) => (
+                      <div key={permission.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                        <Label htmlFor={permission.id} className="cursor-pointer text-right font-medium" dir="ltr">
+                          {permission.category}:{permission.action}
+                        </Label>
+                        <Checkbox
+                          id={permission.id}
+                          checked={selectedPermissions.includes(permission.id)}
+                          onCheckedChange={() => handlePermissionToggle(permission.id)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="py-10 text-center text-muted-foreground">لا توجد صلاحيات إضافية متاحة للإسناد حالياً.</p>
+                )}
               </ScrollArea>
-              <Button 
-                onClick={assignPermissions} 
-                disabled={loading || selectedPermissions.length === 0}
+              <Button
+                onClick={assignPermissions}
+                disabled={isMutating || selectedPermissions.length === 0}
                 className="w-full"
               >
-                <Save className="h-4 w-4 mr-2" />
-                Assign Selected Permissions ({selectedPermissions.length})
+                <Save className="ml-2 h-4 w-4" />
+                حفظ الصلاحيات المحددة ({selectedPermissions.length})
               </Button>
             </CardContent>
           </Card>
 
-          {/* Current Permissions */}
           <Card>
             <CardHeader>
-              <CardTitle>Current Permissions</CardTitle>
-              <CardDescription>All permissions for this user (role-based and direct)</CardDescription>
+              <CardTitle>الصلاحيات الحالية</CardTitle>
+              <CardDescription>يمكن إزالة الصلاحيات المباشرة فقط من هذه الشاشة.</CardDescription>
             </CardHeader>
             <CardContent>
               {userPermissions.length > 0 ? (
                 <div className="space-y-3">
-                  {userPermissions.map((perm) => (
-                    <div key={perm.id} className="flex items-center justify-between p-3 border rounded">
-                      <div className="flex-1">
-                        <div className="font-medium">{perm.category}:{perm.action}</div>
-                        <div className="text-sm text-gray-500">
-                          Source: {perm.source === 'role' ? `Role (${perm.roleName})` : 'Direct assignment'}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={perm.source === 'role' ? 'secondary' : 'default'}>
-                          {perm.source}
+                  {userPermissions.map((permission) => (
+                    <div key={permission.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center">
+                      <div className="flex items-center gap-2 self-start sm:order-1">
+                        <Badge variant={permission.source === 'role' ? 'secondary' : 'default'}>
+                          {permission.source === 'role' ? 'من دور' : 'مباشرة'}
                         </Badge>
-                        {perm.source === 'direct' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => removePermission(perm.id)}
-                            disabled={loading}
+                        {permission.source === 'direct' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removePermission(permission.id)}
+                            disabled={isMutating}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
+                        ) : null}
+                      </div>
+                      <div className="flex-1 text-right">
+                        <div className="font-medium" dir="ltr">
+                          {permission.category}:{permission.action}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {permission.source === 'role'
+                            ? `موروثة من الدور: ${permission.roleName || '-'}`
+                            : 'تمت إضافتها مباشرة لهذا المستخدم'}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-4">No permissions assigned to this user</p>
+                <p className="py-4 text-center text-muted-foreground">لا توجد صلاحيات حالية لهذا المستخدم.</p>
               )}
             </CardContent>
           </Card>

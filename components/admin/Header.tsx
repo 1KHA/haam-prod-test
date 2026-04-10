@@ -1,8 +1,7 @@
 "use client"
 
-import { Bell, User, Search, LogOut } from "lucide-react"
+import { Bell, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,10 +25,6 @@ export default function Header() {
         <h1 className="text-xl font-bold">لوحة تحكم المدير</h1>
       </div>
       <div className="flex items-center gap-4">
-        <div className="relative w-64">
-          <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="بحث..." className="pr-8 w-full" />
-        </div>
         <Button variant="outline" size="icon" onClick={() => router.push("/admin-dashboard/notifications")}>
           <Bell className="h-4 w-4" />
         </Button>

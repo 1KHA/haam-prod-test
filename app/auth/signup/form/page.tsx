@@ -33,6 +33,7 @@ export default function SignUpForm() {
   const [errors, setErrors] = useState({
     password: "",
     confirmPassword: "",
+    phone: "",
   })
 
   const specializations = [
@@ -72,9 +73,19 @@ export default function SignUpForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    
+
     if (name === "password" || name === "confirmPassword") {
       validatePasswords(name, value)
+    }
+
+    if (name === "phone") {
+      if (/[a-zA-Z]/.test(value)) {
+        setErrors(prev => ({ ...prev, phone: "رقم الهاتف لا يجب أن يحتوي على أحرف إنجليزية" }))
+      } else if (value && !/^\+?[0-9\s\-]{7,20}$/.test(value)) {
+        setErrors(prev => ({ ...prev, phone: "رقم الهاتف يجب أن يحتوي على أرقام فقط" }))
+      } else {
+        setErrors(prev => ({ ...prev, phone: "" }))
+      }
     }
   }
   
@@ -82,21 +93,27 @@ export default function SignUpForm() {
     setFormData(prev => ({ ...prev, specialization: value }))
   }
   
+  const validatePassword = (value: string): string => {
+    if (value.length < 8) return "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+    if (!/[A-Z]/.test(value)) return "كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل"
+    if (!/[a-z]/.test(value)) return "كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل"
+    if (!/[0-9]/.test(value)) return "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل"
+    if (!/[^A-Za-z0-9]/.test(value)) return "كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل"
+    return ""
+  }
+
   const validatePasswords = (field: string, value: string) => {
     if (field === "password") {
-      if (value.length < 8) {
-        setErrors(prev => ({ ...prev, password: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }))
-      } else {
-        setErrors(prev => ({ ...prev, password: "" }))
-      }
-      
+      const passwordError = validatePassword(value)
+      setErrors(prev => ({ ...prev, password: passwordError }))
+
       if (formData.confirmPassword && value !== formData.confirmPassword) {
         setErrors(prev => ({ ...prev, confirmPassword: "كلمات المرور غير متطابقة" }))
       } else if (formData.confirmPassword) {
         setErrors(prev => ({ ...prev, confirmPassword: "" }))
       }
     }
-    
+
     if (field === "confirmPassword") {
       if (value !== formData.password) {
         setErrors(prev => ({ ...prev, confirmPassword: "كلمات المرور غير متطابقة" }))
@@ -108,14 +125,20 @@ export default function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    const passwordError = validatePassword(formData.password)
+    if (passwordError) {
+      setErrors(prev => ({ ...prev, password: passwordError }))
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setErrors(prev => ({ ...prev, confirmPassword: "كلمات المرور غير متطابقة" }))
       return
     }
-    
-    if (formData.password.length < 8) {
-      setErrors(prev => ({ ...prev, password: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }))
+
+    if (formData.phone && /[a-zA-Z]/.test(formData.phone)) {
+      setErrors(prev => ({ ...prev, phone: "رقم الهاتف لا يجب أن يحتوي على أحرف إنجليزية" }))
       return
     }
     
@@ -203,6 +226,7 @@ export default function SignUpForm() {
             onChange={handleChange}
             required
           />
+          {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
         </div>
 
         <div className="space-y-2">

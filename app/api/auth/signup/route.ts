@@ -25,9 +25,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if password is strong enough
-    if (password.length < 8) {
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
+        { error: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حرف كبير وصغير ورقم ورمز خاص' },
+        { status: 400 }
+      );
+    }
+
+    // Validate phone
+    if (phone && /[a-zA-Z]/.test(phone)) {
+      return NextResponse.json(
+        { error: 'رقم الهاتف لا يجب أن يحتوي على أحرف إنجليزية' },
         { status: 400 }
       );
     }
@@ -72,7 +80,8 @@ export async function POST(request: NextRequest) {
         name,
         role: role as any, // Type assertion to bypass type checking
         specialization, // Add specialization directly
-      },
+        approvalStatus: role === UserRole.ENTREPRENEUR ? "PENDING_APPROVAL" : "ACTIVE",
+      } as any,
     });
 
     console.log('User created with specialization:', specialization);
@@ -154,10 +163,14 @@ export async function POST(request: NextRequest) {
       profile: completeUser?.profile,
     };
 
-    return NextResponse.json({
-      user: userData,
-      token,
-    });
+    if (role === UserRole.ENTREPRENEUR) {
+      return NextResponse.json({
+        pending: true,
+        message: "تم إنشاء حسابك بنجاح. في انتظار موافقة المسؤول للدخول إلى لوحة التحكم.",
+      }, { status: 201 });
+    }
+    // For other roles (admin-created, shouldn't reach here via public signup)
+    return NextResponse.json({ user: userData, token });
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json(

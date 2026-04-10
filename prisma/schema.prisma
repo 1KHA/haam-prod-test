@@ -17,6 +17,7 @@ model User {
   name          String
   role          UserRole
   specialization String?
+  approvalStatus String   @default("ACTIVE")  // PENDING_APPROVAL, ACTIVE, SUSPENDED
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   profile       Profile?

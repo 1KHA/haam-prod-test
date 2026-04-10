@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
-    });
+    }) as any;
 
     // Check if user exists
     if (!user) {
@@ -34,6 +34,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
+      );
+    }
+
+    // Check approval status
+    if (user.approvalStatus === 'PENDING_APPROVAL') {
+      return NextResponse.json(
+        { error: 'حسابك قيد المراجعة من قبل المسؤول. سيتم إعلامك عند الموافقة على طلبك.' },
+        { status: 403 }
       );
     }
 

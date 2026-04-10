@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
 
 // GET /api/admin/users/export - Export users data
 export async function GET(req: NextRequest) {
@@ -55,7 +56,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role') || '';
-    const delimiter = searchParams.get('delimiter') || ','; // Allow delimiter customization for Arabic environments
 
     // Build filter conditions
     let whereClause: any = {};
@@ -100,7 +100,8 @@ export async function GET(req: NextRequest) {
         user.entrepreneurProfile;
 
       // Determine status
-      const status = roleProfile ? 'ACTIVE' : 'PENDING';
+      const status = (user as any).approvalStatus || (roleProfile ? 'ACTIVE' : 'PENDING');
+      const statusLabel = status === 'ACTIVE' ? 'نشط' : status === 'PENDING_APPROVAL' ? 'قيد المراجعة' : 'معلق';
 
       // Map role names for clarity
       const roleMap: Record<string, string> = {
@@ -124,57 +125,30 @@ export async function GET(req: NextRequest) {
         name: user.name,
         email: user.email,
         role: roleMap[user.role] || user.role,
-        status: status === 'ACTIVE' ? 'نشط' : 'معلق',
+        status: statusLabel,
         specialization: user.specialization || '-',
         createdAt: formatDate(user.createdAt),
         updatedAt: formatDate(user.updatedAt)
       };
     });
 
-    // Convert to CSV
-    const headers = [
-      'معرف المستخدم',
-      'الاسم',
-      'البريد الإلكتروني',
-      'الدور',
-      'الحالة',
-      'التخصص',
-      'تاريخ الإنشاء',
-      'تاريخ التحديث'
-    ];
+    const delimiter = getDelimiterFromRequest(searchParams);
 
-    // Create CSV content with enhanced Arabic text handling
-    const csvRows: string[] = [];
-    
-    formattedUsers.forEach((user: any) => {
-      const row = [
-        `"${user.id}"`,
-        `"${user.name.replace(/"/g, '""')}"`, // Escape quotes in names
-        `"${user.email}"`,
-        `"${user.role}"`,
-        `"${user.status}"`,
-        `"${user.specialization.replace(/"/g, '""')}"`,
-        `"${user.createdAt}"`,
-        `"${user.updatedAt}"`
-      ];
-      csvRows.push(row.join(delimiter));
-    });
-
-    // Combine header and rows
-    const csv = [headers.join(delimiter), ...csvRows].join('\n');
-
-    // Set headers for file download
-    const headers_response = new Headers();
-    headers_response.set('Content-Type', 'text/csv; charset=utf-8');
-    headers_response.set('Content-Disposition', 'attachment; filename="users-export.csv"');
-
-    // Add UTF-8 BOM to ensure proper encoding
-    const bom = '\uFEFF';
-    const csvWithBom = bom + csv;
-    
-    return new NextResponse(csvWithBom, {
-      status: 200,
-      headers: headers_response,
+    return createCSVResponse({
+      filename: 'users-export.csv',
+      delimiter,
+      includeUTF8BOM: true,
+      headers: [
+        'معرف المستخدم',
+        'الاسم',
+        'البريد الإلكتروني',
+        'الدور',
+        'الحالة',
+        'التخصص',
+        'تاريخ الإنشاء',
+        'تاريخ التحديث'
+      ],
+      data: formattedUsers
     });
   } catch (error) {
     console.error('Error exporting users:', error);

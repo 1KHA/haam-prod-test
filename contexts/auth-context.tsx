@@ -130,6 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log("Signup response:", data);
 
+      if (data.pending) {
+        router.push('/auth/pending');
+        return;
+      }
+
       // Save user and token to state and localStorage
       setUser(data.user);
       setToken(data.token);

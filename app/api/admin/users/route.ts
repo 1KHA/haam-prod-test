@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
         user.entrepreneurProfile;
 
       // Determine status
-      const status = roleProfile ? 'ACTIVE' : 'PENDING';
+      const status = (user as any).approvalStatus || (roleProfile ? 'ACTIVE' : 'PENDING');
 
       // Get program information if available
       let program = '-';

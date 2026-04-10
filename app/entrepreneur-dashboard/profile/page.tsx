@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Building, Mail, Phone, MapPin, Globe, Upload, Save, Edit, BookOpen, Briefcase } from "lucide-react"
+import { User, Building, Mail, Phone, MapPin, Globe, Upload, Save, Edit, BookOpen, Briefcase, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
 // Define types for role-specific profiles
@@ -46,6 +46,11 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [userData, setUserData] = useState<any>(null)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
+  
+  // Avatar upload state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Profile data state
   const [profileData, setProfileData] = useState({
@@ -238,6 +243,59 @@ export default function ProfilePage() {
     })
   }
 
+  // Handle avatar upload
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingAvatar(true)
+    setAvatarError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      const response = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Update profile data with new avatar URL
+        setProfileData({
+          ...profileData,
+          personal: {
+            ...profileData.personal,
+            avatar: data.avatar
+          }
+        })
+        setSaveStatus("success")
+        setTimeout(() => setSaveStatus(null), 3000)
+      } else {
+        const error = await response.json()
+        setAvatarError(error.error || 'Failed to upload avatar')
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      setAvatarError('An error occurred while uploading avatar')
+    } finally {
+      setIsUploadingAvatar(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Trigger file input click
+  const triggerAvatarUpload = () => {
+    fileInputRef.current?.click()
+  }
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">جاري تحميل البيانات...</div>
   }
@@ -388,7 +446,6 @@ export default function ProfilePage() {
             <Card>
               <CardHeader>
                 <CardTitle>الصورة الشخصية</CardTitle>
-                
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden">
@@ -402,10 +459,38 @@ export default function ProfilePage() {
                     }}
                   />
                 </div>
+                
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleAvatarUpload}
+                />
+                
+                {avatarError && (
+                  <p className="text-sm text-red-600 text-center">{avatarError}</p>
+                )}
+                
                 {isEditing && (
-                  <Button variant="outline" className="w-full">
-                    <Upload className="h-4 w-4 ml-2" />
-                    تغيير الصورة
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={triggerAvatarUpload}
+                    disabled={isUploadingAvatar}
+                  >
+                    {isUploadingAvatar ? (
+                      <>
+                        <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                        جاري الرفع...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 ml-2" />
+                        تغيير الصورة
+                      </>
+                    )}
                   </Button>
                 )}
               </CardContent>

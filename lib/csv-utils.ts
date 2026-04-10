@@ -1,6 +1,7 @@
 /**
- * CSV Utility functions for Arabic text handling and export functionality
+ * CSV / Excel Utility functions for Arabic text handling and export functionality
  */
+import * as XLSX from 'xlsx';
 
 export interface CSVExportOptions {
   delimiter?: string;
@@ -226,4 +227,61 @@ export function getDelimiterFromRequest(searchParams: URLSearchParams): string {
   
   // Default to comma, but could be enhanced to detect based on Accept-Language header
   return ',';
+}
+
+/**
+ * Creates a proper .xlsx response using SheetJS.
+ *
+ * Why XLSX instead of CSV?
+ * CSV encoding is unreliable for Arabic: UTF-8 BOM is ignored by older Excel on
+ * Windows, and UTF-16 LE is misread by Excel on macOS. XLSX is a binary format
+ * that Excel reads identically on every platform and locale — Arabic text is
+ * always stored as Unicode internally and displayed correctly without any
+ * encoding hints.
+ */
+export function createExcelResponse(options: {
+  headers: string[];
+  data: Array<Record<string, any>>;
+  filename?: string;
+  sheetName?: string;
+}): Response {
+  const { headers, data, filename = 'export.xlsx', sheetName = 'Sheet1' } = options;
+
+  // Build rows: header row first, then one row per data object
+  const rows: (string | number | null)[][] = [
+    headers,
+    ...data.map(row =>
+      headers.map(header => {
+        const key = getFieldKey(header, row);
+        const val = row[key];
+        return val === null || val === undefined ? '' : val;
+      })
+    ),
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Set RTL view so Arabic columns read right-to-left
+  if (!ws['!sheetView']) {
+    (ws as any)['!sheetView'] = [{ rightToLeft: true }];
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  // Write to a Node.js Buffer
+  const buf: Buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  const responseHeaders = new Headers();
+  responseHeaders.set(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+  responseHeaders.set(
+    'Content-Disposition',
+    `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+  );
+  responseHeaders.set('Cache-Control', 'no-cache');
+
+  return new Response(buf, { status: 200, headers: responseHeaders });
 }

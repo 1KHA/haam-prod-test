@@ -341,111 +341,90 @@ export default function UsersTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-4 justify-between">
-        <div className="flex gap-2 w-full md:w-1/2">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="البحث عن مستخدم..."
-              className="pl-3 pr-10 w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => fetchUsers()}
-            title="تحديث البيانات"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+      {/* ── Toolbar row ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="البحث عن مستخدم..."
+            className="pr-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={handleExport}
-          >
-            <Download className="h-4 w-4" />
-            <span>تصدير</span>
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => router.push("/admin-dashboard/users/new")}
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>إضافة مستخدم</span>
-          </Button>
-        </div>
+        {/* Role filter */}
+        <Select value={activeTab} onValueChange={setActiveTab}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="جميع المستخدمين" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">جميع المستخدمين</SelectItem>
+            <SelectItem value="admin">المديرون</SelectItem>
+            <SelectItem value="program_manager">مديرو البرامج</SelectItem>
+            <SelectItem value="mentor">الموجهون</SelectItem>
+            <SelectItem value="investor">المستثمرون</SelectItem>
+            <SelectItem value="entrepreneur">رواد الأعمال</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Refresh */}
+        <Button variant="outline" size="icon" onClick={() => fetchUsers()} title="تحديث البيانات">
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+
+        <div className="flex-1" />
+
+        {/* Export */}
+        <Button variant="outline" size="sm" className="gap-1" onClick={handleExport}>
+          <Download className="h-4 w-4" />
+          تصدير
+        </Button>
+
+        {/* Add user */}
+        <Button variant="default" size="sm" className="gap-1" onClick={() => router.push("/admin-dashboard/users/new")}>
+          <UserPlus className="h-4 w-4" />
+          إضافة مستخدم
+        </Button>
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          {selectedUsers.length > 0 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setIsRoleDialogOpen(true)}
-              >
-                <Shield className="h-4 w-4" />
-                <span>تغيير الدور</span>
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setIsDeleteDialogOpen(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>حذف</span>
-              </Button>
-            </>
-          )}
+      {/* ── Bulk-action bar (only visible when rows are selected) ── */}
+      {selectedUsers.length > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md text-sm">
+          <span className="text-muted-foreground ml-auto">
+            تم تحديد {selectedUsers.length} مستخدم
+          </span>
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => setIsRoleDialogOpen(true)}>
+            <Shield className="h-4 w-4" />
+            تغيير الدور
+          </Button>
+          <Button variant="destructive" size="sm" className="gap-1" onClick={() => setIsDeleteDialogOpen(true)}>
+            <Trash2 className="h-4 w-4" />
+            حذف
+          </Button>
         </div>
+      )}
 
-        <div className="flex gap-2">
-          <Select value={activeTab} onValueChange={setActiveTab}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="جميع المستخدمين" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">جميع المستخدمين</SelectItem>
-              <SelectItem value="admin">المديرون</SelectItem>
-              <SelectItem value="program_manager">مديرو البرامج</SelectItem>
-              <SelectItem value="mentor">الموجهون</SelectItem>
-              <SelectItem value="investor">المستثمرون</SelectItem>
-              <SelectItem value="entrepreneur">رواد الأعمال</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="border rounded-md">
+      <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
+            <TableRow className="text-right">
+              <TableHead className="w-10 text-right">
                 <input
                   type="checkbox"
                   checked={selectedUsers.length === users.length && users.length > 0}
                   onChange={selectAllUsers}
                 />
               </TableHead>
-              <TableHead>الاسم</TableHead>
-              <TableHead>البريد الإلكتروني</TableHead>
-              <TableHead>الدور</TableHead>
-              <TableHead>الحالة</TableHead>
-              <TableHead>تاريخ التسجيل</TableHead>
-              <TableHead>البرنامج</TableHead>
-              <TableHead className="text-left">الإجراءات</TableHead>
+              <TableHead className="text-right min-w-[140px]">الاسم</TableHead>
+              <TableHead className="text-right min-w-[180px]">البريد الإلكتروني</TableHead>
+              <TableHead className="text-right min-w-[120px]">الدور</TableHead>
+              <TableHead className="text-right min-w-[130px]">الحالة</TableHead>
+              <TableHead className="text-right min-w-[120px]">تاريخ التسجيل</TableHead>
+              <TableHead className="text-right min-w-[100px]">البرنامج</TableHead>
+              <TableHead className="text-right w-16">الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -464,16 +443,16 @@ export default function UsersTable() {
             ) : (
               users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <input
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
                       onChange={() => toggleUserSelection(user.id)}
                     />
                   </TableCell>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{getRoleDisplayName(user.role)}</TableCell>
+                  <TableCell className="text-right font-medium">{user.name}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">{user.email}</TableCell>
+                  <TableCell className="text-right">{getRoleDisplayName(user.role)}</TableCell>
                   <TableCell>
                     {user.status === 'ACTIVE' ? (
                       <button
@@ -504,9 +483,9 @@ export default function UsersTable() {
                       </button>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(user.createdAt)}</TableCell>
-                  <TableCell>{user.program || '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">{formatDate(user.createdAt)}</TableCell>
+                  <TableCell className="text-right">{user.program || '-'}</TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">

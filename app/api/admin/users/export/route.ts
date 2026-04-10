@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
+import { createExcelResponse } from '@/lib/csv-utils';
 
 // GET /api/admin/users/export - Export users data
 export async function GET(req: NextRequest) {
@@ -132,12 +132,8 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    const delimiter = getDelimiterFromRequest(searchParams);
-
-    return createCSVResponse({
-      filename: 'users-export.csv',
-      delimiter,
-      includeUTF8BOM: true,
+    return createExcelResponse({
+      filename: 'users-export.xlsx',
       headers: [
         'معرف المستخدم',
         'الاسم',

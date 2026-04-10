@@ -97,10 +97,11 @@ export async function exportCSV(options: {
       throw new Error(errorData.error || `HTTP ${response.status}`);
     }
 
-    // Read as raw bytes and wrap with explicit charset so the browser does
-    // not re-encode the content.  The file is already UTF-16 LE with BOM.
+    // Use the exact Content-Type returned by the server so the browser
+    // passes the right MIME type to the OS when opening the file.
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
     const arrayBuffer = await response.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: 'text/csv;charset=utf-16le' });
+    const blob = new Blob([arrayBuffer], { type: contentType });
     const downloadUrl = window.URL.createObjectURL(blob);
 
     // Create and trigger download
@@ -184,7 +185,7 @@ export const exportPresets = {
     
     return exportCSV({
       baseUrl: '/api/admin/users/export',
-      filename: `users-export-${new Date().toISOString().split('T')[0]}.csv`,
+      filename: `users-export-${new Date().toISOString().split('T')[0]}.xlsx`,
       queryParams,
       token: getAuthToken(),
       successMessage: 'تم تصدير بيانات المستخدمين بنجاح',

@@ -27,10 +27,16 @@ export function RouteGuard({
   const { user, isLoading: authLoading } = useAuth();
   const { hasPermission, hasRole, loading: permissionsLoading } = usePermissions();
   const [authorized, setAuthorized] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
     // Wait for auth and permissions to load
     if (authLoading || permissionsLoading) return;
+
+    // Mark that we've completed the initial auth check
+    if (!hasCheckedAuth) {
+      setHasCheckedAuth(true);
+    }
 
     // Check if user is authenticated
     if (!user) {
@@ -65,8 +71,8 @@ export function RouteGuard({
     pathname
   ]);
 
-  // Show loading state
-  if (authLoading || permissionsLoading || !authorized) {
+  // Show loading state during initial auth check OR while loading
+  if (authLoading || permissionsLoading || !hasCheckedAuth || !authorized) {
     return <>{fallback}</>;
   }
 

@@ -68,7 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(JSON.parse(storedUser));
     }
 
-    setIsLoading(false);
+    // Small delay to ensure state updates are applied before marking loading complete
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Sign in function

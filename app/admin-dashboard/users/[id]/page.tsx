@@ -308,26 +308,26 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-4 flex flex-col gap-3 text-sm">
-                <div className="w-full flex items-start gap-2">
-                  <Tag className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="w-full flex items-start gap-2 justify-end">
                   <div className="text-right">
                     <p className="text-muted-foreground text-xs">التخصص</p>
                     <p>{user.specialization || '-'}</p>
                   </div>
+                  <Tag className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                 </div>
-                <div className="w-full flex items-start gap-2">
-                  <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="w-full flex items-start gap-2 justify-end">
                   <div className="text-right">
                     <p className="text-muted-foreground text-xs">تاريخ التسجيل</p>
                     <p>{formatDate(user.createdAt)}</p>
                   </div>
-                </div>
-                <div className="w-full flex items-start gap-2">
                   <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                </div>
+                <div className="w-full flex items-start gap-2 justify-end">
                   <div className="text-right">
                     <p className="text-muted-foreground text-xs">آخر تحديث</p>
                     <p>{formatDate(user.updatedAt)}</p>
                   </div>
+                  <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                 </div>
               </CardFooter>
             </Card>
@@ -335,15 +335,15 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
             {/* Role profile */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="flex items-center gap-2 justify-end">
                   معلومات {getRoleDisplayName(user.role)}
+                  <Briefcase className="h-5 w-5 text-muted-foreground" />
                 </CardTitle>
-                <CardDescription>البيانات المرتبطة بدور المستخدم</CardDescription>
+                <CardDescription className="text-right">البيانات المرتبطة بدور المستخدم</CardDescription>
               </CardHeader>
               <CardContent>
                 {roleFields.length > 0 ? (
-                  <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
+                  <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 text-right">
                     {roleFields.map(({ label, value }) => (
                       <div key={label} className="border-b pb-3">
                         <dt className="text-xs text-muted-foreground mb-1">{label}</dt>
@@ -352,7 +352,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                     ))}
                   </dl>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2 text-right">
                     <User className="h-10 w-10 opacity-30" />
                     <p>لم يتم إكمال الملف الشخصي بعد</p>
                   </div>
@@ -379,6 +379,7 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                 {user.startups.map((startup) => (
                   <div key={startup.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">{startup.name}</h3>
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                         startup.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
                         startup.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
@@ -386,9 +387,8 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                       }`}>
                         {startup.status === 'APPROVED' ? 'معتمدة' : startup.status === 'REJECTED' ? 'مرفوضة' : 'قيد المراجعة'}
                       </span>
-                      <h3 className="font-semibold">{startup.name}</h3>
                     </div>
-                    <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                    <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3 text-right">
                       <div><dt className="text-muted-foreground text-xs">المجال</dt><dd className="break-words">{startup.industry || '-'}</dd></div>
                       <div><dt className="text-muted-foreground text-xs">المرحلة</dt><dd className="break-words">{startup.stage || '-'}</dd></div>
                       <div><dt className="text-muted-foreground text-xs">تاريخ الإنشاء</dt><dd className="break-words">{formatDate(startup.createdAt)}</dd></div>
@@ -409,10 +409,10 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                 {user.teamMembers.map((member) => (
                   <div key={member.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{member.department}</span>
                       <h3 className="font-semibold">{member.name}</h3>
+                      <span className="text-xs text-muted-foreground">{member.department}</span>
                     </div>
-                    <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                    <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3 text-right">
                       <div><dt className="text-muted-foreground text-xs">المنصب</dt><dd className="break-words">{member.position || '-'}</dd></div>
                       <div><dt className="text-muted-foreground text-xs">البريد</dt><dd className="break-all">{member.email || '-'}</dd></div>
                       <div><dt className="text-muted-foreground text-xs">الهاتف</dt><dd className="break-words">{member.phone || '-'}</dd></div>
@@ -436,21 +436,23 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
 
       {/* Delete dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle>تأكيد حذف المستخدم</DialogTitle>
-            <DialogDescription>
-              هل أنت متأكد من رغبتك في حذف <strong>{user.name}</strong>؟ هذا الإجراء لا يمكن التراجع عنه وسيحذف جميع بياناته.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
-              إلغاء
-            </Button>
-            <Button variant="destructive" onClick={deleteUser} disabled={isDeleting}>
-              {isDeleting ? <><Loader2 className="h-4 w-4 ml-2 animate-spin" />جاري الحذف...</> : 'حذف'}
-            </Button>
-          </DialogFooter>
+        <DialogContent className="text-right">
+          <div dir="rtl">
+            <DialogHeader>
+              <DialogTitle>تأكيد حذف المستخدم</DialogTitle>
+              <DialogDescription>
+                هل أنت متأكد من رغبتك في حذف <strong>{user.name}</strong>؟ هذا الإجراء لا يمكن التراجع عنه وسيحذف جميع بياناته.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+                إلغاء
+              </Button>
+              <Button variant="destructive" onClick={deleteUser} disabled={isDeleting}>
+                {isDeleting ? <><Loader2 className="h-4 w-4 ml-2 animate-spin" />جاري الحذف...</> : 'حذف'}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -147,7 +147,7 @@ export default function StartupsPage() {
                 <div className="p-6 flex-grow">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-xl font-bold">{company.name}</h3>
-                    {getStatusBadge(company.status)}
+                    <div>{getStatusBadge(company.status)}</div>
                   </div>
                   <div className="flex flex-wrap gap-2 mb-3">
                     <Badge variant="secondary">{company.industry}</Badge>

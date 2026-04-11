@@ -159,7 +159,7 @@ export default function NewStartupPage() {
       
       <form onSubmit={handleSubmit} className="space-y-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="justify-between">
             <CardTitle>معلومات الشركة الناشئة</CardTitle>
             <CardDescription>أدخل المعلومات الأساسية عن شركتك الناشئة</CardDescription>
           </CardHeader>
@@ -234,7 +234,7 @@ export default function NewStartupPage() {
         </Card>
         
         <Card>
-          <CardHeader>
+          <CardHeader className="justify-between">
             <CardTitle>نموذج الأعمال</CardTitle>
             <CardDescription>شرح مفصل عن نموذج أعمال شركتك الناشئة</CardDescription>
           </CardHeader>
@@ -307,7 +307,7 @@ export default function NewStartupPage() {
         </Card>
         
         <Card>
-          <CardHeader>
+          <CardHeader className="justify-between">
             <CardTitle>معلومات إضافية</CardTitle>
             <CardDescription>معلومات إضافية عن شركتك الناشئة</CardDescription>
           </CardHeader>

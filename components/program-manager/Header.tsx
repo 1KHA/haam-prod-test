@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Search, LogOut } from "lucide-react"
+import { User, Search, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,6 +14,7 @@ import {
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
+import { NotificationBell } from "@/components/NotificationBell"
 
 export default function Header() {
   const { setTheme, theme } = useTheme()
@@ -30,9 +31,7 @@ export default function Header() {
           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="بحث..." className="pr-8 w-full" />
         </div>
-        <Button variant="outline" size="icon" onClick={() => router.push("/program-manager-dashboard/notifications")}>
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">

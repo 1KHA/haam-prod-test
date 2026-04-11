@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, LogOut } from "lucide-react"
+import { User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
+import { NotificationBell } from "@/components/NotificationBell"
 
 export default function Header() {
   const { setTheme, theme } = useTheme()
@@ -25,9 +26,7 @@ export default function Header() {
         <h1 className="text-xl font-bold">لوحة تحكم المدير</h1>
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.push("/admin-dashboard/notifications")}>
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">

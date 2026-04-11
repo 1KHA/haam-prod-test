@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
-import { Bell, User, LogOut, LogIn } from "lucide-react"
+import { User, LogOut, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { NotificationBell } from "@/components/NotificationBell"
 
 export default function Header() {
   const { user, signOut } = useAuth()
@@ -27,9 +28,7 @@ export default function Header() {
         <p className="text-sm text-muted-foreground">أدر شركاتك الناشئة وقدم على البرامج المتاحة</p>
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.push("/entrepreneur-dashboard/notifications")}>
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationBell />
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

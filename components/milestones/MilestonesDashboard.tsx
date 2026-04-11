@@ -607,14 +607,11 @@ export function MilestonesDashboard({
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">{title}</h1>
         <Button className="flex items-center gap-2" onClick={openCreateDialog}>
           <Plus className="h-4 w-4" />
           <span>إضافة مرحلة جديدة</span>
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
       </div>
 
       {error && (
@@ -652,8 +649,11 @@ export function MilestonesDashboard({
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
-          <CardHeader>
+          <CardHeader dir="rtl" className="justify-start">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <CardTitle>إدارة مراحل الدفعات</CardTitle>
+              </div>
               <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <div className="relative w-full md:w-72">
                   <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -678,11 +678,6 @@ export function MilestonesDashboard({
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <CardTitle>إدارة مراحل الدفعات</CardTitle>
-                <CardDescription>الإنشاء والتعديل والحذف على مستوى الدفعة وليس الشركة المنفردة.</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -755,8 +750,6 @@ export function MilestonesDashboard({
                           <h3 className="text-lg font-semibold">{milestone.title}</h3>
                         </div>
 
-                        <p className="text-sm text-muted-foreground">{milestone.description}</p>
-
                         <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground md:grid-cols-3">
                           <div className="flex items-center justify-end gap-2">
                             <span>{milestone.cohortName}</span>
@@ -798,11 +791,8 @@ export function MilestonesDashboard({
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader dir="rtl" className="justify-start">
             <CardTitle>تفاصيل المرحلة</CardTitle>
-            <CardDescription>
-              متابعة تسليم كل شركة داخل الدفعة مع صلاحية تعديل الرد أو إعادة فتحه.
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {detailLoading ? (
@@ -845,8 +835,6 @@ export function MilestonesDashboard({
                       </CardDescription>
                     </div>
                   </div>
-
-                  <p className="text-sm text-muted-foreground">{selectedMilestone.description}</p>
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <div className="rounded-lg border p-3 text-right">

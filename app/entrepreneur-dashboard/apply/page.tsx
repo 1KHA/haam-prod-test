@@ -31,6 +31,7 @@ interface Cohort {
     membersCount: number
     mentorsCount: number
   }
+  alreadyApplied: boolean
 }
 
 interface Startup {
@@ -38,6 +39,7 @@ interface Startup {
   name: string
   industry: string
   stage: string
+  status: string
   description: string
 }
 
@@ -129,11 +131,13 @@ export default function ApplyPage() {
         }
         
         const data = await response.json();
-        setCompanies(data.companies || []);
-        
-        // Set the first company as selected by default if available
-        if (data.companies && data.companies.length > 0) {
-          setSelectedStartup(data.companies[0].id);
+        const allCompanies: Startup[] = data.companies || [];
+        setCompanies(allCompanies);
+
+        // Set the first APPROVED company as selected by default
+        const firstApproved = allCompanies.find(c => c.status === 'APPROVED');
+        if (firstApproved) {
+          setSelectedStartup(firstApproved.id);
         }
       } catch (error) {
         console.error('Error fetching companies:', error);
@@ -276,6 +280,8 @@ export default function ApplyPage() {
     );
   }
   
+  const approvedCompanies = companies.filter(c => c.status === 'APPROVED');
+
   if (companies.length === 0) {
     return (
       <div className="space-y-6 text-right">
@@ -347,16 +353,22 @@ export default function ApplyPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button 
-                className="w-full"
-                onClick={() => {
-                  setSelectedCohort(cohort);
-                  setDialogOpen(true);
-                }}
-              >
-                <span>التقديم للدفعة</span>
-                <ArrowRight className="h-4 w-4 mr-2" />
-              </Button>
+              {cohort.alreadyApplied ? (
+                <Badge className="w-full flex justify-center py-2 bg-green-600 text-white text-sm cursor-default">
+                  تم التقديم ✓
+                </Badge>
+              ) : (
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedCohort(cohort);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <span>التقديم للدفعة</span>
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
@@ -410,28 +422,34 @@ export default function ApplyPage() {
             {/* Company Selection */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">اختر الشركة الناشئة</h3>
-              <div className="grid grid-cols-1 gap-4">
-                {companies.map(company => (
-                  <Card 
-                    key={company.id} 
-                    className={`cursor-pointer ${selectedStartup === company.id ? 'border-primary' : ''}`}
-                    onClick={() => setSelectedStartup(company.id)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <Badge variant={selectedStartup === company.id ? "default" : "outline"}>
-                          {selectedStartup === company.id ? 'مختار' : 'اختر'}
-                        </Badge>
-                        <h4 className="font-medium">{company.name}</h4>
-                      </div>
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        <p>{company.industry} - {company.stage}</p>
-                        <p className="mt-1">{company.description.substring(0, 100)}...</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {approvedCompanies.length === 0 ? (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md text-sm">
+                  شركتك قيد المراجعة من قِبَل الإدارة. ستتمكن من التقديم بعد الموافقة.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {approvedCompanies.map(company => (
+                    <Card
+                      key={company.id}
+                      className={`cursor-pointer ${selectedStartup === company.id ? 'border-primary' : ''}`}
+                      onClick={() => setSelectedStartup(company.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <Badge variant={selectedStartup === company.id ? "default" : "outline"}>
+                            {selectedStartup === company.id ? 'مختار' : 'اختر'}
+                          </Badge>
+                          <h4 className="font-medium">{company.name}</h4>
+                        </div>
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          <p>{company.industry} - {company.stage}</p>
+                          <p className="mt-1">{company.description.substring(0, 100)}...</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
             
             {/* Team Members */}
@@ -538,9 +556,9 @@ export default function ApplyPage() {
             >
               إلغاء
             </Button>
-            <Button 
+            <Button
               onClick={handleApply}
-              disabled={applying}
+              disabled={applying || approvedCompanies.length === 0}
             >
               {applying ? 'جاري التقديم...' : 'تقديم الطلب'}
             </Button>

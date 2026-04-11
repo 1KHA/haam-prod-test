@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { User, Mail, Phone, UserPlus } from "lucide-react"
+import { User, Mail, Phone, UserPlus, Eye, EyeOff, Copy, Check } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 import { RouteGuard } from "@/components/auth/RouteGuard"
@@ -56,6 +56,14 @@ export default function TeamPage() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+
+  // Create member dialog state
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "", email: "", password: "", role: "Member" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Fetch entrepreneur's companies and set companyId
   useEffect(() => {
@@ -132,6 +140,43 @@ export default function TeamPage() {
     }
   };
 
+  const handleCreateMember = async () => {
+    if (!createForm.name || !createForm.email || !createForm.password || !companyId || !token) return;
+    setCreating(true);
+    try {
+      const res = await fetch(`/api/company/${companyId}/create-member`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "خطأ", description: data.error || "فشل في إنشاء الحساب", variant: "destructive" });
+      } else {
+        setCreatedCredentials({ name: createForm.name, email: createForm.email, password: createForm.password });
+        // Refresh members list
+        const membersRes = await fetch(`/api/company/${companyId}/members`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (membersRes.ok) {
+          const membersData = await membersRes.json();
+          setMembers(membersData.members);
+        }
+        setCreateForm({ name: "", email: "", password: "", role: "Member" });
+      }
+    } catch {
+      toast({ title: "خطأ", description: "حدث خطأ أثناء إنشاء الحساب", variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCopyField = (field: string, value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
       (member.name && member.name.includes(searchQuery)) ||
@@ -151,10 +196,16 @@ export default function TeamPage() {
           <PermissionGate
             requirement={{ category: 'users', action: 'add' }}
           >
-            <Button onClick={() => setShowInviteDialog(true)}>
-              <UserPlus className="ml-2 h-4 w-4" />
-              إضافة عضو جديد
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowInviteDialog(true)}>
+                <UserPlus className="ml-2 h-4 w-4" />
+                دعوة عبر البريد
+              </Button>
+              <Button onClick={() => { setCreatedCredentials(null); setShowCreateDialog(true); }}>
+                <UserPlus className="ml-2 h-4 w-4" />
+                إنشاء حساب عضو
+              </Button>
+            </div>
           </PermissionGate>
         </div>
 
@@ -284,6 +335,100 @@ export default function TeamPage() {
           }
         `}</style>
       </div>
+
+      {/* Create Member Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) setCreatedCredentials(null); }}>
+        <DialogContent>
+          <div dir="rtl">
+            <DialogHeader>
+              <DialogTitle>إنشاء حساب عضو</DialogTitle>
+            </DialogHeader>
+            {createdCredentials ? (
+              <div className="space-y-4 py-2">
+                <p className="text-sm text-muted-foreground">تم إنشاء الحساب بنجاح. احتفظ ببيانات الدخول لمشاركتها مع العضو.</p>
+                {[
+                  { label: "الاسم", field: "name", value: createdCredentials.name },
+                  { label: "البريد الإلكتروني", field: "email", value: createdCredentials.email },
+                  { label: "كلمة المرور", field: "password", value: createdCredentials.password },
+                ].map(({ label, field, value }) => (
+                  <div key={field} className="space-y-1">
+                    <Label>{label}</Label>
+                    <div className="flex gap-2 items-center">
+                      <Input value={value} readOnly className="flex-1" />
+                      <Button size="icon" variant="outline" onClick={() => handleCopyField(field, value)}>
+                        {copiedField === field ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <DialogFooter>
+                  <Button onClick={() => { setShowCreateDialog(false); setCreatedCredentials(null); }}>إغلاق</Button>
+                </DialogFooter>
+              </div>
+            ) : (
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="create-name">الاسم <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="create-name"
+                    placeholder="اسم العضو"
+                    value={createForm.name}
+                    onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-email">البريد الإلكتروني <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="create-email"
+                    type="email"
+                    placeholder="example@email.com"
+                    value={createForm.email}
+                    onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-password">كلمة المرور <span className="text-red-500">*</span></Label>
+                  <div className="relative">
+                    <Input
+                      id="create-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="كلمة المرور"
+                      value={createForm.password}
+                      onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                      className="pl-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      onClick={() => setShowPassword(p => !p)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-role">الدور</Label>
+                  <Input
+                    id="create-role"
+                    placeholder="Member"
+                    value={createForm.role}
+                    onChange={e => setCreateForm(f => ({ ...f, role: e.target.value }))}
+                  />
+                </div>
+                <DialogFooter className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>إلغاء</Button>
+                  <Button
+                    onClick={handleCreateMember}
+                    disabled={creating || !createForm.name || !createForm.email || !createForm.password}
+                  >
+                    {creating ? "جاري الإنشاء..." : "إنشاء الحساب"}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent>

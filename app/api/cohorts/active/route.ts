@@ -17,6 +17,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Find user's startup (if any) to check existing applications
+    const userStartup = await prisma.startup.findFirst({
+      where: { creatorId: user.id },
+      select: { id: true }
+    });
+
     // Get active cohorts
     const activeCohorts = await prisma.cohort.findMany({
       where: {
@@ -45,6 +51,16 @@ export async function GET(request: NextRequest) {
       }
     });
     
+    // Get cohort IDs where user's startup already applied
+    const appliedCohortIds = new Set<string>();
+    if (userStartup) {
+      const memberships = await prisma.cohortMember.findMany({
+        where: { startupId: userStartup.id },
+        select: { cohortId: true }
+      });
+      memberships.forEach(m => appliedCohortIds.add(m.cohortId));
+    }
+
     // Transform the cohorts
     const transformedCohorts = activeCohorts.map(cohort => ({
       id: cohort.id,
@@ -64,7 +80,8 @@ export async function GET(request: NextRequest) {
       stats: {
         membersCount: cohort._count.members,
         mentorsCount: cohort._count.mentors
-      }
+      },
+      alreadyApplied: appliedCohortIds.has(cohort.id)
     }));
     
     return NextResponse.json({

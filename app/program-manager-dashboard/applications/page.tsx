@@ -529,7 +529,13 @@ export default function ApplicationsPage() {
                       
                       <div className="flex justify-between mt-4">
                         <Button variant="outline" size="sm">تعيين مراجعين</Button>
-                        <Button variant="default" size="sm">بدء المراجعة</Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleStatusUpdate(application.id, "in-review")}
+                        >
+                          بدء المراجعة
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -613,8 +619,20 @@ export default function ApplicationsPage() {
                       <div className="flex justify-between mt-4">
                         <Button variant="outline" size="sm">إضافة ملاحظات</Button>
                         <div className="flex gap-2">
-                          <Button variant="destructive" size="sm">رفض</Button>
-                          <Button variant="default" size="sm">قبول</Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleStatusUpdate(application.id, "rejected")}
+                          >
+                            رفض
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleStatusUpdate(application.id, "approved")}
+                          >
+                            قبول
+                          </Button>
                         </div>
                       </div>
                     </div>

@@ -28,7 +28,7 @@ interface Registration {
   id: string
   userId: string
   eventId: string
-  registeredAt: string
+  createdAt: string
   status: string
   user: {
     id: string
@@ -291,7 +291,9 @@ export default function EventRegistrations() {
                     <TableCell>{registration.user.phone || "غير محدد"}</TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {format(new Date(registration.registeredAt), "PPP p", { locale: ar })}
+                        {registration.createdAt
+                          ? format(new Date(registration.createdAt), "PPP p", { locale: ar })
+                          : "—"}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(registration.status)}</TableCell>

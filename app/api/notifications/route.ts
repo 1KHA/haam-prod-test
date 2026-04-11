@@ -16,13 +16,13 @@ export async function GET(request: NextRequest) {
       where: { userId: user.userId },
       include: {
         notification: {
-          select: {
-            id: true,
-            title: true,
-            message: true,
-            type: true,
-            priority: true,
-            createdAt: true,
+          include: {
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -32,16 +32,25 @@ export async function GET(request: NextRequest) {
 
     const notifications = recipientRecords.map((r) => ({
       id: r.notification.id,
+      recipientId: r.id,
       title: r.notification.title,
       message: r.notification.message,
+      titleEn: r.notification.titleEn,
+      messageEn: r.notification.messageEn,
       type: r.notification.type || 'info',
       priority: r.notification.priority,
-      read: r.isRead,
+      status: r.notification.status,
+      actionUrl: r.notification.actionUrl,
+      actionLabel: r.notification.actionLabel,
+      actionLabelEn: r.notification.actionLabelEn,
+      metadata: r.notification.metadata ? JSON.parse(r.notification.metadata) : null,
+      isRead: r.isRead,
       readAt: r.readAt,
       createdAt: r.notification.createdAt,
+      createdBy: r.notification.createdBy?.name || 'System',
     }));
 
-    const unreadCount = notifications.filter((n) => !n.read).length;
+    const unreadCount = notifications.filter((n) => !n.isRead).length;
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {

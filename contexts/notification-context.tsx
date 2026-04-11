@@ -53,8 +53,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      // Explicitly specify 'direct' mode to ensure we get a Response object
-      const response = await fetchWithAuth('/api/admin/notifications', {}, 'direct') as Response;
+      // Use the general notifications endpoint that works for all roles
+      const response = await fetchWithAuth('/api/notifications', {}, 'direct') as Response;
       
       if (!response.ok) {
         throw new Error('Failed to fetch notifications');
@@ -62,7 +62,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       
       const data = await response.json();
       setNotifications(data.notifications);
-      setUnreadCount(data.notifications.filter((n: Notification) => !n.isRead).length);
+      setUnreadCount(data.unreadCount || 0);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -125,7 +125,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Mark a notification as read
   const markAsRead = async (id: string) => {
     try {
-      const response = await fetchWithAuth(`/api/admin/notifications/mark-read`, {
+      const response = await fetchWithAuth(`/api/notifications/mark-read`, {
         method: 'POST',
         body: JSON.stringify({ notificationIds: [id] }),
       }, 'direct') as Response;
@@ -148,7 +148,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      const response = await fetchWithAuth(`/api/admin/notifications/mark-read`, {
+      const response = await fetchWithAuth(`/api/notifications/mark-read`, {
         method: 'POST',
         body: JSON.stringify({ all: true }),
       }, 'direct') as Response;

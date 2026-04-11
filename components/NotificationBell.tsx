@@ -46,9 +46,10 @@ interface NotificationItemProps {
 function NotificationItem({ notification, onMarkAsRead, onActionClick }: NotificationItemProps) {
   const icon = typeIcons[notification.type] || <Info className="h-4 w-4" />;
   
-  // Determine language (simplified - in real app, use user's preference)
-  const title = notification.titleEn || notification.title;
-  const message = notification.message || '';
+  // Use Arabic by default, fallback to English if needed
+  const title = notification.title;
+  const message = notification.message;
+  const actionLabel = notification.actionLabel || 'عرض';
 
   return (
     <div
@@ -93,7 +94,7 @@ function NotificationItem({ notification, onMarkAsRead, onActionClick }: Notific
           </span>
           
           {/* Action Button */}
-          {(notification as any).actionUrl && (
+          {notification.actionUrl && (
             <Button
               variant="ghost"
               size="sm"
@@ -103,7 +104,7 @@ function NotificationItem({ notification, onMarkAsRead, onActionClick }: Notific
                 onActionClick(notification);
               }}
             >
-              {(notification as any).actionLabel || 'عرض'}
+              {actionLabel}
             </Button>
           )}
         </div>
@@ -134,9 +135,8 @@ export function NotificationBell() {
   };
 
   const handleActionClick = (notification: Notification) => {
-    const actionUrl = (notification as any).actionUrl;
-    if (actionUrl) {
-      router.push(actionUrl);
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl);
     }
     if (!notification.isRead) {
       markAsRead(notification.id);

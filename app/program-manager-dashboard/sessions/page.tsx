@@ -175,11 +175,11 @@ export default function SessionsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">جدولة الجلسات</h1>
         <Button className="flex items-center gap-2" onClick={() => setShowNewDialog(true)}>
           <Plus className="h-4 w-4" />
           <span>جدولة جلسة جديدة</span>
         </Button>
-        <h1 className="text-3xl font-bold">جدولة الجلسات</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

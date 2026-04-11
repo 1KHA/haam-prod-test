@@ -284,6 +284,7 @@ export default function CohortMembersPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">أعضاء الدفعة</h1>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>

@@ -63,16 +63,16 @@ export default function PMNotificationsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">الإشعارات</h1>
+          {unreadCount > 0 && <p className="text-sm text-muted-foreground">{unreadCount} إشعار غير مقروء</p>}
+        </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={markAllRead}>
               <Check className="h-4 w-4 ml-2" />تحديد الكل كمقروء
             </Button>
           )}
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold">الإشعارات</h1>
-          {unreadCount > 0 && <p className="text-sm text-muted-foreground">{unreadCount} إشعار غير مقروء</p>}
         </div>
       </div>
       <Card>

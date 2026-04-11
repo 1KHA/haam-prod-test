@@ -170,13 +170,13 @@ export default function EditEvent() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">تعديل الفعالية</h1>
         <Link href={`/program-manager-dashboard/events/${eventId}`}>
           <Button variant="outline" size="sm" className="flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
             <span>العودة</span>
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">تعديل الفعالية</h1>
       </div>
 
       <Card>

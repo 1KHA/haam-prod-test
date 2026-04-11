@@ -167,6 +167,14 @@ export default function EventRegistrations() {
     <div className="space-y-6 text-right">
       {/* Header */}
       <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">إدارة التسجيلات</h1>
+          {event && (
+            <p className="text-muted-foreground mt-1">
+              {event.title} - {getEventTypeDisplay(event.eventType)}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Link href={`/program-manager-dashboard/events/${eventId}`}>
             <Button variant="outline" size="sm">
@@ -183,15 +191,6 @@ export default function EventRegistrations() {
             <Download className="h-4 w-4 ml-2" />
             تصدير CSV
           </Button>
-        </div>
-        
-        <div>
-          <h1 className="text-3xl font-bold">إدارة التسجيلات</h1>
-          {event && (
-            <p className="text-muted-foreground mt-1">
-              {event.title} - {getEventTypeDisplay(event.eventType)}
-            </p>
-          )}
         </div>
       </div>
 

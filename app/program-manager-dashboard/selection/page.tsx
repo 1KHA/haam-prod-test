@@ -246,6 +246,7 @@ export default function SelectionPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">اختيار المتقدمين</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -256,7 +257,6 @@ export default function SelectionPage() {
             <span>إرسال إشعارات</span>
           </Button>
         </div>
-        <h1 className="text-3xl font-bold">اختيار المتقدمين</h1>
       </div>
 
       {!token ? (

@@ -164,6 +164,7 @@ export default function StartupsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إدارة الشركات الناشئة</h1>
         <Button 
           className="flex items-center gap-2"
           onClick={() => router.push('/program-manager-dashboard/startups/new')}
@@ -171,66 +172,63 @@ export default function StartupsPage() {
           <Plus className="h-4 w-4" />
           <span>إضافة شركة ناشئة</span>
         </Button>
-        <h1 className="text-3xl font-bold">إدارة الشركات الناشئة</h1>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 justify-start">
             <CardTitle className="text-sm font-medium">إجمالي الشركات</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.stats.total}</div>
+            <div className="text-2xl font-bold text-right">{data.stats.total}</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 justify-start">
             <CardTitle className="text-sm font-medium">الشركات النشطة</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.stats.active}</div>
+            <div className="text-2xl font-bold text-right">{data.stats.active}</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 justify-start">
             <CardTitle className="text-sm font-medium">الشركات المعرضة للخطر</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.stats.atRisk}</div>
+            <div className="text-2xl font-bold text-right">{data.stats.atRisk}</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 justify-start">
             <CardTitle className="text-sm font-medium">متوسط التقدم</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.stats.avgProgress}%</div>
+            <div className="text-2xl font-bold text-right">{data.stats.avgProgress}%</div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+        <CardHeader dir="rtl" className="justify-start">
+          <CardTitle>الشركات الناشئة</CardTitle>
+          <div className="flex items-center gap-2 mr-auto">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="بحث..."
+                className="pl-3 pr-9 w-[250px]"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <CardTitle>الشركات الناشئة</CardTitle>
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -254,10 +252,10 @@ export default function StartupsPage() {
                     >
                       <div className="p-4 border-b">
                         <div className="flex items-center justify-between">
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(startup.status, startup.progress)}`}></div>
                           <h3 className="font-bold text-lg">{startup.name}</h3>
+                          <div className={`w-3 h-3 rounded-full ${getStatusColor(startup.status, startup.progress)}`}></div>
                         </div>
-                        <div className="text-sm text-muted-foreground mt-1">{startup.industry}</div>
+                        <div className="text-sm text-muted-foreground mt-1 text-right">{startup.industry}</div>
                       </div>
                       <div className="p-4">
                         <div className="flex justify-between items-center mb-2">
@@ -328,7 +326,7 @@ export default function StartupsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="justify-start">
             <CardTitle>المراحل الرئيسية القادمة</CardTitle>
           </CardHeader>
           <CardContent>
@@ -358,7 +356,7 @@ export default function StartupsPage() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="justify-start">
             <CardTitle>إحصائيات الشركات الناشئة</CardTitle>
           </CardHeader>
           <CardContent>

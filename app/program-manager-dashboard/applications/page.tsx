@@ -245,6 +245,7 @@ export default function ApplicationsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">مراجعة الطلبات</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -255,7 +256,6 @@ export default function ApplicationsPage() {
             <span>تنزيل البيانات</span>
           </Button>
         </div>
-        <h1 className="text-3xl font-bold">مراجعة الطلبات</h1>
       </div>
 
       {!token ? (

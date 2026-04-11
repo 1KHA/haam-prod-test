@@ -330,6 +330,7 @@ export default function CohortsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إدارة الدفعات</h1>
         <Button 
           variant="default" 
           className="flex items-center gap-1"
@@ -338,7 +339,6 @@ export default function CohortsPage() {
           <Plus className="h-4 w-4" />
           <span>إضافة دفعة</span>
         </Button>
-        <h1 className="text-3xl font-bold">إدارة الدفعات</h1>
       </div>
 
       {/* Statistics Cards */}

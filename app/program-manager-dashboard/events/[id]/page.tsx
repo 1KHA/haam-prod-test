@@ -159,6 +159,10 @@ export default function EventDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold">{event.title}</h1>
+          {getStatusBadge(event.status)}
+        </div>
+        <div className="flex items-center gap-2">
           <Link href="/program-manager-dashboard/events">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 ml-2" />
@@ -184,11 +188,6 @@ export default function EventDetail() {
             )}
             حذف
           </Button>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold">{event.title}</h1>
-          {getStatusBadge(event.status)}
         </div>
       </div>
 

@@ -153,6 +153,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">تفاصيل الدفعة</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -181,16 +182,15 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
             <span>حذف</span>
           </Button>
         </div>
-        <h1 className="text-3xl font-bold">تفاصيل الدفعة</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <div>{getStatusBadge(cohort.status)}</div>
+              <div className="flex justify-between items-center w-full">
                 <CardTitle className="text-2xl">{cohort.name}</CardTitle>
+                <div>{getStatusBadge(cohort.status)}</div>
               </div>
             </CardHeader>
             <CardContent>

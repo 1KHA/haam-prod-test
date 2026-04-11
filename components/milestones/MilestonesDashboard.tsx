@@ -713,7 +713,51 @@ export function MilestonesDashboard({
                     }`}
                     onClick={() => setSelectedMilestoneId(milestone.id)}
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-4" dir="rtl">
+                      <div className="space-y-3 flex-1">
+                        <div className="flex items-center justify-start gap-2">
+                          <h3 className="text-lg font-semibold">{milestone.title}</h3>
+                          <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(milestone.status)}`}>
+                            {getStatusText(milestone.status)}
+                          </span>
+                          <span className={`rounded-full px-2 py-1 text-xs ${getPriorityColor(milestone.priority)}`}>
+                            {getPriorityText(milestone.priority)}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground md:grid-cols-3">
+                          <div className="flex items-center justify-start gap-2">
+                            <Users className="h-4 w-4" />
+                            <span>{milestone.cohortName}</span>
+                          </div>
+                          <div className="flex items-center justify-start gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{formatDate(milestone.dueDate)}</span>
+                          </div>
+                          <div className="flex items-center justify-start gap-2">
+                            <Target className="h-4 w-4" />
+                            <span>{getCategoryText(milestone.category)}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">تغطية التسليم داخل الدفعة</span>
+                            <span>{milestone.submittedStartups}/{milestone.totalStartups}</span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary"
+                              style={{
+                                width: milestone.totalStartups
+                                  ? `${Math.round((milestone.submittedStartups / milestone.totalStartups) * 100)}%`
+                                  : "0%",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
@@ -737,50 +781,6 @@ export function MilestonesDashboard({
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <span className={`rounded-full px-2 py-1 text-xs ${getStatusColor(milestone.status)}`}>
-                            {getStatusText(milestone.status)}
-                          </span>
-                          <span className={`rounded-full px-2 py-1 text-xs ${getPriorityColor(milestone.priority)}`}>
-                            {getPriorityText(milestone.priority)}
-                          </span>
-                          <h3 className="text-lg font-semibold">{milestone.title}</h3>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground md:grid-cols-3">
-                          <div className="flex items-center justify-end gap-2">
-                            <span>{milestone.cohortName}</span>
-                            <Users className="h-4 w-4" />
-                          </div>
-                          <div className="flex items-center justify-end gap-2">
-                            <span>{formatDate(milestone.dueDate)}</span>
-                            <Calendar className="h-4 w-4" />
-                          </div>
-                          <div className="flex items-center justify-end gap-2">
-                            <span>{getCategoryText(milestone.category)}</span>
-                            <Target className="h-4 w-4" />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span>{milestone.submittedStartups}/{milestone.totalStartups}</span>
-                            <span className="text-muted-foreground">تغطية التسليم داخل الدفعة</span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full rounded-full bg-primary"
-                              style={{
-                                width: milestone.totalStartups
-                                  ? `${Math.round((milestone.submittedStartups / milestone.totalStartups) * 100)}%`
-                                  : "0%",
-                              }}
-                            />
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </button>

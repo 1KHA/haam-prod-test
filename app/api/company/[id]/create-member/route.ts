@@ -52,7 +52,7 @@ export async function POST(
         email,
         password: hashedPassword,
         role: 'ENTREPRENEUR' as any,
-        approvalStatus: 'ACTIVE' as any,
+        approvalStatus: 'PENDING_APPROVAL' as any,
       } as any
     });
 

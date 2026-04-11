@@ -24,10 +24,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get companies created by the entrepreneur
+    // Get companies where user is creator OR an active team member
     const companies = await prisma.startup.findMany({
       where: {
-        creatorId: user.userId,
+        OR: [
+          { creatorId: user.userId },
+          {
+            members: {
+              some: { userId: user.userId, status: 'ACTIVE' }
+            }
+          }
+        ]
       },
       orderBy: {
         createdAt: 'desc',

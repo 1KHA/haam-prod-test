@@ -6,13 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { 
-  FileText, 
-  Users, 
-  Rocket, 
-  Calendar, 
-  BookOpen, 
-  DollarSign,
+import {
+  FileText,
+  Users,
+  Rocket,
+  Calendar,
+  BookOpen,
   Target,
   Clock,
   CheckCircle,
@@ -22,6 +21,14 @@ import {
   Handshake
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+
+interface Milestone {
+  id: string
+  title: string
+  dueDate: string
+  status: "upcoming" | "in_progress" | "overdue" | "completed"
+  canSubmit: boolean
+}
 
 export default function EntrepreneurDashboard() {
   const { user } = useAuth()
@@ -39,10 +46,117 @@ export default function EntrepreneurDashboard() {
   const [programs, setPrograms] = useState<Array<{
     id: string; name: string; description: string | null; applicationDeadline: string | null
   }>>([])
+  const [tasks, setTasks] = useState<Array<{
+    id: string
+    title: string
+    deadline: string
+    priority: "عالية" | "متوسطة" | "منخفضة"
+    icon: React.ReactNode
+    priorityColor: React.CSSProperties
+    href?: string
+  }>>([])
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
+  }
+
+  const buildTasks = (startup: any, milestones: Milestone[]) => {
+    const result: typeof tasks = []
+
+    // If no startup exists, prompt to create one
+    if (!startup) {
+      result.push({
+        id: "create-startup",
+        title: "إنشاء ملف الشركة الناشئة",
+        deadline: "ابدأ الآن",
+        priority: "عالية",
+        icon: <AlertCircle className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />,
+        priorityColor: { color: "#f58f62" },
+        href: "/entrepreneur-dashboard/startup/new",
+      })
+      return result
+    }
+
+    // Check for incomplete startup profile fields
+    if (!startup.pitchDeckUrl) {
+      result.push({
+        id: "upload-pitch-deck",
+        title: "رفع العرض التقديمي للشركة",
+        deadline: "مطلوب للتقديم",
+        priority: "عالية",
+        icon: <AlertCircle className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />,
+        priorityColor: { color: "#f58f62" },
+        href: `/entrepreneur-dashboard/startups/${startup.id}/edit`,
+      })
+    }
+
+    if (!startup.description) {
+      result.push({
+        id: "add-description",
+        title: "إكمال وصف الشركة الناشئة",
+        deadline: "مطلوب للتقديم",
+        priority: result.length === 0 ? "عالية" : "متوسطة",
+        icon: <Clock className="h-5 w-5 ml-2" style={{ color: "#799dd7" }} />,
+        priorityColor: { color: "#799dd7" },
+        href: `/entrepreneur-dashboard/startups/${startup.id}/edit`,
+      })
+    }
+
+    // Add overdue milestones as high priority
+    const overdue = milestones.filter((m) => m.status === "overdue" && m.canSubmit)
+    overdue.slice(0, 2).forEach((m) => {
+      result.push({
+        id: m.id,
+        title: m.title,
+        deadline: "متأخر عن الموعد",
+        priority: "عالية",
+        icon: <AlertCircle className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />,
+        priorityColor: { color: "#f58f62" },
+        href: `/entrepreneur-dashboard/milestones`,
+      })
+    })
+
+    // Add upcoming/in-progress milestones
+    const pending = milestones.filter(
+      (m) => (m.status === "upcoming" || m.status === "in_progress") && m.canSubmit
+    )
+    pending.slice(0, 3 - result.length).forEach((m) => {
+      const daysLeft = Math.ceil(
+        (new Date(m.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+      const deadlineLabel =
+        daysLeft <= 0
+          ? "اليوم"
+          : daysLeft === 1
+          ? "غداً"
+          : daysLeft <= 7
+          ? `خلال ${daysLeft} أيام`
+          : daysLeft <= 14
+          ? "خلال أسبوع"
+          : "خلال أسبوعين"
+
+      const isUrgent = daysLeft <= 3
+      result.push({
+        id: m.id,
+        title: m.title,
+        deadline: deadlineLabel,
+        priority: isUrgent ? "عالية" : m.status === "in_progress" ? "متوسطة" : "منخفضة",
+        icon: isUrgent
+          ? <AlertCircle className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />
+          : m.status === "in_progress"
+          ? <Clock className="h-5 w-5 ml-2" style={{ color: "#799dd7" }} />
+          : <CheckCircle className="h-5 w-5 ml-2" style={{ color: "#3f4249" }} />,
+        priorityColor: isUrgent
+          ? { color: "#f58f62" }
+          : m.status === "in_progress"
+          ? { color: "#799dd7" }
+          : { color: "#3f4249" },
+        href: `/entrepreneur-dashboard/milestones`,
+      })
+    })
+
+    return result
   }
 
   useEffect(() => {
@@ -56,7 +170,7 @@ export default function EntrepreneurDashboard() {
       fetch("/api/events?upcoming=true&limit=3", { headers }).then((r) => r.json()),
       fetch("/api/startups", { headers }).then((r) => r.json()),
     ])
-      .then(([mentorData, programData, eventData, startupData]) => {
+      .then(async ([mentorData, programData, eventData, startupData]) => {
         const companies = startupData?.companies || []
         const myStartup = companies[0]
 
@@ -77,6 +191,22 @@ export default function EntrepreneurDashboard() {
 
         setUpcomingEvents((eventData?.events || []).slice(0, 3))
         setPrograms((programData?.programs || []).slice(0, 5))
+
+        // Fetch milestones if startup exists
+        let milestones: Milestone[] = []
+        if (myStartup?.id) {
+          try {
+            const milestoneRes = await fetch(`/api/milestones?startupId=${myStartup.id}`, { headers })
+            if (milestoneRes.ok) {
+              const milestoneData = await milestoneRes.json()
+              milestones = milestoneData?.milestones || []
+            }
+          } catch {
+            // silently ignore — tasks will be based on profile completeness only
+          }
+        }
+
+        setTasks(buildTasks(myStartup, milestones))
       })
       .catch(console.error)
   }, [user?.id])
@@ -88,33 +218,6 @@ export default function EntrepreneurDashboard() {
     { title: "الفعاليات القادمة", value: dashboardStats.eventCount, icon: <Calendar className="h-4 w-4 text-muted-foreground" /> },
   ]
 
-  const tasks = [
-    { 
-      id: 1, 
-      title: "إكمال ملف الشركة الناشئة", 
-      deadline: "خلال 3 أيام", 
-      priority: "عالية",
-      icon: <AlertCircle className="h-5 w-5 ml-2" style={{ color: "#f58f62" }} />,
-      priorityColor: { color: "#f58f62" }
-    },
-    { 
-      id: 2, 
-      title: "تحضير عرض تقديمي للبرنامج", 
-      deadline: "خلال أسبوع", 
-      priority: "متوسطة",
-      icon: <Clock className="h-5 w-5 ml-2" style={{ color: "#799dd7" }} />,
-      priorityColor: { color: "#799dd7" }
-    },
-    { 
-      id: 3, 
-      title: "تحديد أهداف المشروع", 
-      deadline: "خلال أسبوعين", 
-      priority: "منخفضة",
-      icon: <CheckCircle className="h-5 w-5 ml-2" style={{ color: "#3f4249" }} />,
-      priorityColor: { color: "#3f4249" }
-    },
-  ]
-
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
@@ -122,7 +225,6 @@ export default function EntrepreneurDashboard() {
         <Button onClick={() => router.push("/entrepreneur-dashboard/startup/new")}>
           إنشاء شركة ناشئة
         </Button>
-        
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -135,11 +237,11 @@ export default function EntrepreneurDashboard() {
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
-              <motion.div 
+              <motion.div
                 key={index}
-                variants={cardVariants} 
-                initial="hidden" 
-                animate="visible" 
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
                 transition={{ delay: index * 0.1 }}
               >
                 <Card>
@@ -154,7 +256,7 @@ export default function EntrepreneurDashboard() {
               </motion.div>
             ))}
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <Card>
               <CardHeader>
@@ -163,8 +265,14 @@ export default function EntrepreneurDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {tasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between">
+                  {tasks.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">لا توجد مهام معلقة، أحسنت!</p>
+                  ) : tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => task.href && router.push(task.href)}
+                    >
                       <div className="flex items-center">
                         {task.icon}
                         <div>
@@ -209,8 +317,6 @@ export default function EntrepreneurDashboard() {
               </CardContent>
             </Card>
           </div>
-          
-          {/* Quick Actions removed — duplicated in sidebar navigation */}
         </TabsContent>
 
         <TabsContent value="programs">

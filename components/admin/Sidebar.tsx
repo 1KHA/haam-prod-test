@@ -115,7 +115,8 @@ const navItems: NavItem[] = [
     name: "التقارير", 
     href: "/admin-dashboard/reports", 
     icon: FileText,
-    permission: { category: "reports", action: "view" }
+    permission: { category: "reports", action: "view" },
+    hidden: true
   },
   { 
     name: "التكاملات", 

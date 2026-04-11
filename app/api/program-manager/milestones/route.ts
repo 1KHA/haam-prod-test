@@ -7,6 +7,8 @@ import {
   listMilestoneCohorts,
   listMilestones,
 } from '@/lib/milestones';
+import { notifyMilestoneCreated } from '@/lib/services/notification-events';
+import { prisma } from '@/lib/prisma';
 
 function matchesSearch(value: string, query: string) {
   return value.toLowerCase().includes(query.toLowerCase());
@@ -99,6 +101,55 @@ export async function POST(request: NextRequest) {
       progress: 0,
       status: 'upcoming',
     });
+
+    // Notify all entrepreneurs in the cohort about the new milestone
+    try {
+      const cohort = await prisma.cohort.findUnique({
+        where: { id: cohortId },
+        include: {
+          members: {
+            include: {
+              startup: {
+                include: {
+                  members: { select: { userId: true } },
+                  creator: { select: { id: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (cohort) {
+        const recipientIds = new Set<string>();
+        
+        for (const member of cohort.members) {
+          // Add startup creator
+          if (member.startup.creator) {
+            recipientIds.add(member.startup.creator.id);
+          }
+          // Add all team members
+          for (const teamMember of member.startup.members) {
+            recipientIds.add(teamMember.userId);
+          }
+        }
+
+        if (recipientIds.size > 0) {
+          await notifyMilestoneCreated({
+            milestoneId: milestone.id,
+            title: milestone.title,
+            description: milestone.description,
+            dueDate: new Date(dueDate),
+            priority,
+            startupId: cohort.members[0]?.startupId || '',
+            startupName: cohort.members[0]?.startup.name || '',
+            recipientIds: Array.from(recipientIds),
+          });
+        }
+      }
+    } catch (notifyError) {
+      console.error('[PM Milestones API] Failed to send milestone notification:', notifyError);
+    }
 
     return NextResponse.json({ milestone }, { status: 201 });
   } catch (error) {

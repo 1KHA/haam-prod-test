@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { notifyProgramCreated } from '@/lib/services/notification-events';
 
 // GET /api/admin/programs - Get all programs with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -197,6 +198,26 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Notify all Program Managers about the new program
+    try {
+      const programManagers = await prisma.user.findMany({
+        where: { role: 'PROGRAM_MANAGER' },
+        select: { id: true },
+      });
+
+      if (programManagers.length > 0) {
+        await notifyProgramCreated({
+          programId: program.id,
+          programName: program.name,
+          programType: program.type,
+          recipientIds: programManagers.map(pm => pm.id),
+          createdBy: permissionCheck.userId,
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Programs API] Failed to send program creation notification:', notifyError);
+    }
     
     return NextResponse.json(program, { status: 201 });
   } catch (error) {

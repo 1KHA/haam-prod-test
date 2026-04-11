@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
+import { notifyApplicationStatusChanged } from '@/lib/services/notification-events';
 
 // GET /api/program-manager/cohorts/[id]/applications - Get all applications for a cohort
 export async function GET(
@@ -175,6 +176,20 @@ export async function PUT(
       );
     }
     
+    // Get application details before update for notification
+    const oldApplication = await prisma.cohortMember.findFirst({
+      where: { id: applicationId },
+      include: {
+        startup: {
+          include: {
+            creator: { select: { id: true } },
+            members: { select: { userId: true } },
+          },
+        },
+        cohort: { select: { name: true } },
+      },
+    });
+
     // Update application status
     const updatedApplication = await prisma.cohortMember.update({
       where: { id: applicationId },
@@ -184,6 +199,38 @@ export async function PUT(
         // feedback
       }
     });
+
+    // Notify the entrepreneur about the status change
+    try {
+      if (oldApplication) {
+        const entrepreneurIds = [
+          oldApplication.startup.creator?.id,
+          ...oldApplication.startup.members.map(m => m.userId),
+        ].filter((id): id is string => !!id);
+
+        // Map cohort member status to application status
+        const statusMap: Record<string, 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'> = {
+          'PENDING': 'PENDING',
+          'ACTIVE': 'ACCEPTED',
+          'REJECTED': 'REJECTED',
+          'DROPPED': 'REJECTED',
+        };
+
+        await notifyApplicationStatusChanged({
+          applicationId,
+          startupId: oldApplication.startupId,
+          startupName: oldApplication.startup.name,
+          cohortId: id,
+          cohortName: oldApplication.cohort.name,
+          oldStatus: oldApplication.status,
+          newStatus: statusMap[status] || 'PENDING',
+          feedback,
+          entrepreneurIds,
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Applications API] Failed to send status change notification:', notifyError);
+    }
     
     return NextResponse.json({
       success: true,

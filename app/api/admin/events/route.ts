@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole, TokenPayload } from '@/lib/auth';
+import { notifyEventCreated, notifyEventCancelled } from '@/lib/services/notification-events';
 
 // GET /api/admin/events - Get all events
 export async function GET(request: NextRequest) {
@@ -132,6 +133,26 @@ export async function POST(request: NextRequest) {
         creatorId: user.userId
       }
     });
+
+    // Notify all active users about the new event
+    try {
+      const activeUsers = await prisma.user.findMany({
+        where: { approvalStatus: 'ACTIVE' },
+        select: { id: true },
+      });
+
+      if (activeUsers.length > 0) {
+        await notifyEventCreated({
+          eventId: event.id,
+          eventName: event.title,
+          eventDate: event.startDate,
+          organizerName: body.organizer,
+          recipientIds: activeUsers.map(u => u.id),
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Events API] Failed to send event creation notification:', notifyError);
+    }
     
     return NextResponse.json({ event }, { status: 201 });
   } catch (error) {
@@ -163,6 +184,16 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Get event details and registered users before deletion for notifications
+    const eventsToDelete = await prisma.event.findMany({
+      where: { id: { in: body.ids } },
+      include: {
+        registrations: {
+          select: { userId: true },
+        },
+      },
+    });
     
     // First delete all registrations for these events
     await prisma.eventRegistration.deleteMany({
@@ -181,6 +212,23 @@ export async function DELETE(request: NextRequest) {
         }
       }
     });
+
+    // Notify registered users about event cancellation
+    try {
+      for (const event of eventsToDelete) {
+        const registeredUserIds = event.registrations.map(r => r.userId);
+        if (registeredUserIds.length > 0) {
+          await notifyEventCancelled({
+            eventId: event.id,
+            eventName: event.title,
+            recipientIds: registeredUserIds,
+            cancelledBy: user.userId,
+          });
+        }
+      }
+    } catch (notifyError) {
+      console.error('[Events API] Failed to send event cancellation notification:', notifyError);
+    }
     
     return NextResponse.json({
       deleted: result.count,

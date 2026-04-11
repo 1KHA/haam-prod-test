@@ -10,6 +10,8 @@ import {
   getMilestoneDetail,
   getSubmissionHistoryForMilestoneAndStartup,
 } from '@/lib/milestones';
+import { notifyMilestoneResponseSubmitted } from '@/lib/services/notification-events';
+import { prisma } from '@/lib/prisma';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -131,6 +133,34 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       message,
       attachments,
     });
+
+    // Notify the Program Manager about the new submission
+    try {
+      const milestone = await getMilestoneDetail(params.id);
+      if (milestone) {
+        // Get cohort with manager info
+        const cohort = await prisma.cohort.findUnique({
+          where: { id: milestone.cohortId },
+          include: {
+            manager: { select: { id: true } },
+          },
+        });
+
+        if (cohort?.manager) {
+          await notifyMilestoneResponseSubmitted({
+            milestoneId: params.id,
+            milestoneTitle: milestone.title,
+            startupId,
+            startupName: access.startupName,
+            submittedBy: user.userId,
+            submittedByName: user.name || '',
+            programManagerId: cohort.manager.id,
+          });
+        }
+      }
+    } catch (notifyError) {
+      console.error('[Milestone Submissions API] Failed to send notification:', notifyError);
+    }
 
     return NextResponse.json({ submission }, { status: 201 });
   } catch (error) {

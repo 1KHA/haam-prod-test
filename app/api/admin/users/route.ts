@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { UserRole } from '@/lib/auth';
+import { notifyUserCreated, notifyUserRoleChanged, notifyAccountApproved, notifyAccountSuspended } from '@/lib/services/notification-events';
 
 // GET /api/admin/users - Get all users with pagination, search, and filtering
 export async function GET(req: NextRequest) {
@@ -334,6 +335,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Send welcome notification to new user
+    try {
+      await notifyUserCreated({
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        tempPassword: password,
+        createdBy: permissionCheck.userId,
+      });
+    } catch (notifyError) {
+      console.error('[Users API] Failed to send welcome notification:', notifyError);
+      // Don't fail the request if notification fails
+    }
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
@@ -419,6 +435,12 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    // Get current user data to check for role change
+    const oldUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, name: true },
+    });
+
     // Update user
     const user = await prisma.user.update({
       where: { id },
@@ -432,6 +454,21 @@ export async function PUT(req: NextRequest) {
         profile: true,
       },
     });
+
+    // Send notification if role changed
+    if (oldUser && role && oldUser.role !== role) {
+      try {
+        await notifyUserRoleChanged({
+          userId: user.id,
+          name: user.name,
+          oldRole: oldUser.role,
+          newRole: role,
+          changedBy: permissionCheck.userId,
+        });
+      } catch (notifyError) {
+        console.error('[Users API] Failed to send role change notification:', notifyError);
+      }
+    }
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;

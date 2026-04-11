@@ -554,19 +554,30 @@ model ReportShare {
 // Model for system notifications
 model Notification {
   id              String        @id @default(uuid())
-  title           String        // Notification title
-  message         String        // Notification message/content
+  title           String        // Notification title (Arabic)
+  message         String        // Notification message/content (Arabic)
+  titleEn         String?       // Notification title (English)
+  messageEn       String?       // Notification message/content (English)
   type            String?       // Type of notification (e.g., "system", "application", "reminder", "security")
   priority        String        @default("medium") // Priority level: "low", "medium", "high"
   status          String        @default("sent") // Status: "sent", "scheduled", "draft"
   scheduledFor    DateTime?     // When to deliver scheduled notifications
   sendEmail       Boolean       @default(false) // Whether to also send as email
   sendPush        Boolean       @default(false) // Whether to also send as push notification
+  actionUrl       String?       // Deep link URL for action button
+  actionLabel     String?       // Action button label (Arabic)
+  actionLabelEn   String?       // Action button label (English)
+  metadata        String?       // JSON string for additional data
   createdAt       DateTime      @default(now()) // Creation timestamp
   updatedAt       DateTime      @updatedAt // Last update timestamp
   createdById     String        // User who created the notification
   createdBy       User          @relation("CreatedNotifications", fields: [createdById], references: [id], onDelete: Cascade)
   recipients      NotificationRecipient[] // Link to recipients
+
+  // Indexes for performance
+  @@index([type])
+  @@index([priority])
+  @@index([createdAt])
 }
 
 // Junction table for notification recipients

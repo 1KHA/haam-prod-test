@@ -9,6 +9,8 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
+  titleEn?: string;
+  messageEn?: string;
   type: string;
   isRead: boolean;
   createdAt: string;
@@ -19,6 +21,10 @@ export interface Notification {
   createdBy?: string; // User who created the notification
   sendEmail?: boolean; 
   sendPush?: boolean;
+  actionUrl?: string; // Deep link for action button
+  actionLabel?: string; // Action button label (AR)
+  actionLabelEn?: string; // Action button label (EN)
+  metadata?: Record<string, unknown>; // Additional data
 }
 
 interface NotificationContextType {

@@ -27,7 +27,7 @@ export async function POST(
       return NextResponse.json({ error: 'Startup not found' }, { status: 404 });
     }
 
-    if (startup.creatorId !== user.id) {
+    if (startup.creatorId !== user.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -52,7 +52,7 @@ export async function POST(
         email,
         password: hashedPassword,
         role: 'ENTREPRENEUR' as any,
-        approvalStatus: 'APPROVED' as any,
+        approvalStatus: 'ACTIVE' as any,
       } as any
     });
 

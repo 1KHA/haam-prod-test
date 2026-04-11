@@ -55,7 +55,8 @@ const navItems = [
     name: "اختيار المتقدمين", 
     href: "/program-manager-dashboard/selection", 
     icon: UserCheck,
-    permission: { category: 'applications', action: 'view' }
+    permission: { category: 'applications', action: 'view' },
+    hidden: true
   },
   { 
     name: "تعيين الموجهين", 

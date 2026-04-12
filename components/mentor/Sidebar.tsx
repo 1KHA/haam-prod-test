@@ -17,7 +17,8 @@ import {
   BookOpen,
   Share2,
   Clock,
-  User
+  User,
+  Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -83,6 +84,12 @@ const navItems = [
     href: "/mentor-dashboard/community", 
     icon: Share2,
     permission: { category: 'discussions', action: 'view' }
+  },
+  { 
+    name: "الإشعارات", 
+    href: "/mentor-dashboard/notifications", 
+    icon: Bell
+    // No permission required - all mentors can see notifications
   }
 ]
 

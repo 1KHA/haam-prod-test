@@ -23,7 +23,8 @@ import {
   UserPlus,
   FileCheck,
   Activity,
-  Settings
+  Settings,
+  Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -113,6 +114,12 @@ const navItems = [
     href: "/investor-dashboard/discussions", 
     icon: MessageSquare,
     permission: { category: 'discussions', action: 'view' }
+  },
+  { 
+    name: "الإشعارات", 
+    href: "/investor-dashboard/notifications", 
+    icon: Bell
+    // No permission required - all investors can see notifications
   },
 ]
 

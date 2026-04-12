@@ -17,7 +17,8 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -78,6 +79,12 @@ const navItems = [
     href: "/entrepreneur-dashboard/support",
     icon: HelpCircle,
     permission: { category: 'support', action: 'view' }
+  },
+  { 
+    name: "الإشعارات", 
+    href: "/entrepreneur-dashboard/notifications",
+    icon: Bell
+    // No permission required - all entrepreneurs can see notifications
   },
 ]
 

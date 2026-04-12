@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Bell, Check, CheckCheck, Clock, AlertCircle, Info, Calendar, Users, FileCheck, Award, DollarSign, Shield } from 'lucide-react';
 import { useNotifications, Notification } from '@/contexts/notification-context';
 import { Button } from '@/components/ui/button';
@@ -123,8 +123,25 @@ function NotificationItem({ notification, onMarkAsRead, onActionClick }: Notific
 
 export function NotificationBell() {
   const router = useRouter();
+  const pathname = usePathname();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
+
+  // Determine the correct notifications URL based on current dashboard
+  const getNotificationsUrl = () => {
+    if (pathname?.startsWith('/admin-dashboard')) {
+      return '/admin-dashboard/notifications';
+    } else if (pathname?.startsWith('/program-manager-dashboard')) {
+      return '/program-manager-dashboard/notifications';
+    } else if (pathname?.startsWith('/entrepreneur-dashboard')) {
+      return '/entrepreneur-dashboard/notifications';
+    } else if (pathname?.startsWith('/mentor-dashboard')) {
+      return '/mentor-dashboard/notifications';
+    } else if (pathname?.startsWith('/investor-dashboard')) {
+      return '/investor-dashboard/notifications';
+    }
+    return '/notifications'; // Fallback
+  };
 
   const handleMarkAsRead = async (id: string) => {
     await markAsRead(id);
@@ -230,7 +247,7 @@ export function NotificationBell() {
             size="sm" 
             className="w-full text-xs"
             onClick={() => {
-              router.push('/notifications');
+              router.push(getNotificationsUrl());
               setOpen(false);
             }}
           >

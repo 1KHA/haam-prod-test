@@ -108,8 +108,8 @@ const navItems: NavItem[] = [
   { 
     name: "الإشعارات", 
     href: "/admin-dashboard/notifications", 
-    icon: Bell,
-    permission: { category: "notifications", action: "view" }
+    icon: Bell
+    // No permission required - all admins can see notifications
   },
   { 
     name: "التقارير", 

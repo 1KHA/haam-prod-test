@@ -20,7 +20,8 @@ import {
   BookOpen,
   BarChart,
   Briefcase,
-  Handshake
+  Handshake,
+  Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -103,6 +104,12 @@ const navItems = [
     href: "/program-manager-dashboard/milestones", 
     icon: ClipboardList,
     permission: { category: 'startups', action: 'view' }
+  },
+  { 
+    name: "الإشعارات", 
+    href: "/program-manager-dashboard/notifications", 
+    icon: Bell
+    // No permission required - all PMs can see notifications
   },
   { 
     name: "التقارير والتحليلات", 

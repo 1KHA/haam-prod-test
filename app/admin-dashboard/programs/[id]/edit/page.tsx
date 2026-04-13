@@ -189,6 +189,7 @@ export default function EditProgramPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">تعديل البرنامج</h1>
         <Button 
           variant="outline" 
           className="flex items-center gap-1"
@@ -197,7 +198,6 @@ export default function EditProgramPage() {
           <ArrowLeft className="h-4 w-4" />
           <span>رجوع</span>
         </Button>
-        <h1 className="text-3xl font-bold">تعديل البرنامج</h1>
       </div>
       
       <Card>

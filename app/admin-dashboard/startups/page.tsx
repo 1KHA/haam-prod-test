@@ -432,6 +432,7 @@ export default function StartupsManagement() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إدارة الشركات الناشئة</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -461,7 +462,6 @@ export default function StartupsManagement() {
             </Button>
           </PermissionGate>
         </div>
-        <h1 className="text-3xl font-bold">إدارة الشركات الناشئة</h1>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 justify-between">

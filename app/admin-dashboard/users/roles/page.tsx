@@ -815,7 +815,7 @@ export default function RolesPermissions() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-start">
         <h1 className="text-3xl font-bold">الأدوار والصلاحيات</h1>
       </div>
 

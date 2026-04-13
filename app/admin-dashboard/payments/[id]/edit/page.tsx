@@ -212,6 +212,10 @@ export default function EditPaymentPage() {
     <div className="space-y-6 text-right">
       {/* Header */}
       <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start gap-1">
+          <h1 className="text-3xl font-bold">تعديل الدفعة</h1>
+          <p className="text-muted-foreground">تعديل تفاصيل الدفعة وحالتها</p>
+        </div>
         <Button 
           variant="outline" 
           size="sm" 
@@ -221,11 +225,6 @@ export default function EditPaymentPage() {
           <ArrowLeft className="h-4 w-4" />
           <span>عودة</span>
         </Button>
-        
-        <div className="flex flex-col items-end gap-1">
-          <h1 className="text-3xl font-bold">تعديل الدفعة</h1>
-          <p className="text-muted-foreground">تعديل تفاصيل الدفعة وحالتها</p>
-        </div>
       </div>
       
       {/* Form */}

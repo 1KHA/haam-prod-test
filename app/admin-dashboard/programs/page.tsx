@@ -339,6 +339,7 @@ export default function ProgramsPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إدارة البرامج</h1>
         <PermissionGate
           requirement={{ category: 'programs', action: 'add' }}
         >
@@ -351,7 +352,6 @@ export default function ProgramsPage() {
             <span>إضافة برنامج</span>
           </Button>
         </PermissionGate>
-        <h1 className="text-3xl font-bold">إدارة البرامج</h1>
       </div>
 
       {/* Statistics Cards */}

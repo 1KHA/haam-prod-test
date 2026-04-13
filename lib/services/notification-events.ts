@@ -294,7 +294,7 @@ export async function notifyUserCreated(params: {
   createdBy?: string;
 }) {
   const { name, role, tempPassword, createdBy } = params;
-
+  
   const roleLabel = getRoleLabelAr(role);
   const roleLabelEn = getRoleLabelEn(role);
 
@@ -346,7 +346,7 @@ export async function notifyUserRoleChanged(params: {
     actionUrl: '/dashboard',
     actionLabel: 'عرض لوحة التحكم',
     actionLabelEn: 'View Dashboard',
-    createdBy,
+    createdBy: changedBy,
     metadata: { userId: params.userId, oldRole, newRole, type: 'user_role_changed' },
   });
 }
@@ -661,8 +661,153 @@ export async function notifyProgramCreated(params: {
     actionUrl: `/program-manager-dashboard/programs?id=${params.programId}`,
     actionLabel: 'عرض البرنامج',
     actionLabelEn: 'View Program',
-    createdBy,
+    createdBy: createdBy,
     metadata: { programId: params.programId, type: 'program_created' },
+  });
+}
+
+// ============================================================================
+// ADMIN NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Notify admins when a new user registers
+ * Trigger: POST /api/auth/signup
+ */
+export async function notifyNewUserRegistered(params: {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  adminIds: string[];
+}) {
+  const { userId, userName, userEmail, userRole, adminIds } = params;
+
+  if (adminIds.length === 0) return;
+
+  const roleLabel = getRoleLabelAr(userRole);
+  const roleLabelEn = getRoleLabelEn(userRole);
+
+  await NotificationService.createNotification({
+    title: 'مستخدم جديد مسجل 📝',
+    message: `${userName} (${userEmail}) سجل كـ ${roleLabel}. يتطلب مراجعة وموافقة.`,
+    titleEn: 'New User Registered 📝',
+    messageEn: `${userName} (${userEmail}) registered as ${roleLabelEn}. Requires review and approval.`,
+    type: 'system',
+    priority: 'high',
+    recipientIds: adminIds,
+    actionUrl: `/admin-dashboard/users?id=${userId}`,
+    actionLabel: 'مراجعة المستخدم',
+    actionLabelEn: 'Review User',
+    metadata: { userId, userEmail, userRole, type: 'new_user_registered' },
+  });
+}
+
+// ============================================================================
+// STARTUP NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Notify Program Managers when a new startup is created
+ * Trigger: POST /api/startups/create
+ */
+export async function notifyStartupCreated(params: {
+  startupId: string;
+  startupName: string;
+  startupDescription?: string;
+  founderId: string;
+  founderName: string;
+  programManagerIds: string[];
+}) {
+  const { startupId, startupName, founderName, programManagerIds } = params;
+
+  if (programManagerIds.length === 0) return;
+
+  await NotificationService.createNotification({
+    title: `شركة ناشئة جديدة: ${startupName}`,
+    message: `${founderName} أنشأ شركة ناشئة جديدة "${startupName}". تحتاج إلى مراجعة.`,
+    titleEn: `New Startup: ${startupName}`,
+    messageEn: `${founderName} created a new startup "${startupName}". Requires review.`,
+    type: 'system',
+    priority: 'medium',
+    recipientIds: programManagerIds,
+    actionUrl: `/program-manager-dashboard/startups/${startupId}`,
+    actionLabel: 'مراجعة الشركة',
+    actionLabelEn: 'Review Startup',
+    metadata: { startupId, founderId, type: 'startup_created' },
+  });
+}
+
+// ============================================================================
+// APPLICATION NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Notify Program Managers when a new application is submitted
+ * Trigger: POST /api/cohorts/apply
+ */
+export async function notifyApplicationSubmitted(params: {
+  applicationId: string;
+  startupId: string;
+  startupName: string;
+  cohortId: string;
+  cohortName: string;
+  applicantId: string;
+  applicantName: string;
+  programManagerIds: string[];
+}) {
+  const { applicationId, startupName, cohortName, applicantName, programManagerIds } = params;
+
+  if (programManagerIds.length === 0) return;
+
+  await NotificationService.createNotification({
+    title: 'طلب انضمام جديد 📨',
+    message: `${applicantName} من ${startupName} تقدم بطلب للانضمام إلى ${cohortName}.`,
+    titleEn: 'New Application Submitted 📨',
+    messageEn: `${applicantName} from ${startupName} applied to join ${cohortName}.`,
+    type: 'application',
+    priority: 'high',
+    recipientIds: programManagerIds,
+    actionUrl: `/program-manager-dashboard/cohorts/${params.cohortId}/applications`,
+    actionLabel: 'مراجعة الطلب',
+    actionLabelEn: 'Review Application',
+    metadata: { applicationId, startupId: params.startupId, cohortId: params.cohortId, type: 'application_submitted' },
+  });
+}
+
+// ============================================================================
+// EVENT REGISTRATION NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Notify event organizers when someone registers
+ * Trigger: POST /api/events/[id]/register
+ */
+export async function notifyEventRegistration(params: {
+  registrationId: string;
+  eventId: string;
+  eventName: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  organizerIds: string[];
+}) {
+  const { eventName, userName, userEmail, organizerIds } = params;
+
+  if (organizerIds.length === 0) return;
+
+  await NotificationService.createNotification({
+    title: `تسجيل جديد: ${eventName}`,
+    message: `${userName} (${userEmail}) سجل في الفعالية "${eventName}".`,
+    titleEn: `New Registration: ${eventName}`,
+    messageEn: `${userName} (${userEmail}) registered for "${eventName}".`,
+    type: 'event',
+    priority: 'medium',
+    recipientIds: organizerIds,
+    actionUrl: `/admin-dashboard/events/${params.eventId}/registrations`,
+    actionLabel: 'عرض المسجلين',
+    actionLabelEn: 'View Registrations',
+    metadata: { registrationId: params.registrationId, eventId: params.eventId, userId: params.userId, type: 'event_registration' },
   });
 }
 

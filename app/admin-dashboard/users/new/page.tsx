@@ -219,6 +219,7 @@ export default function NewUserPage() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إضافة مستخدم جديد</h1>
         <Button 
           variant="outline" 
           size="sm" 
@@ -228,7 +229,6 @@ export default function NewUserPage() {
           <ArrowRight className="h-4 w-4" />
           <span>العودة إلى قائمة المستخدمين</span>
         </Button>
-        <h1 className="text-3xl font-bold">إضافة مستخدم جديد</h1>
       </div>
 
       <Card>

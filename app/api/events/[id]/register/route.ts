@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
+import { notifyEventRegistration } from '@/lib/services/notification-events';
 
 // GET /api/events/[id]/register - Check registration status for an event
 export async function GET(
@@ -177,6 +178,34 @@ export async function POST(
         status: 'confirmed'
       }
     });
+
+    // Notify event organizers about new registration
+    try {
+      // Get the event creator/organizer
+      const eventWithOrganizer = await prisma.event.findUnique({
+        where: { id: eventId },
+        select: { 
+          id: true,
+          name: true,
+          createdById: true 
+        },
+      });
+
+      if (eventWithOrganizer?.createdById) {
+        await notifyEventRegistration({
+          registrationId: registration.id,
+          eventId,
+          eventName: eventWithOrganizer.name,
+          userId: user.userId,
+          userName: user.name || user.email,
+          userEmail: user.email,
+          organizerIds: [eventWithOrganizer.createdById],
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Event Register] Failed to send notifications:', notifyError);
+      // Don't fail the request if notification fails
+    }
     
     return NextResponse.json({
       registration,

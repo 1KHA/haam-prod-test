@@ -4,6 +4,7 @@ import { isAuthenticated, UserRole } from '@/lib/auth';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { mkdir } from 'fs/promises';
+import { notifyStartupCreated } from '@/lib/services/notification-events';
 
 // Define the allowed file types
 const ALLOWED_FILE_TYPES = [
@@ -120,6 +121,28 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
       },
     });
+
+    // Notify Program Managers about new startup
+    try {
+      const programManagers = await prisma.user.findMany({
+        where: { role: 'PROGRAM_MANAGER' },
+        select: { id: true },
+      });
+
+      if (programManagers.length > 0) {
+        await notifyStartupCreated({
+          startupId: startup.id,
+          startupName: startup.name,
+          startupDescription: startup.description,
+          founderId: user.userId,
+          founderName: user.name || user.email,
+          programManagerIds: programManagers.map(pm => pm.id),
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Create Startup] Failed to send notifications:', notifyError);
+      // Don't fail the request if notification fails
+    }
     
     // Return success response
     return NextResponse.json({

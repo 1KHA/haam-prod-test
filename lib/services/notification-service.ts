@@ -11,6 +11,10 @@ import { prisma } from '@/lib/prisma';
 // Map of userId -> array of controller functions
 const sseConnections = new Map<string, Array<(data: string) => void>>();
 
+// Pending notifications for users who are not currently connected
+// Map of userId -> array of pending notification payloads
+const pendingNotifications = new Map<string, Array<{ type: string; data: unknown }>>();
+
 export type NotificationType = 
   | 'system' 
   | 'application' 
@@ -144,6 +148,7 @@ export class NotificationService {
 
   /**
    * Register an SSE connection for a user
+   * Also delivers any pending notifications that were queued while user was offline
    */
   static registerConnection(userId: string, controller: (data: string) => void): () => void {
     if (!sseConnections.has(userId)) {
@@ -153,6 +158,27 @@ export class NotificationService {
     const connections = sseConnections.get(userId)!;
     connections.push(controller);
 
+    // Deliver any pending notifications immediately
+    const pending = pendingNotifications.get(userId);
+    if (pending && pending.length > 0) {
+      console.log(`[NotificationService] Delivering ${pending.length} pending notifications to user ${userId}`);
+      for (const payload of pending) {
+        try {
+          const dataString = `event: ${payload.type}
+data: ${JSON.stringify(payload.data)}
+
+`;
+          controller(dataString);
+        } catch (error) {
+          console.error(`[NotificationService] Error sending pending notification to user ${userId}:`, error);
+        }
+      }
+      // Clear pending notifications after delivery
+      pendingNotifications.delete(userId);
+    }
+
+    console.log(`[NotificationService] Registered SSE connection for user ${userId}, total connections: ${connections.length}`);
+
     // Return cleanup function
     return () => {
       const idx = connections.indexOf(controller);
@@ -161,12 +187,16 @@ export class NotificationService {
       }
       if (connections.length === 0) {
         sseConnections.delete(userId);
+        console.log(`[NotificationService] Removed last SSE connection for user ${userId}`);
+      } else {
+        console.log(`[NotificationService] Removed SSE connection for user ${userId}, remaining: ${connections.length}`);
       }
     };
   }
 
   /**
    * Broadcast to specific users via SSE
+   * If user is not connected, notification is queued for later delivery
    */
   private static async broadcastToUsers(
     userIds: string[],
@@ -177,13 +207,30 @@ export class NotificationService {
     for (const userId of userIds) {
       const connections = sseConnections.get(userId);
       if (connections && connections.length > 0) {
+        // User is online - send immediately
+        let deliveredCount = 0;
         connections.forEach((controller) => {
           try {
             controller(dataString);
+            deliveredCount++;
           } catch (error) {
             console.error(`[NotificationService] Error broadcasting to user ${userId}:`, error);
           }
         });
+        console.log(`[NotificationService] Delivered ${payload.type} to user ${userId} (${deliveredCount} connections)`);
+      } else {
+        // User is offline - queue for later delivery
+        console.log(`[NotificationService] User ${userId} offline, queuing ${payload.type} notification`);
+        if (!pendingNotifications.has(userId)) {
+          pendingNotifications.set(userId, []);
+        }
+        pendingNotifications.get(userId)!.push(payload);
+        
+        // Limit pending queue to prevent memory issues (keep last 50)
+        const queue = pendingNotifications.get(userId)!;
+        if (queue.length > 50) {
+          queue.splice(0, queue.length - 50);
+        }
       }
     }
   }
@@ -348,6 +395,13 @@ export class NotificationService {
       console.error('[NotificationService] Error getting notifications:', error);
       return { notifications: [], total: 0, unreadCount: 0 };
     }
+  }
+
+  /**
+   * Get pending notifications count for a user (notifications queued while offline)
+   */
+  static getPendingCount(userId: string): number {
+    return pendingNotifications.get(userId)?.length || 0;
   }
 
   /**

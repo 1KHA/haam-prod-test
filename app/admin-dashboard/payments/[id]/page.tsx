@@ -349,6 +349,17 @@ export default function PaymentDetailsPage() {
     <div className="space-y-6 text-right">
       {/* Header */}
       <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start gap-1">
+          <h1 className="text-3xl font-bold">تفاصيل الدفعة #{payment.referenceNumber}</h1>
+          <div className="flex items-center gap-2">
+            <Badge className={getStatusColor(payment.status)}>
+              {getPaymentStatusArabic(payment.status)}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {formatDate(payment.paymentDate)}
+            </span>
+          </div>
+        </div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -377,18 +388,6 @@ export default function PaymentDetailsPage() {
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>تحديث</span>
           </Button>
-        </div>
-        
-        <div className="flex flex-col items-end gap-1">
-          <h1 className="text-3xl font-bold">تفاصيل الدفعة #{payment.referenceNumber}</h1>
-          <div className="flex items-center gap-2">
-            <Badge className={getStatusColor(payment.status)}>
-              {getPaymentStatusArabic(payment.status)}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {formatDate(payment.paymentDate)}
-            </span>
-          </div>
         </div>
       </div>
 

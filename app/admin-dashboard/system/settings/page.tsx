@@ -1138,6 +1138,7 @@ export default function SystemSettings() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إعدادات النظام</h1>
         <Button 
           variant="default" 
           size="sm" 
@@ -1148,7 +1149,6 @@ export default function SystemSettings() {
           {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           <span>حفظ الإعدادات</span>
         </Button>
-        <h1 className="text-3xl font-bold">إعدادات النظام</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

@@ -237,6 +237,10 @@ export default function StartupDetails({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold">{startup.name}</h1>
+          {getStatusBadge(startup.status)}
+        </div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -270,10 +274,6 @@ export default function StartupDetails({ params }: { params: { id: string } }) {
             )}
             <span>حذف</span>
           </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold">{startup.name}</h1>
-          {getStatusBadge(startup.status)}
         </div>
       </div>
 

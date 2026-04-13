@@ -14,6 +14,7 @@ export default function UsersManagement() {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">إدارة المستخدمين</h1>
         <PermissionGate
           requirement={{ category: 'users', action: 'add' }}
         >
@@ -27,7 +28,6 @@ export default function UsersManagement() {
             <span>إضافة مستخدم</span>
           </Button>
         </PermissionGate>
-        <h1 className="text-3xl font-bold">إدارة المستخدمين</h1>
       </div>
 
       <Card>

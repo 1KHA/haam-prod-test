@@ -271,6 +271,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">تفاصيل الفعالية</h1>
         <div className="flex gap-2">
           <Link href="/admin-dashboard/events">
             <Button variant="outline" size="sm" className="flex items-center gap-1">
@@ -288,7 +289,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             <span>تصدير المشاركين</span>
           </Button>
         </div>
-        <h1 className="text-3xl font-bold">تفاصيل الفعالية</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -196,6 +196,7 @@ export default function EditStartup({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">تعديل {startup.name}</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -207,7 +208,6 @@ export default function EditStartup({ params }: { params: { id: string } }) {
             <span>العودة</span>
           </Button>
         </div>
-        <h1 className="text-3xl font-bold">تعديل {startup.name}</h1>
       </div>
 
       <form onSubmit={handleSubmit}>

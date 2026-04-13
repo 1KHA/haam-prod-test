@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
+import { notifyApplicationSubmitted } from '@/lib/services/notification-events';
 
 // POST /api/cohorts/apply - Apply to a cohort with a startup
 export async function POST(request: NextRequest) {
@@ -85,6 +86,30 @@ export async function POST(request: NextRequest) {
         joinDate: new Date()
       }
     });
+
+    // Notify Program Managers about new application
+    try {
+      const programManagers = await prisma.user.findMany({
+        where: { role: 'PROGRAM_MANAGER' },
+        select: { id: true },
+      });
+
+      if (programManagers.length > 0) {
+        await notifyApplicationSubmitted({
+          applicationId: cohortMember.id,
+          startupId,
+          startupName: startup.name,
+          cohortId,
+          cohortName: cohort.name,
+          applicantId: user.userId,
+          applicantName: user.name || user.email,
+          programManagerIds: programManagers.map(pm => pm.id),
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Cohort Apply] Failed to send notifications:', notifyError);
+      // Don't fail the request if notification fails
+    }
     
     // Update team members if provided
     if (teamMembers && Array.isArray(teamMembers) && teamMembers.length > 0) {

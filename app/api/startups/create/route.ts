@@ -123,13 +123,17 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify Program Managers about new startup
+    console.log(`[Create Startup] Looking for Program Managers to notify...`);
     try {
       const programManagers = await prisma.user.findMany({
         where: { role: 'PROGRAM_MANAGER' },
         select: { id: true },
       });
 
+      console.log(`[Create Startup] Found ${programManagers.length} Program Managers`);
+
       if (programManagers.length > 0) {
+        console.log(`[Create Startup] Sending notification to PMs...`);
         await notifyStartupCreated({
           startupId: startup.id,
           startupName: startup.name,
@@ -138,9 +142,13 @@ export async function POST(request: NextRequest) {
           founderName: user.name || user.email,
           programManagerIds: programManagers.map(pm => pm.id),
         });
+        console.log(`[Create Startup] Notification sent successfully`);
+      } else {
+        console.log(`[Create Startup] No Program Managers found, skipping notification`);
       }
-    } catch (notifyError) {
-      console.error('[Create Startup] Failed to send notifications:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Create Startup] Failed to send notifications:', notifyError.message);
+      console.error('[Create Startup] Stack:', notifyError.stack);
       // Don't fail the request if notification fails
     }
     

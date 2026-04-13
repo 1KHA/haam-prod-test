@@ -27,6 +27,13 @@ export async function notifyMilestoneResponseSubmitted(params: {
 }) {
   const { milestoneId, milestoneTitle, startupName, submittedByName, programManagerId } = params;
 
+  console.log(`[notifyMilestoneResponseSubmitted] Called for PM: ${programManagerId}`);
+
+  if (!programManagerId) {
+    console.log('[notifyMilestoneResponseSubmitted] SKIPPED: No program manager ID');
+    return;
+  }
+
   await NotificationService.createNotification({
     title: `رد جديد على المهمة: ${milestoneTitle}`,
     message: `${startupName} قدم رداً على المهمة "${milestoneTitle}" بواسطة ${submittedByName}.`,
@@ -721,7 +728,12 @@ export async function notifyStartupCreated(params: {
 }) {
   const { startupId, startupName, founderName, programManagerIds } = params;
 
-  if (programManagerIds.length === 0) return;
+  console.log(`[notifyStartupCreated] Called with ${programManagerIds.length} PMs`);
+
+  if (programManagerIds.length === 0) {
+    console.log('[notifyStartupCreated] SKIPPED: No program managers to notify');
+    return;
+  }
 
   await NotificationService.createNotification({
     title: `شركة ناشئة جديدة: ${startupName}`,
@@ -758,7 +770,12 @@ export async function notifyApplicationSubmitted(params: {
 }) {
   const { applicationId, startupName, cohortName, applicantName, programManagerIds } = params;
 
-  if (programManagerIds.length === 0) return;
+  console.log(`[notifyApplicationSubmitted] Called with ${programManagerIds.length} PMs`);
+
+  if (programManagerIds.length === 0) {
+    console.log('[notifyApplicationSubmitted] SKIPPED: No program managers to notify');
+    return;
+  }
 
   await NotificationService.createNotification({
     title: 'طلب انضمام جديد 📨',
@@ -794,7 +811,12 @@ export async function notifyEventRegistration(params: {
 }) {
   const { eventName, userName, userEmail, organizerIds } = params;
 
-  if (organizerIds.length === 0) return;
+  console.log(`[notifyEventRegistration] Called with ${organizerIds.length} organizers`);
+
+  if (organizerIds.length === 0) {
+    console.log('[notifyEventRegistration] SKIPPED: No organizers to notify');
+    return;
+  }
 
   await NotificationService.createNotification({
     title: `تسجيل جديد: ${eventName}`,

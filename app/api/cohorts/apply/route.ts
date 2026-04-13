@@ -88,13 +88,17 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify Program Managers about new application
+    console.log(`[Cohort Apply] Looking for Program Managers to notify about application...`);
     try {
       const programManagers = await prisma.user.findMany({
         where: { role: 'PROGRAM_MANAGER' },
         select: { id: true },
       });
 
+      console.log(`[Cohort Apply] Found ${programManagers.length} Program Managers`);
+
       if (programManagers.length > 0) {
+        console.log(`[Cohort Apply] Sending application notification to PMs...`);
         await notifyApplicationSubmitted({
           applicationId: cohortMember.id,
           startupId,
@@ -105,9 +109,13 @@ export async function POST(request: NextRequest) {
           applicantName: user.name || user.email,
           programManagerIds: programManagers.map(pm => pm.id),
         });
+        console.log(`[Cohort Apply] Application notification sent successfully`);
+      } else {
+        console.log(`[Cohort Apply] No Program Managers found, skipping notification`);
       }
-    } catch (notifyError) {
-      console.error('[Cohort Apply] Failed to send notifications:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Cohort Apply] Failed to send notifications:', notifyError.message);
+      console.error('[Cohort Apply] Stack:', notifyError.stack);
       // Don't fail the request if notification fails
     }
     

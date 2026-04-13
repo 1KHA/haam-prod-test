@@ -135,8 +135,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
 
     // Notify the Program Manager about the new submission
+    console.log(`[Milestone Submissions] Attempting to notify PM about submission...`);
     try {
       const milestone = await getMilestoneDetail(params.id);
+      console.log(`[Milestone Submissions] Got milestone: ${milestone?.title}, cohortId: ${milestone?.cohortId}`);
+      
       if (milestone) {
         // Get cohort with manager info
         const cohort = await prisma.cohort.findUnique({
@@ -146,7 +149,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           },
         });
 
+        console.log(`[Milestone Submissions] Got cohort: ${cohort?.name}, manager: ${cohort?.manager?.id}`);
+
         if (cohort?.manager) {
+          console.log(`[Milestone Submissions] Sending notification to PM: ${cohort.manager.id}`);
           await notifyMilestoneResponseSubmitted({
             milestoneId: params.id,
             milestoneTitle: milestone.title,
@@ -156,10 +162,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             submittedByName: user.name || '',
             programManagerId: cohort.manager.id,
           });
+          console.log(`[Milestone Submissions] Notification sent successfully`);
+        } else {
+          console.log(`[Milestone Submissions] No manager found for cohort, skipping notification`);
         }
+      } else {
+        console.log(`[Milestone Submissions] Milestone not found, skipping notification`);
       }
-    } catch (notifyError) {
-      console.error('[Milestone Submissions API] Failed to send notification:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Milestone Submissions API] Failed to send notification:', notifyError.message);
+      console.error('[Milestone Submissions API] Stack:', notifyError.stack);
     }
 
     return NextResponse.json({ submission }, { status: 201 });

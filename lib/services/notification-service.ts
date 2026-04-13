@@ -92,58 +92,82 @@ export class NotificationService {
       sendPush = false,
     } = params;
 
+    console.log(`[NotificationService] Creating notification:`, {
+      title: title.substring(0, 30),
+      type,
+      recipientCount: recipientIds?.length,
+    });
+
+    // Validate recipientIds
+    if (!recipientIds || recipientIds.length === 0) {
+      console.error('[NotificationService] ERROR: No recipients provided');
+      throw new Error('No recipients provided');
+    }
+
     // Remove duplicates from recipientIds
     const uniqueRecipientIds = [...new Set(recipientIds)];
+    console.log(`[NotificationService] Deduplicated recipients: ${uniqueRecipientIds.length}`);
 
-    // Create notification with recipients in a transaction
-    const notification = await prisma.$transaction(async (tx) => {
-      const created = await (tx as any).notification.create({
-        data: {
-          title,
-          message,
-          titleEn,
-          messageEn,
-          type,
-          priority,
-          sendEmail,
-          sendPush,
-          actionUrl,
-          actionLabel,
-          actionLabelEn,
-          metadata: metadata ? JSON.stringify(metadata) : null,
-          createdById: createdBy || 'system',
-          recipients: {
-            create: uniqueRecipientIds.map((userId) => ({
-              userId,
-              deliveredAt: new Date(),
-            })),
+    try {
+      // Create notification with recipients in a transaction
+      console.log(`[NotificationService] Starting database transaction...`);
+      const notification = await prisma.$transaction(async (tx) => {
+        console.log(`[NotificationService] Creating notification record...`);
+        const created = await (tx as any).notification.create({
+          data: {
+            title,
+            message,
+            titleEn,
+            messageEn,
+            type,
+            priority,
+            sendEmail,
+            sendPush,
+            actionUrl,
+            actionLabel,
+            actionLabelEn,
+            metadata: metadata ? JSON.stringify(metadata) : null,
+            createdById: createdBy || 'system',
+            recipients: {
+              create: uniqueRecipientIds.map((userId) => ({
+                userId,
+                deliveredAt: new Date(),
+              })),
+            },
           },
-        },
-        include: {
-          recipients: true,
-        },
+          include: {
+            recipients: true,
+          },
+        });
+
+        console.log(`[NotificationService] Notification created with ID: ${created.id}`);
+        return created;
       });
 
-      return created;
-    });
+      // Broadcast to connected clients via SSE
+      console.log(`[NotificationService] Broadcasting to ${uniqueRecipientIds.length} recipients...`);
+      await this.broadcastToUsers(uniqueRecipientIds, {
+        type: 'new_notification',
+        data: this.formatNotification(notification),
+      });
 
-    // Broadcast to connected clients via SSE
-    await this.broadcastToUsers(uniqueRecipientIds, {
-      type: 'new_notification',
-      data: this.formatNotification(notification),
-    });
+      // TODO: Send email if enabled
+      if (sendEmail) {
+        // await this.sendEmailNotifications(notification, uniqueRecipientIds);
+      }
 
-    // TODO: Send email if enabled
-    if (sendEmail) {
-      // await this.sendEmailNotifications(notification, uniqueRecipientIds);
+      // TODO: Send push if enabled
+      if (sendPush) {
+        // await this.sendPushNotifications(notification, uniqueRecipientIds);
+      }
+
+      console.log(`[NotificationService] Notification created successfully`);
+      return notification;
+    } catch (error: any) {
+      console.error('[NotificationService] ERROR creating notification:', error.message);
+      console.error('[NotificationService] Stack:', error.stack);
+      throw error;
     }
-
-    // TODO: Send push if enabled
-    if (sendPush) {
-      // await this.sendPushNotifications(notification, uniqueRecipientIds);
-    }
-
-    return notification;
   }
 
   /**

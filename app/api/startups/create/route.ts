@@ -122,29 +122,63 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Notify Program Managers about new startup
-    console.log(`[Create Startup] Looking for Program Managers to notify...`);
+    // Notify Program Managers and Admins about new startup
+    console.log(`[Create Startup] Looking for recipients to notify...`);
     try {
       const programManagers = await prisma.user.findMany({
         where: { role: 'PROGRAM_MANAGER' },
         select: { id: true },
       });
 
-      console.log(`[Create Startup] Found ${programManagers.length} Program Managers`);
+      const admins = await prisma.user.findMany({
+        where: { role: 'ADMIN' },
+        select: { id: true },
+      });
 
-      if (programManagers.length > 0) {
-        console.log(`[Create Startup] Sending notification to PMs...`);
+      console.log(`[Create Startup] Found ${programManagers.length} Program Managers and ${admins.length} Admins`);
+
+      // Combine PM and Admin IDs
+      const allRecipients = [
+        ...programManagers.map(pm => pm.id),
+        ...admins.map(admin => admin.id)
+      ];
+
+      if (allRecipients.length > 0) {
+        console.log(`[Create Startup] Sending notification to ${allRecipients.length} recipients...`);
+        console.log(`[Create Startup] Recipient IDs: ${JSON.stringify(allRecipients)}`);
+        
         await notifyStartupCreated({
           startupId: startup.id,
           startupName: startup.name,
           startupDescription: startup.description,
           founderId: user.userId,
           founderName: user.name || user.email,
-          programManagerIds: programManagers.map(pm => pm.id),
+          programManagerIds: allRecipients,
         });
-        console.log(`[Create Startup] Notification sent successfully`);
+        console.log(`[Create Startup] Notification function completed`);
+        
+        // Final verification - check if any startup notifications exist
+        console.log(`[Create Startup] Verifying notifications were saved...`);
+        try {
+          const recentNotifications = await (prisma as any).notification.findMany({
+            where: {
+              title: {
+                contains: startup.name,
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          });
+          if (recentNotifications.length > 0) {
+            console.log(`[Create Startup] ✅ FOUND notification in DB: ${recentNotifications[0].id}`);
+          } else {
+            console.error(`[Create Startup] ❌ NO notification found in DB for startup: ${startup.name}`);
+          }
+        } catch (verifyError: any) {
+          console.error(`[Create Startup] ❌ Verification failed:`, verifyError.message);
+        }
       } else {
-        console.log(`[Create Startup] No Program Managers found, skipping notification`);
+        console.log(`[Create Startup] No recipients found (no PMs or Admins), skipping notification`);
       }
     } catch (notifyError: any) {
       console.error('[Create Startup] Failed to send notifications:', notifyError.message);

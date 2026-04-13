@@ -25,9 +25,9 @@ export async function notifyMilestoneResponseSubmitted(params: {
   submittedByName: string;
   programManagerId: string;
 }) {
-  const { milestoneId, milestoneTitle, startupName, submittedByName, programManagerId } = params;
+  const { milestoneId, milestoneTitle, startupId, startupName, submittedByName, programManagerId } = params;
 
-  console.log(`[notifyMilestoneResponseSubmitted] Called for PM: ${programManagerId}`);
+  console.log(`[notifyMilestoneResponseSubmitted] Called for PM: ${programManagerId}, startupId: ${startupId}`);
 
   if (!programManagerId) {
     console.log('[notifyMilestoneResponseSubmitted] SKIPPED: No program manager ID');
@@ -726,9 +726,9 @@ export async function notifyStartupCreated(params: {
   founderName: string;
   programManagerIds: string[];
 }) {
-  const { startupId, startupName, founderName, programManagerIds } = params;
+  const { startupId, startupName, founderId, founderName, programManagerIds } = params;
 
-  console.log(`[notifyStartupCreated] Called with ${programManagerIds.length} PMs`);
+  console.log(`[notifyStartupCreated] Called with ${programManagerIds.length} PMs, founderId: ${founderId}`);
 
   if (programManagerIds.length === 0) {
     console.log('[notifyStartupCreated] SKIPPED: No program managers to notify');
@@ -768,9 +768,9 @@ export async function notifyApplicationSubmitted(params: {
   applicantName: string;
   programManagerIds: string[];
 }) {
-  const { applicationId, startupName, cohortName, applicantName, programManagerIds } = params;
+  const { applicationId, startupId, cohortId, startupName, cohortName, applicantName, programManagerIds } = params;
 
-  console.log(`[notifyApplicationSubmitted] Called with ${programManagerIds.length} PMs`);
+  console.log(`[notifyApplicationSubmitted] Called with ${programManagerIds.length} PMs, appId: ${applicationId}`);
 
   if (programManagerIds.length === 0) {
     console.log('[notifyApplicationSubmitted] SKIPPED: No program managers to notify');
@@ -785,10 +785,10 @@ export async function notifyApplicationSubmitted(params: {
     type: 'application',
     priority: 'high',
     recipientIds: programManagerIds,
-    actionUrl: `/program-manager-dashboard/cohorts/${params.cohortId}/applications`,
+    actionUrl: `/program-manager-dashboard/cohorts/${cohortId}/applications`,
     actionLabel: 'مراجعة الطلب',
     actionLabelEn: 'Review Application',
-    metadata: { applicationId, startupId: params.startupId, cohortId: params.cohortId, type: 'application_submitted' },
+    metadata: { applicationId, startupId, cohortId, type: 'application_submitted' },
   });
 }
 

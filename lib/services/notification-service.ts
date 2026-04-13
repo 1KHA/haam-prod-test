@@ -7,6 +7,10 @@
 
 import { prisma } from '@/lib/prisma';
 
+// Default admin user ID for system-generated notifications
+// This user must exist in the database (foreign key constraint)
+const DEFAULT_ADMIN_ID = '5c7e918d-1c6b-49db-8fa2-b4a2303dccae';
+
 // Global SSE connections store
 // Map of userId -> array of controller functions
 const sseConnections = new Map<string, Array<(data: string) => void>>();
@@ -111,8 +115,11 @@ export class NotificationService {
     try {
       // Create notification with recipients in a transaction
       console.log(`[NotificationService] Starting database transaction...`);
+      console.log(`[NotificationService] createdById: ${createdBy || 'system'}`);
+      console.log(`[NotificationService] recipientIds: ${JSON.stringify(uniqueRecipientIds)}`);
+      
       const notification = await prisma.$transaction(async (tx) => {
-        console.log(`[NotificationService] Creating notification record...`);
+        console.log(`[NotificationService] Creating notification record inside transaction...`);
         const created = await (tx as any).notification.create({
           data: {
             title,
@@ -127,7 +134,7 @@ export class NotificationService {
             actionLabel,
             actionLabelEn,
             metadata: metadata ? JSON.stringify(metadata) : null,
-            createdById: createdBy || 'system',
+            createdById: createdBy || DEFAULT_ADMIN_ID,
             recipients: {
               create: uniqueRecipientIds.map((userId) => ({
                 userId,
@@ -140,9 +147,30 @@ export class NotificationService {
           },
         });
 
-        console.log(`[NotificationService] Notification created with ID: ${created.id}`);
+        console.log(`[NotificationService] ✅ Created inside transaction with ID: ${created.id}`);
+        console.log(`[NotificationService] Recipients: ${created.recipients?.length || 0}`);
         return created;
       });
+
+      // IMMEDIATE VERIFICATION - Query the database right after transaction
+      console.log(`[NotificationService] Verifying notification persisted to DB...`);
+      try {
+        const verifyNotification = await (prisma as any).notification.findUnique({
+          where: { id: notification.id },
+          include: { recipients: true }
+        });
+        
+        if (verifyNotification) {
+          console.log(`[NotificationService] ✅ VERIFIED: Notification in DB: ${verifyNotification.id}`);
+          console.log(`[NotificationService] ✅ Title: ${verifyNotification.title.substring(0, 40)}`);
+          console.log(`[NotificationService] ✅ Recipients in DB: ${verifyNotification.recipients?.length || 0}`);
+        } else {
+          console.error(`[NotificationService] ❌ CRITICAL: Notification NOT in DB! ID: ${notification.id}`);
+          console.error(`[NotificationService] ❌ Transaction may have rolled back silently!`);
+        }
+      } catch (verifyError: any) {
+        console.error(`[NotificationService] ❌ Verification query failed:`, verifyError.message);
+      }
 
       // Broadcast to connected clients via SSE
       console.log(`[NotificationService] Broadcasting to ${uniqueRecipientIds.length} recipients...`);

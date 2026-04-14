@@ -177,11 +177,14 @@ export async function PUT(
     }
     
     // Get application details before update for notification
+    console.log(`[Applications API] Fetching application details for notification...`);
     const oldApplication = await prisma.cohortMember.findFirst({
       where: { id: applicationId },
       include: {
         startup: {
-          include: {
+          select: {
+            id: true,
+            name: true,
             creator: { select: { id: true } },
             members: { select: { userId: true } },
           },
@@ -189,6 +192,8 @@ export async function PUT(
         cohort: { select: { name: true } },
       },
     });
+    console.log(`[Applications API] Found application: ${oldApplication ? 'yes' : 'no'}`);
+    console.log(`[Applications API] Startup name: ${oldApplication?.startup?.name}`);
 
     // Update application status
     const updatedApplication = await prisma.cohortMember.update({
@@ -201,12 +206,16 @@ export async function PUT(
     });
 
     // Notify the entrepreneur about the status change
+    console.log(`[Applications API] Notifying entrepreneur about status change to ${status}...`);
     try {
       if (oldApplication) {
         const entrepreneurIds = [
           oldApplication.startup.creator?.id,
           ...oldApplication.startup.members.map(m => m.userId),
         ].filter((id): id is string => !!id);
+
+        console.log(`[Applications API] Found ${entrepreneurIds.length} entrepreneurs to notify`);
+        console.log(`[Applications API] Entrepreneur IDs: ${JSON.stringify(entrepreneurIds)}`);
 
         // Map cohort member status to application status
         const statusMap: Record<string, 'PENDING' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED'> = {
@@ -216,20 +225,31 @@ export async function PUT(
           'DROPPED': 'REJECTED',
         };
 
-        await notifyApplicationStatusChanged({
-          applicationId,
-          startupId: oldApplication.startupId,
-          startupName: oldApplication.startup.name,
-          cohortId: id,
-          cohortName: oldApplication.cohort.name,
-          oldStatus: oldApplication.status,
-          newStatus: statusMap[status] || 'PENDING',
-          feedback,
-          entrepreneurIds,
-        });
+        const mappedStatus = statusMap[status] || 'PENDING';
+        console.log(`[Applications API] Mapped status: ${status} -> ${mappedStatus}`);
+
+        if (entrepreneurIds.length > 0) {
+          await notifyApplicationStatusChanged({
+            applicationId,
+            startupId: oldApplication.startupId,
+            startupName: oldApplication.startup.name,
+            cohortId: id,
+            cohortName: oldApplication.cohort.name,
+            oldStatus: oldApplication.status,
+            newStatus: mappedStatus,
+            feedback,
+            entrepreneurIds,
+          });
+          console.log(`[Applications API] Status change notification sent successfully`);
+        } else {
+          console.log(`[Applications API] No entrepreneurs found to notify`);
+        }
+      } else {
+        console.log(`[Applications API] No old application data found`);
       }
-    } catch (notifyError) {
-      console.error('[Applications API] Failed to send status change notification:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Applications API] Failed to send status change notification:', notifyError.message);
+      console.error('[Applications API] Stack:', notifyError.stack);
     }
     
     return NextResponse.json({

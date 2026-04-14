@@ -98,6 +98,13 @@ export async function POST(request: NextRequest) {
       console.log(`[Cohort Apply] Found ${programManagers.length} Program Managers`);
 
       if (programManagers.length > 0) {
+        // Get the full user data for the applicant's name
+        const applicant = await prisma.user.findUnique({
+          where: { id: user.userId },
+          select: { name: true, email: true },
+        });
+        const applicantName = applicant?.name || applicant?.email || user.email;
+
         console.log(`[Cohort Apply] Sending application notification to PMs...`);
         await notifyApplicationSubmitted({
           applicationId: cohortMember.id,
@@ -106,7 +113,7 @@ export async function POST(request: NextRequest) {
           cohortId,
           cohortName: cohort.name,
           applicantId: user.userId,
-          applicantName: user.name || user.email,
+          applicantName,
           programManagerIds: programManagers.map(pm => pm.id),
         });
         console.log(`[Cohort Apply] Application notification sent successfully`);

@@ -64,7 +64,8 @@ export default function SelectionPage() {
   
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -80,8 +81,7 @@ export default function SelectionPage() {
       try {
         const response = await fetch(`/api/program-manager/selection`, {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+                      }
         });
         
         if (!response.ok) {
@@ -145,8 +145,7 @@ export default function SelectionPage() {
       const response = await fetch(`/api/program-manager/selection/${applicationId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           status: apiStatus,

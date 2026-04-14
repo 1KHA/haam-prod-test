@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify all entrepreneurs in the cohort about the new milestone
+    console.log(`[PM Milestones API] Notifying entrepreneurs about new milestone...`);
     try {
       const cohort = await prisma.cohort.findUnique({
         where: { id: cohortId },
@@ -120,19 +121,25 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      console.log(`[PM Milestones API] Cohort: ${cohort?.name}, Members: ${cohort?.members?.length || 0}`);
+
       if (cohort) {
         const recipientIds = new Set<string>();
         
         for (const member of cohort.members) {
+          console.log(`[PM Milestones API] Processing startup: ${member.startup?.name}, Creator: ${member.startup?.creator?.id}`);
           // Add startup creator
-          if (member.startup.creator) {
+          if (member.startup?.creator) {
             recipientIds.add(member.startup.creator.id);
           }
           // Add all team members
-          for (const teamMember of member.startup.members) {
+          for (const teamMember of member.startup?.members || []) {
             recipientIds.add(teamMember.userId);
           }
         }
+
+        console.log(`[PM Milestones API] Total recipients: ${recipientIds.size}`);
+        console.log(`[PM Milestones API] Recipient IDs: ${JSON.stringify(Array.from(recipientIds))}`);
 
         if (recipientIds.size > 0) {
           await notifyMilestoneCreated({
@@ -142,13 +149,19 @@ export async function POST(request: NextRequest) {
             dueDate: new Date(dueDate),
             priority,
             startupId: cohort.members[0]?.startupId || '',
-            startupName: cohort.members[0]?.startup.name || '',
+            startupName: cohort.members[0]?.startup?.name || '',
             recipientIds: Array.from(recipientIds),
           });
+          console.log(`[PM Milestones API] Milestone creation notification sent successfully`);
+        } else {
+          console.log(`[PM Milestones API] No recipients found in cohort`);
         }
+      } else {
+        console.log(`[PM Milestones API] Cohort not found`);
       }
-    } catch (notifyError) {
-      console.error('[PM Milestones API] Failed to send milestone notification:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[PM Milestones API] Failed to send milestone notification:', notifyError.message);
+      console.error('[PM Milestones API] Stack:', notifyError.stack);
     }
 
     return NextResponse.json({ milestone }, { status: 201 });

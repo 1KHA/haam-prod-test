@@ -121,13 +121,13 @@ export default function PaymentsManagement() {
       }
       
       // Get token from localStorage
-      const token = localStorage.getItem('token');
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       
       // Fetch payments from API
       const response = await fetch(`/api/admin/payments?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
         }
       });
       
@@ -326,7 +326,8 @@ export default function PaymentsManagement() {
               }
               
               // Get token from localStorage
-              const token = localStorage.getItem('token');
+              // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
               
               if (!token) {
                 toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى');
@@ -519,7 +520,8 @@ export default function PaymentsManagement() {
                     className="flex items-center gap-1"
                     onClick={() => {
                       // Get token from localStorage
-                      const token = localStorage.getItem('token');
+                      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
                       if (!token) return;
                       
                       // Export only selected payments

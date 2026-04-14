@@ -30,7 +30,8 @@ export default function EntrepreneurSettingsPage() {
     }
     setSaving(true)
     try {
-      const token = localStorage.getItem("token")
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       const res = await fetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

@@ -135,23 +135,34 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify all active users about the new event
+    console.log(`[Events API] Notifying active users about new event...`);
     try {
       const activeUsers = await prisma.user.findMany({
         where: { approvalStatus: 'ACTIVE' },
-        select: { id: true },
+        select: { id: true, role: true, email: true },
       });
 
+      console.log(`[Events API] Found ${activeUsers.length} active users to notify`);
+      console.log(`[Events API] Active users: ${JSON.stringify(activeUsers.map(u => ({role: u.role, email: u.email})))}`);
+
       if (activeUsers.length > 0) {
+        const recipientIds = activeUsers.map(u => u.id);
+        console.log(`[Events API] Sending event creation notification to ${recipientIds.length} users`);
+        
         await notifyEventCreated({
           eventId: event.id,
           eventName: event.title,
           eventDate: event.startDate,
           organizerName: body.organizer,
-          recipientIds: activeUsers.map(u => u.id),
+          recipientIds,
         });
+        console.log(`[Events API] Event creation notification sent successfully`);
+      } else {
+        console.log(`[Events API] No active users found to notify`);
       }
-    } catch (notifyError) {
-      console.error('[Events API] Failed to send event creation notification:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Events API] Failed to send event creation notification:', notifyError.message);
+      console.error('[Events API] Stack:', notifyError.stack);
     }
     
     return NextResponse.json({ event }, { status: 201 });

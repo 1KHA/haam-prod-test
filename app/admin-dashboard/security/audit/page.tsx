@@ -94,12 +94,12 @@ export default function SecurityAudit() {
     try {
       setIsLoading(true)
       
-      const token = localStorage.getItem('token')
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       
       const response = await fetch(`/api/admin/security/audit?type=${type}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
         }
       })
       
@@ -132,13 +132,13 @@ export default function SecurityAudit() {
     try {
       setIsStartingAudit(true)
       
-      const token = localStorage.getItem('token')
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       
       const response = await fetch('/api/admin/security/audit', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           auditType: type,

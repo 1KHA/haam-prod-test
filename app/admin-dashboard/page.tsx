@@ -52,11 +52,8 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) return
-
     fetch("/api/admin/stats", {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     })
       .then((r) => r.json())
       .then((data) => setStats(data))

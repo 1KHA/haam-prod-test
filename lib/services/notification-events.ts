@@ -834,6 +834,200 @@ export async function notifyEventRegistration(params: {
 }
 
 // ============================================================================
+// USER MANAGEMENT NOTIFICATIONS (TASK-01, TASK-02, TASK-03, TASK-04)
+// ============================================================================
+
+/**
+ * Notify user and admin about multiple failed login attempts (TASK-02)
+ * Trigger: 3+ consecutive failed login attempts
+ */
+export async function notifyLoginFailed(params: {
+  userId: string;
+  email: string;
+  attemptCount: number;
+  ipAddress: string;
+  timestamp: Date;
+}) {
+  const { userId, email, attemptCount, ipAddress, timestamp } = params;
+
+  console.log(`[notifyLoginFailed] Notifying about ${attemptCount} failed attempts for ${email}`);
+
+  // 1. Notify user
+  await NotificationService.createNotification({
+    title: 'محاولات تسجيل دخول غير ناجحة',
+    message: `تم رصد ${attemptCount} محاولات تسجيل دخول غير ناجحة لحسابك. إذا لم تكن أنت، يرجى تغيير كلمة المرور فوراً.`,
+    titleEn: 'Failed Login Attempts Detected',
+    messageEn: `${attemptCount} failed login attempts were detected for your account. If this wasn't you, please change your password immediately.`,
+    type: 'security',
+    priority: 'high',
+    recipientIds: [userId],
+    actionUrl: '/settings/security',
+    actionLabel: 'مراجعة الأمان',
+    actionLabelEn: 'Review Security',
+    metadata: { 
+      type: 'login_failed', 
+      attemptCount,
+      ipAddress,
+      timestamp: timestamp.toISOString()
+    },
+  });
+
+  // 2. Notify admins
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN' },
+    select: { id: true }
+  });
+
+  if (admins.length > 0) {
+    await NotificationService.createNotification({
+      title: 'تنبيه أمان: محاولات تسجيل دخول متعددة',
+      message: `المستخدم ${email} حاول تسجيل الدخول ${attemptCount} مرات. IP: ${ipAddress}`,
+      titleEn: 'Security Alert: Multiple Login Attempts',
+      messageEn: `User ${email} attempted to login ${attemptCount} times. IP: ${ipAddress}`,
+      type: 'security',
+      priority: 'high',
+      recipientIds: admins.map(a => a.id),
+      actionUrl: `/admin-dashboard/users?id=${userId}`,
+      actionLabel: 'مراجعة المستخدم',
+      actionLabelEn: 'Review User',
+      metadata: { 
+        type: 'login_failed_admin_alert', 
+        userId,
+        email,
+        attemptCount,
+        ipAddress
+      },
+    });
+  }
+
+  console.log(`[notifyLoginFailed] Notifications sent to user and ${admins.length} admins`);
+}
+
+/**
+ * Notify user when their password is changed (TASK-01)
+ * Trigger: User updates password via admin or profile settings
+ */
+export async function notifyPasswordChanged(params: {
+  userId: string;
+  changedAt: Date;
+  changedByName: string;
+  ipAddress?: string;
+}) {
+  const { userId, changedAt, changedByName, ipAddress } = params;
+
+  console.log(`[notifyPasswordChanged] Notifying user ${userId}`);
+
+  await NotificationService.createNotification({
+    title: 'تم تغيير كلمة المرور',
+    message: `تم تغيير كلمة المرور الخاصة بك بواسطة ${changedByName}. إذا لم تكن أنت من قام بهذا الإجراء، يرجى التواصل مع الدعم فوراً.`,
+    titleEn: 'Password Changed',
+    messageEn: `Your password has been changed by ${changedByName}. If you did not make this change, please contact support immediately.`,
+    type: 'security',
+    priority: 'high',
+    recipientIds: [userId],
+    actionUrl: '/settings/security',
+    actionLabel: 'مراجعة الأمان',
+    actionLabelEn: 'Review Security',
+    metadata: { 
+      type: 'password_changed', 
+      changedAt: changedAt.toISOString(),
+      ipAddress: ipAddress || 'unknown'
+    },
+  });
+
+  console.log(`[notifyPasswordChanged] Notification sent to user ${userId}`);
+}
+
+/**
+ * Notify user when their profile is updated (TASK-03)
+ * Trigger: Admin updates user profile
+ */
+export async function notifyUserUpdated(params: {
+  userId: string;
+  changedFields: string[];
+  updatedByName: string;
+}) {
+  const { userId, changedFields, updatedByName } = params;
+
+  console.log(`[notifyUserUpdated] Notifying user ${userId} about profile update`);
+
+  const fieldLabelsAr: Record<string, string> = {
+    name: 'الاسم',
+    email: 'البريد الإلكتروني',
+    phone: 'رقم الهاتف',
+    role: 'الدور الوظيفي',
+    approvalStatus: 'حالة الحساب',
+    specialization: 'التخصص',
+  };
+
+  const changedLabelsAr = changedFields
+    .map(f => fieldLabelsAr[f] || f)
+    .join('، ');
+
+  await NotificationService.createNotification({
+    title: 'تم تحديث ملفك الشخصي',
+    message: `تم تحديث ${changedLabelsAr} في ملفك الشخصي بواسطة ${updatedByName}.`,
+    titleEn: 'Your Profile Has Been Updated',
+    messageEn: `Your profile has been updated by ${updatedByName}. Changed fields: ${changedFields.join(', ')}.`,
+    type: 'system',
+    priority: 'medium',
+    recipientIds: [userId],
+    actionUrl: '/settings/profile',
+    actionLabel: 'عرض الملف',
+    actionLabelEn: 'View Profile',
+    metadata: { 
+      changedFields,
+      updatedBy: updatedByName,
+      type: 'user_updated'
+    },
+  });
+
+  console.log(`[notifyUserUpdated] Notification sent`);
+}
+
+/**
+ * Notify admin team when a user is deleted (TASK-04)
+ * Trigger: Admin deletes user account
+ */
+export async function notifyUserDeleted(params: {
+  deletedUserId: string;
+  deletedUserName: string;
+  deletedUserEmail: string;
+  deletedByName: string;
+  adminIds: string[];
+}) {
+  const { deletedUserId, deletedUserName, deletedUserEmail, deletedByName, adminIds } = params;
+
+  console.log(`[notifyUserDeleted] Notifying ${adminIds.length} admins about deletion of ${deletedUserName}`);
+
+  if (!adminIds || adminIds.length === 0) {
+    console.log(`[notifyUserDeleted] No admins to notify`);
+    return;
+  }
+
+  await NotificationService.createNotification({
+    title: 'تم حذف مستخدم',
+    message: `تم حذف حساب المستخدم ${deletedUserName} (${deletedUserEmail}) بواسطة ${deletedByName}.`,
+    titleEn: 'User Account Deleted',
+    messageEn: `User account ${deletedUserName} (${deletedUserEmail}) has been deleted by ${deletedByName}.`,
+    type: 'system',
+    priority: 'medium',
+    recipientIds: adminIds,
+    actionUrl: '/admin-dashboard/users',
+    actionLabel: 'عرض المستخدمين',
+    actionLabelEn: 'View Users',
+    metadata: { 
+      deletedUserId,
+      deletedUserEmail,
+      deletedBy: deletedByName,
+      type: 'user_deleted'
+    },
+  });
+
+  console.log(`[notifyUserDeleted] Notification sent to ${adminIds.length} admins`);
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 

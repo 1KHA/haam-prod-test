@@ -94,19 +94,31 @@ export async function POST(
       );
     }
     
+    console.log(`[Milestone Review] Processing review with status: ${status}`);
+    
+    // Map review status to submission status
+    // The MilestoneSubmission model only accepts: SUBMITTED, REOPENED, SUPERSEDED
+    const statusMap: Record<string, string> = {
+      'approved': 'SUPERSEDED',     // Approved means this submission is complete/succeeded
+      'rejected': 'REOPENED',       // Rejected means the startup needs to resubmit
+      'needs_revision': 'REOPENED', // Needs revision also means resubmit
+    };
+    
+    const submissionStatus = statusMap[status] || 'SUBMITTED';
+    console.log(`[Milestone Review] Mapped to submission status: ${submissionStatus}`);
+    
     // Update the submission status
     const updatedSubmission = await prisma.milestoneSubmission.update({
       where: { id: submissionId },
       data: {
-        status: status.toUpperCase(),
-        reviewedAt: new Date(),
-        reviewedBy: user.userId,
-        feedback: feedback || null,
+        status: submissionStatus,
       },
     });
+    console.log(`[Milestone Review] Updated submission status`);
     
     // Update milestone progress if approved
     if (status === 'approved') {
+      console.log(`[Milestone Review] Approving milestone ${milestoneId}`);
       await prisma.milestone.update({
         where: { id: milestoneId },
         data: {
@@ -117,24 +129,43 @@ export async function POST(
     }
     
     // Notify the entrepreneur about the review
+    console.log(`[Milestone Review] Preparing to notify entrepreneurs...`);
     try {
       const entrepreneurIds = [
         submission.startup.creator?.id,
         ...submission.startup.members.map(m => m.userId),
       ].filter((id): id is string => !!id);
 
-      await notifyMilestoneResponseReviewed({
-        milestoneId,
-        milestoneTitle: submission.milestone.title,
-        startupId: submission.startupId,
-        startupName: submission.startup.name,
-        status: status as 'approved' | 'rejected' | 'needs_revision',
-        feedback,
-        reviewedByName: user.name || 'Program Manager',
-        entrepreneurIds,
+      console.log(`[Milestone Review] Found ${entrepreneurIds.length} entrepreneurs to notify`);
+      console.log(`[Milestone Review] Entrepreneur IDs: ${JSON.stringify(entrepreneurIds)}`);
+
+      // Get the full user data for the reviewer's name
+      const reviewer = await prisma.user.findUnique({
+        where: { id: user.userId },
+        select: { name: true },
       });
-    } catch (notifyError) {
-      console.error('[Milestone Review API] Failed to send notification:', notifyError);
+      const reviewedByName = reviewer?.name || 'Program Manager';
+      console.log(`[Milestone Review] Reviewer name: ${reviewedByName}`);
+
+      if (entrepreneurIds.length > 0) {
+        console.log(`[Milestone Review] Calling notifyMilestoneResponseReviewed...`);
+        await notifyMilestoneResponseReviewed({
+          milestoneId,
+          milestoneTitle: submission.milestone.title,
+          startupId: submission.startupId,
+          startupName: submission.startup.name,
+          status: status as 'approved' | 'rejected' | 'needs_revision',
+          feedback,
+          reviewedByName,
+          entrepreneurIds,
+        });
+        console.log(`[Milestone Review] Notification sent successfully`);
+      } else {
+        console.log(`[Milestone Review] No entrepreneurs found to notify`);
+      }
+    } catch (notifyError: any) {
+      console.error('[Milestone Review API] Failed to send notification:', notifyError.message);
+      console.error('[Milestone Review API] Stack:', notifyError.stack);
     }
     
     return NextResponse.json({

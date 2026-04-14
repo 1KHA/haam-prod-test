@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Find user's startup (if any) to check existing applications
     const userStartup = await prisma.startup.findFirst({
-      where: { creatorId: user.id },
+      where: { creatorId: user.userId },
       select: { id: true }
     });
 

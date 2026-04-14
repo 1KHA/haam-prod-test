@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
+import { notifyEventCreated, notifyEventCancelled } from '@/lib/services/notification-events';
 
 // GET /api/program-manager/events - Get all events accessible to program manager
 export async function GET(request: NextRequest) {
@@ -170,6 +171,37 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Notify all active users about the new event
+    console.log(`[PM Events API] Notifying active users about new event...`);
+    try {
+      const activeUsers = await prisma.user.findMany({
+        where: { approvalStatus: 'ACTIVE' },
+        select: { id: true, role: true, email: true },
+      });
+
+      console.log(`[PM Events API] Found ${activeUsers.length} active users to notify`);
+      console.log(`[PM Events API] Active users: ${JSON.stringify(activeUsers.map(u => ({role: u.role, email: u.email})))}`);
+
+      if (activeUsers.length > 0) {
+        const recipientIds = activeUsers.map(u => u.id);
+        console.log(`[PM Events API] Sending event creation notification to ${recipientIds.length} users`);
+        
+        await notifyEventCreated({
+          eventId: event.id,
+          eventName: event.title,
+          eventDate: event.startDate,
+          organizerName: body.organizer,
+          recipientIds,
+        });
+        console.log(`[PM Events API] Event creation notification sent successfully`);
+      } else {
+        console.log(`[PM Events API] No active users found to notify`);
+      }
+    } catch (notifyError: any) {
+      console.error('[PM Events API] Failed to send event creation notification:', notifyError.message);
+      console.error('[PM Events API] Stack:', notifyError.stack);
+    }
     
     return NextResponse.json({
       event: {
@@ -212,7 +244,12 @@ export async function DELETE(request: NextRequest) {
       where: {
         id: { in: body.ids },
         creatorId: user.userId // Ensure they can only delete their own events
-      }
+      },
+      include: {
+        registrations: {
+          select: { userId: true },
+        },
+      },
     });
     
     if (eventsToDelete.length !== body.ids.length) {
@@ -223,6 +260,26 @@ export async function DELETE(request: NextRequest) {
     }
     
     const eventIds = eventsToDelete.map(event => event.id);
+    
+    // Notify registered users about event cancellation before deleting
+    console.log(`[PM Events API] Notifying registered users about event cancellation...`);
+    try {
+      for (const event of eventsToDelete) {
+        const registeredUserIds = event.registrations.map(r => r.userId);
+        if (registeredUserIds.length > 0) {
+          console.log(`[PM Events API] Notifying ${registeredUserIds.length} users about cancellation of event: ${event.title}`);
+          await notifyEventCancelled({
+            eventId: event.id,
+            eventName: event.title,
+            recipientIds: registeredUserIds,
+            cancelledBy: user.userId,
+          });
+        }
+      }
+      console.log(`[PM Events API] Event cancellation notifications sent`);
+    } catch (notifyError: any) {
+      console.error('[PM Events API] Failed to send event cancellation notification:', notifyError.message);
+    }
     
     // First delete all registrations for these events
     await prisma.eventRegistration.deleteMany({

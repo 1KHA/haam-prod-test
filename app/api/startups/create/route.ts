@@ -147,12 +147,19 @@ export async function POST(request: NextRequest) {
         console.log(`[Create Startup] Sending notification to ${allRecipients.length} recipients...`);
         console.log(`[Create Startup] Recipient IDs: ${JSON.stringify(allRecipients)}`);
         
+        // Get the full user data for the founder's name
+        const founder = await prisma.user.findUnique({
+          where: { id: user.userId },
+          select: { name: true, email: true },
+        });
+        const founderName = founder?.name || founder?.email || user.email;
+        
         await notifyStartupCreated({
           startupId: startup.id,
           startupName: startup.name,
           startupDescription: startup.description,
           founderId: user.userId,
-          founderName: user.name || user.email,
+          founderName,
           programManagerIds: allRecipients,
         });
         console.log(`[Create Startup] Notification function completed`);

@@ -1,6 +1,9 @@
 /**
  * API client utility for making authenticated requests
- * with enhanced error handling and token management
+ * with enhanced error handling
+ * 
+ * Note: Authentication is now handled via HTTP-only cookies.
+ * The browser automatically sends the cookie with each request.
  */
 
 // Type for standard API response
@@ -11,7 +14,7 @@ export interface ApiResponse<T = any> {
 }
 
 /**
- * Makes an authenticated fetch request by adding the auth token from localStorage
+ * Makes an authenticated fetch request
  * with comprehensive error handling
  * 
  * @param url The URL to fetch
@@ -28,24 +31,17 @@ export async function fetchWithAuth<T = any>(
   mode: 'response' | 'direct' = 'direct'
 ): Promise<ApiResponse<T> | Response> {
   try {
-    // Get the token from localStorage
-    const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
-    
-    if (!token) {
-      console.warn('No authentication token found in localStorage');
-    }
-    
-    // Create headers with auth token if available
+    // Create headers - cookie is sent automatically by browser
     const headers = {
       ...options.headers,
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
     
-    // Make the request with the auth headers
+    // Make the request - browser sends HTTP-only cookie automatically
     const response = await fetch(url, {
       ...options,
-      headers
+      headers,
+      credentials: 'include', // Important: include cookies in cross-origin requests
     });
     
     // For backward compatibility, return the direct response if in 'direct' mode
@@ -58,9 +54,6 @@ export async function fetchWithAuth<T = any>(
     // Check for 401 unauthorized response which may indicate token expiration
     if (response.status === 401) {
       console.warn('Unauthorized API request - token may be invalid or expired');
-      
-      // You could implement token refresh logic here
-      // For now, we'll just notify through console and return the error
       
       return {
         error: 'Unauthorized - Please log in again',
@@ -130,19 +123,19 @@ export async function fetchWithAuth<T = any>(
 }
 
 /**
- * Checks if the current user is authenticated by verifying
- * the presence and validity of the token in localStorage
+ * Checks if the current user is authenticated
+ * Note: With HTTP-only cookies, we can't check client-side directly.
+ * This function now returns a placeholder. Use /api/auth/me to verify auth.
  * 
- * @returns Boolean indicating if the user is authenticated
+ * @returns Boolean indicating if the user is likely authenticated (based on previous auth check)
  */
 export function isAuthenticated(): boolean {
+  // With HTTP-only cookies, we can't access the token client-side
+  // The actual auth check is done server-side via the cookie
+  // This function is kept for API compatibility but should not be relied upon
   if (typeof window === "undefined") return false;
   
-  const token = localStorage.getItem('token');
-  if (!token) return false;
-  
-  // Optional: You could add token expiration check here
-  // by parsing the JWT and checking the exp claim
-  
-  return true;
+  // Check for a client-side flag that indicates user was previously authenticated
+  // This is not security-critical, just for UI state
+  return document.cookie.includes('token=');
 }

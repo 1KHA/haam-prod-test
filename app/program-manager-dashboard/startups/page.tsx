@@ -72,7 +72,8 @@ export default function StartupsPage() {
   
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -88,8 +89,7 @@ export default function StartupsPage() {
       try {
         const response = await fetch('/api/program-manager/startups', {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+                      }
         });
         
         if (!response.ok) {

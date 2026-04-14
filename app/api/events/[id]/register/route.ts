@@ -179,31 +179,64 @@ export async function POST(
       }
     });
 
-    // Notify event organizers about new registration
+    // Notify event organizers and admins about new registration
+    console.log(`[Event Register] Sending registration notifications...`);
     try {
       // Get the event creator/organizer
       const eventWithOrganizer = await prisma.event.findUnique({
         where: { id: eventId },
         select: { 
           id: true,
-          name: true,
-          createdById: true 
+          title: true,
+          organizerId: true 
         },
       });
 
-      if (eventWithOrganizer?.createdById) {
+      // Get all admins and PMs to notify
+      const staffUsers = await prisma.user.findMany({
+        where: { 
+          role: { in: ['ADMIN', 'PROGRAM_MANAGER'] }
+        },
+        select: { id: true },
+      });
+
+      const organizerIds: string[] = [];
+      
+      // Add event creator
+      if (eventWithOrganizer?.organizerId) {
+        organizerIds.push(eventWithOrganizer.organizerId);
+      }
+      
+      // Add all staff users
+      for (const staff of staffUsers) {
+        if (!organizerIds.includes(staff.id)) {
+          organizerIds.push(staff.id);
+        }
+      }
+
+      console.log(`[Event Register] Notifying ${organizerIds.length} organizers/staff`);
+
+      if (organizerIds.length > 0) {
+        // Get the full user data for the registrant's name
+        const registrant = await prisma.user.findUnique({
+          where: { id: user.userId },
+          select: { name: true, email: true },
+        });
+        const userName = registrant?.name || registrant?.email || user.email;
+
         await notifyEventRegistration({
           registrationId: registration.id,
           eventId,
-          eventName: eventWithOrganizer.name,
+          eventName: eventWithOrganizer?.title || 'Event',
           userId: user.userId,
-          userName: user.name || user.email,
+          userName,
           userEmail: user.email,
-          organizerIds: [eventWithOrganizer.createdById],
+          organizerIds,
         });
+        console.log(`[Event Register] Registration notifications sent successfully`);
       }
-    } catch (notifyError) {
-      console.error('[Event Register] Failed to send notifications:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Event Register] Failed to send notifications:', notifyError.message);
       // Don't fail the request if notification fails
     }
     

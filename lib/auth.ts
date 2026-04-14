@@ -1,5 +1,6 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 // Re-export UserRole from Prisma client (single source of truth)
 export { UserRole } from '@prisma/client';
@@ -39,7 +40,7 @@ export function verifyToken(token: string): TokenPayload | null {
   }
 }
 
-// Get token from request headers
+// Get token from request headers (legacy fallback)
 export function getTokenFromHeader(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -47,15 +48,38 @@ export function getTokenFromHeader(authHeader?: string): string | null {
   return authHeader.split(' ')[1];
 }
 
-// Middleware to check if user is authenticated
-export async function isAuthenticated(authHeader?: string): Promise<TokenPayload | null> {
-  console.log('[AUTH] Incoming Authorization header:', authHeader);
-  const token = getTokenFromHeader(authHeader);
-  console.log('[AUTH] Extracted token:', token);
-  if (!token) {
-    console.log('[AUTH] No token found in header.');
+// Get token from HTTP-only cookie
+export function getTokenFromCookie(): string | null {
+  try {
+    const cookieStore = cookies();
+    return cookieStore.get('token')?.value || null;
+  } catch (error) {
+    // Cookies() only works in Server Components/API routes
     return null;
   }
+}
+
+// Middleware to check if user is authenticated
+// Tries cookie first, then falls back to Authorization header for backward compatibility
+export async function isAuthenticated(authHeader?: string): Promise<TokenPayload | null> {
+  console.log('[AUTH] Checking authentication...');
+  
+  // First try to get token from cookie
+  let token = getTokenFromCookie();
+  
+  // Fallback to Authorization header for backward compatibility
+  if (!token && authHeader) {
+    console.log('[AUTH] No cookie found, checking Authorization header...');
+    token = getTokenFromHeader(authHeader);
+  }
+  
+  console.log('[AUTH] Token found:', token ? 'Yes' : 'No');
+  
+  if (!token) {
+    console.log('[AUTH] No token found in cookie or header.');
+    return null;
+  }
+  
   const payload = verifyToken(token);
   console.log('[AUTH] Decoded payload:', payload);
   return payload;

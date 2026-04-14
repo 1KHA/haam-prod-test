@@ -194,8 +194,7 @@ export default function ReportsManagement() {
       
       const response = await fetchWithAuth(`/api/admin/reports?${queryParams.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Cache-Control': 'no-cache' // Prevent caching
+                    'Cache-Control': 'no-cache' // Prevent caching
         }
       }, 'direct')
       
@@ -272,20 +271,21 @@ export default function ReportsManagement() {
   
   // Function to handle printing reports
   const handlePrint = (reportId: string) => {
-    const token = localStorage.getItem('token')
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
     window.open(`/api/admin/reports/print?id=${reportId}&token=${encodeURIComponent(token || '')}`, '_blank')
   }
   
   // Function to handle viewing a report
   const handleView = async (reportId: string) => {
     try {
-      const token = localStorage.getItem('token')
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       
       // First fetch the report details to get the file path
       const response = await fetchWithAuth(`/api/admin/reports/view?id=${reportId}&skipViewIncrement=true`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache'
+                    'Cache-Control': 'no-cache'
         }
       }, 'direct')
       

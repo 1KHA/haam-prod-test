@@ -75,7 +75,8 @@ export default function ProgramsPage() {
 
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -108,8 +109,7 @@ export default function ProgramsPage() {
         
         const response = await fetch(`/api/admin/programs?${queryParams.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+                      }
         });
         
         if (!response.ok) {
@@ -179,8 +179,7 @@ export default function ProgramsPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+                  },
         body: JSON.stringify(body)
       });
       

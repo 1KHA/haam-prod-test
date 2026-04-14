@@ -135,13 +135,13 @@ export default function SecurityLogs() {
       }
       
       // Get token from localStorage
-      const token = localStorage.getItem('token');
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       
       // Fetch logs from API
       const response = await fetch(`/api/admin/security/logs?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
         }
       });
       
@@ -172,7 +172,8 @@ export default function SecurityLogs() {
       if (selectedLogs.length === 0) return;
       
       setIsDeleting(true);
-      const token = localStorage.getItem('token');
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       
       // In a real implementation, you would send the IDs to delete
       // For now, we'll just use the query parameter for demonstration
@@ -183,8 +184,7 @@ export default function SecurityLogs() {
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+                    'Content-Type': 'application/json'
         }
       });
       

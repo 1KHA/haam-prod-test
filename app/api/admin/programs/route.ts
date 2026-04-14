@@ -200,23 +200,35 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify all Program Managers about the new program
+    console.log(`[Programs API] Notifying Program Managers about new program...`);
     try {
       const programManagers = await prisma.user.findMany({
         where: { role: 'PROGRAM_MANAGER' },
         select: { id: true },
       });
 
+      console.log(`[Programs API] Found ${programManagers.length} Program Managers`);
+
       if (programManagers.length > 0) {
+        const recipientIds = programManagers.map(pm => pm.id);
+        console.log(`[Programs API] Sending program creation notification to: ${JSON.stringify(recipientIds)}`);
+        console.log(`[Programs API] Program details: ${program.name} (${program.type})`);
+        console.log(`[Programs API] Created by: ${permissionCheck.userId}`);
+        
         await notifyProgramCreated({
           programId: program.id,
           programName: program.name,
           programType: program.type,
-          recipientIds: programManagers.map(pm => pm.id),
+          recipientIds,
           createdBy: permissionCheck.userId,
         });
+        console.log(`[Programs API] Program creation notification sent successfully`);
+      } else {
+        console.log(`[Programs API] No Program Managers found, skipping notification`);
       }
-    } catch (notifyError) {
-      console.error('[Programs API] Failed to send program creation notification:', notifyError);
+    } catch (notifyError: any) {
+      console.error('[Programs API] Failed to send program creation notification:', notifyError.message);
+      console.error('[Programs API] Stack:', notifyError.stack);
     }
     
     return NextResponse.json(program, { status: 201 });

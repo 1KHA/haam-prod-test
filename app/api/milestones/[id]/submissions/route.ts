@@ -90,7 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Missing startupId' }, { status: 400 });
     }
 
-    const { user } = await ensureEntrepreneurStartupAccess(
+    const { user, startupName } = await ensureEntrepreneurStartupAccess(
       params.id,
       startupId,
       request.headers.get('authorization')
@@ -153,13 +153,20 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
         if (cohort?.manager) {
           console.log(`[Milestone Submissions] Sending notification to PM: ${cohort.manager.id}`);
+          // Get the full user data for the submitter's name
+          const submitter = await prisma.user.findUnique({
+            where: { id: user.userId },
+            select: { name: true, email: true },
+          });
+          const submittedByName = submitter?.name || submitter?.email || user.email;
+
           await notifyMilestoneResponseSubmitted({
             milestoneId: params.id,
             milestoneTitle: milestone.title,
             startupId,
-            startupName: access.startupName,
+            startupName,
             submittedBy: user.userId,
-            submittedByName: user.name || '',
+            submittedByName,
             programManagerId: cohort.manager.id,
           });
           console.log(`[Milestone Submissions] Notification sent successfully`);

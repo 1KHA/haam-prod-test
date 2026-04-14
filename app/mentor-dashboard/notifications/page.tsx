@@ -25,7 +25,8 @@ export default function MentorNotificationsPage() {
     const fetchNotifications = async () => {
       setLoading(true)
       try {
-        const token = localStorage.getItem("token")
+        // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
         const res = await fetch("/api/notifications", {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -44,7 +45,8 @@ export default function MentorNotificationsPage() {
 
   const markAllRead = async () => {
     try {
-      const token = localStorage.getItem("token")
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       const res = await fetch("/api/notifications/read-all", {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },

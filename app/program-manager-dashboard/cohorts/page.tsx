@@ -75,7 +75,8 @@ export default function CohortsPage() {
 
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -110,8 +111,7 @@ export default function CohortsPage() {
         
         const response = await fetch(`/api/program-manager/cohorts?${queryParams.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+                      }
         });
         
         if (!response.ok) {
@@ -158,8 +158,7 @@ export default function CohortsPage() {
           await fetch(`/api/program-manager/cohorts/${cohortId}`, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`
-            }
+                          }
           });
         }
       } else if (action === 'activate') {
@@ -170,8 +169,7 @@ export default function CohortsPage() {
           method,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+                      },
           body: JSON.stringify(body)
         });
       } else if (action === 'complete') {
@@ -182,8 +180,7 @@ export default function CohortsPage() {
           method,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+                      },
           body: JSON.stringify(body)
         });
       }

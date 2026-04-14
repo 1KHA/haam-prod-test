@@ -29,7 +29,8 @@ export default function MentorsPage() {
   const [availabilityFilter, setAvailabilityFilter] = useState("all")
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
     fetch("/api/mentor", {
       headers: { Authorization: `Bearer ${token}` },
     })

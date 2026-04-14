@@ -58,13 +58,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Load user from localStorage on initial render
+  // Load user from localStorage on initial render (token is now in HTTP-only cookie)
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
+    if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
@@ -88,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Important: include cookies
       });
 
       const data = await response.json();
@@ -96,11 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error || 'Failed to sign in');
       }
 
-      // Save user and token to state and localStorage
+      // Save user to state and localStorage (token is now in HTTP-only cookie)
       setUser(data.user);
-      setToken(data.token);
+      setToken('cookie'); // Placeholder - actual token is in HTTP-only cookie
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      // Note: We don't store token in localStorage anymore - it's in HTTP-only cookie
 
       // Redirect based on user role
       redirectBasedOnRole(data.user.role);
@@ -125,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(userData),
+        credentials: 'include', // Important: include cookies
       });
 
       const data = await response.json();
@@ -140,11 +140,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Save user and token to state and localStorage
+      // Save user to state and localStorage (token is now in HTTP-only cookie)
       setUser(data.user);
-      setToken(data.token);
+      setToken('cookie'); // Placeholder - actual token is in HTTP-only cookie
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      // Note: We don't store token in localStorage anymore - it's in HTTP-only cookie
 
       // Redirect based on user role
       redirectBasedOnRole(data.user.role);
@@ -156,12 +156,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Sign out function
-  const signOut = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    router.push('/');
+  const signOut = async () => {
+    try {
+      // Call API to clear the HTTP-only cookie
+      await fetch('/api/auth/signout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Signout error:', error);
+    } finally {
+      // Clear client-side state regardless of API response
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('user');
+      // Note: token cookie is cleared by the API
+      router.push('/');
+    }
   };
 
   // Clear error

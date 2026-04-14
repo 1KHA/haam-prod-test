@@ -44,15 +44,19 @@ export default function MentorDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const headers = { Authorization: `Bearer ${token}` }
-
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
     const fetchAll = async () => {
       try {
         const [startupsRes, sessionsRes, profileRes] = await Promise.all([
-          fetch("/api/mentor/startups", { headers }),
-          fetch("/api/mentor/sessions", { headers }),
-          fetch("/api/mentor/profile", { headers }),
+          fetch("/api/mentor/startups", {
+            credentials: 'include',
+          }),
+          fetch("/api/mentor/sessions", {
+            credentials: 'include',
+          }),
+          fetch("/api/mentor/profile", {
+            credentials: 'include',
+          }),
         ])
         if (startupsRes.ok) {
           const d = await startupsRes.json()

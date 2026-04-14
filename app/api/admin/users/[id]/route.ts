@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { hash } from 'bcrypt';
 import { UserRole } from '@/lib/auth';
 import { checkPermission } from '@/lib/permissions';
+import { notifyPasswordChanged, notifyUserUpdated, notifyUserDeleted } from '@/lib/services/notification-events';
 
 // GET /api/admin/users/[id] - Get a single user by ID
 export async function GET(
@@ -144,9 +145,13 @@ export async function PUT(
     if (role) updateData.role = role as UserRole;
     if (specialization !== undefined) updateData.specialization = specialization;
     
+    // Track if password is being changed for notification
+    let passwordChanged = false;
+    
     // If password is provided, hash it
     if (password) {
       updateData.password = await hash(password, 10);
+      passwordChanged = true;
     }
     
     // Check if role is being changed and handle role-specific profiles
@@ -205,6 +210,12 @@ export async function PUT(
       }
     }
     
+    // Get current user data for comparison before update
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true, role: true, specialization: true }
+    });
+    
     // Update the user
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -219,6 +230,55 @@ export async function PUT(
         entrepreneurProfile: true,
       }
     });
+    
+    // Send notifications for changes (don't await - don't block response)
+    console.log(`[Admin Users] Checking for notifications...`);
+    
+    // Get updater info for notifications
+    const updaterInfo = await prisma.user.findUnique({
+      where: { id: permissionCheck.userId },
+      select: { name: true }
+    });
+    const updaterName = updaterInfo?.name || 'Admin';
+    
+    // 1. Password change notification (TASK-01)
+    if (passwordChanged) {
+      console.log(`[Admin Users] Sending password change notification...`);
+      try {
+        await notifyPasswordChanged({
+          userId,
+          changedAt: new Date(),
+          changedByName: updaterName,
+          ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        });
+        console.log(`[Admin Users] Password change notification sent`);
+      } catch (notifyError: any) {
+        console.error('[Admin Users] Failed to send password change notification:', notifyError.message);
+      }
+    }
+    
+    // 2. Profile update notification (TASK-03)
+    const changedFields: string[] = [];
+    if (name && name !== currentUser?.name) changedFields.push('name');
+    if (email && email !== currentUser?.email) changedFields.push('email');
+    if (role && role !== currentUser?.role) changedFields.push('role');
+    if (specialization !== undefined && specialization !== currentUser?.specialization) {
+      changedFields.push('specialization');
+    }
+    
+    if (changedFields.length > 0) {
+      console.log(`[Admin Users] Sending profile update notification...`);
+      try {
+        await notifyUserUpdated({
+          userId,
+          changedFields,
+          updatedByName: updaterName,
+        });
+        console.log(`[Admin Users] Profile update notification sent`);
+      } catch (notifyError: any) {
+        console.error('[Admin Users] Failed to send profile update notification:', notifyError.message);
+      }
+    }
     
     // Determine if the user has completed their profile
     const hasProfile = updatedUser.mentorProfile || 
@@ -288,6 +348,13 @@ export async function DELETE(
         { status: 404 }
       );
     }
+    
+    // Save user info for notification before deletion (TASK-04)
+    const userToDelete = {
+      id: existingUser.id,
+      name: existingUser.name,
+      email: existingUser.email
+    };
     
     // Use transaction to safely delete user and all related records
     await prisma.$transaction(async (tx) => {
@@ -426,6 +493,33 @@ export async function DELETE(
         where: { id: userId }
       });
     });
+    
+    // Send notification about user deletion (TASK-04)
+    console.log(`[Admin Users] Sending user deletion notification...`);
+    try {
+      // Get all admins to notify
+      const admins = await prisma.user.findMany({
+        where: { role: 'ADMIN' },
+        select: { id: true }
+      });
+      
+      // Get deleter info
+      const deleterInfo = await prisma.user.findUnique({
+        where: { id: permissionCheck.userId },
+        select: { name: true }
+      });
+      
+      await notifyUserDeleted({
+        deletedUserId: userToDelete.id,
+        deletedUserName: userToDelete.name,
+        deletedUserEmail: userToDelete.email,
+        deletedByName: deleterInfo?.name || 'Admin',
+        adminIds: admins.map(a => a.id),
+      });
+      console.log(`[Admin Users] User deletion notification sent to ${admins.length} admins`);
+    } catch (notifyError: any) {
+      console.error('[Admin Users] Failed to send user deletion notification:', notifyError.message);
+    }
     
     return NextResponse.json({ 
       success: true,

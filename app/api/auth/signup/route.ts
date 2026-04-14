@@ -201,8 +201,22 @@ export async function POST(request: NextRequest) {
         message: "تم إنشاء حسابك بنجاح. في انتظار موافقة المسؤول للدخول إلى لوحة التحكم.",
       }, { status: 201 });
     }
+
     // For other roles (admin-created, shouldn't reach here via public signup)
-    return NextResponse.json({ user: userData, token });
+    const response = NextResponse.json({ user: userData });
+
+    // Set HTTP-only cookie with token
+    response.cookies.set({
+      name: 'token',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json(

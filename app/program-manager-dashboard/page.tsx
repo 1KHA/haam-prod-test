@@ -49,14 +49,15 @@ export default function ProgramManagerDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const headers = { Authorization: `Bearer ${token}` }
-
     const fetchAll = async () => {
       try {
         const [cohortsRes, sessionsRes] = await Promise.all([
-          fetch("/api/program-manager/cohorts?limit=10", { headers }),
-          fetch("/api/program-manager/sessions", { headers }),
+          fetch("/api/program-manager/cohorts?limit=10", {
+            credentials: 'include',
+          }),
+          fetch("/api/program-manager/sessions", {
+            credentials: 'include',
+          }),
         ])
         if (cohortsRes.ok) {
           const d = await cohortsRes.json()

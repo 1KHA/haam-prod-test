@@ -34,7 +34,8 @@ export default function MentorStartupsPage() {
 
   useEffect(() => {
     const fetchStartups = async () => {
-      const token = localStorage.getItem("token")
+      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+  const token = null; // Cookie-based auth - no localStorage token needed
       setLoading(true)
       try {
         const res = await fetch("/api/mentor/startups", {

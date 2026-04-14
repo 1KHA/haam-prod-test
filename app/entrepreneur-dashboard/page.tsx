@@ -160,15 +160,19 @@ export default function EntrepreneurDashboard() {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) return
-    const headers = { Authorization: `Bearer ${token}` }
-
     Promise.all([
-      fetch("/api/mentor", { headers }).then((r) => r.json()),
-      fetch("/api/programs?status=ACTIVE&limit=100", { headers }).then((r) => r.json()),
-      fetch("/api/events?upcoming=true&limit=3", { headers }).then((r) => r.json()),
-      fetch("/api/startups", { headers }).then((r) => r.json()),
+      fetch("/api/mentor", {
+        credentials: 'include',
+      }).then((r) => r.json()),
+      fetch("/api/programs?status=ACTIVE&limit=100", {
+        credentials: 'include',
+      }).then((r) => r.json()),
+      fetch("/api/events?upcoming=true&limit=3", {
+        credentials: 'include',
+      }).then((r) => r.json()),
+      fetch("/api/startups", {
+        credentials: 'include',
+      }).then((r) => r.json()),
     ])
       .then(async ([mentorData, programData, eventData, startupData]) => {
         const companies = startupData?.companies || []
@@ -196,7 +200,9 @@ export default function EntrepreneurDashboard() {
         let milestones: Milestone[] = []
         if (myStartup?.id) {
           try {
-            const milestoneRes = await fetch(`/api/milestones?startupId=${myStartup.id}`, { headers })
+            const milestoneRes = await fetch(`/api/milestones?startupId=${myStartup.id}`, {
+              credentials: 'include',
+            })
             if (milestoneRes.ok) {
               const milestoneData = await milestoneRes.json()
               milestones = milestoneData?.milestones || []

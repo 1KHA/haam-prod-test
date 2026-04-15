@@ -1028,6 +1028,910 @@ export async function notifyUserDeleted(params: {
 }
 
 // ============================================================================
+// COHORT NOTIFICATIONS (TASK-05, TASK-06)
+// ============================================================================
+
+/**
+ * Notify startup team when added to cohort (TASK-05)
+ * Trigger: Application accepted and startup joins cohort
+ */
+export async function notifyCohortMemberAdded(params: {
+  cohortId: string;
+  cohortName: string;
+  programId: string;
+  programName: string;
+  startupId: string;
+  startupName: string;
+  entrepreneurIds: string[];
+  programManagerId: string;
+}) {
+  const { 
+    cohortId, 
+    cohortName, 
+    programName,
+    startupName, 
+    entrepreneurIds, 
+    programManagerId 
+  } = params;
+
+  console.log(`[notifyCohortMemberAdded] Notifying ${entrepreneurIds.length} team members about joining ${cohortName}`);
+
+  if (!entrepreneurIds || entrepreneurIds.length === 0) {
+    console.log(`[notifyCohortMemberAdded] No entrepreneurs to notify`);
+    return;
+  }
+
+  // 1. Notify startup team
+  await NotificationService.createNotification({
+    title: `🎉 مرحباً بك في ${cohortName}`,
+    message: `تهانينا! تم قبول طلب ${startupName} للانضمام إلى ${cohortName} ضمن برنامج ${programName}. نتطلع للعمل معك!`,
+    titleEn: `🎉 Welcome to ${cohortName}`,
+    messageEn: `Congratulations! ${startupName} has been accepted into ${cohortName} as part of ${programName}. We look forward to working with you!`,
+    type: 'cohort',
+    priority: 'high',
+    recipientIds: entrepreneurIds,
+    actionUrl: `/entrepreneur-dashboard/cohorts?id=${cohortId}`,
+    actionLabel: 'عرض الدفعة',
+    actionLabelEn: 'View Cohort',
+    metadata: { 
+      cohortId, 
+      programId,
+      startupId: params.startupId,
+      type: 'cohort_member_added' 
+    },
+  });
+
+  // 2. Notify program manager
+  await NotificationService.createNotification({
+    title: 'انضمام جديد للدفعة',
+    message: `انضم ${startupName} إلى ${cohortName}.`,
+    titleEn: 'New Cohort Member',
+    messageEn: `${startupName} has joined ${cohortName}.`,
+    type: 'cohort',
+    priority: 'medium',
+    recipientIds: [programManagerId],
+    actionUrl: `/program-manager-dashboard/cohorts/${cohortId}`,
+    actionLabel: 'عرض التفاصيل',
+    actionLabelEn: 'View Details',
+    metadata: { 
+      cohortId, 
+      startupId: params.startupId,
+      type: 'cohort_member_added_pm' 
+    },
+  });
+
+  console.log(`[notifyCohortMemberAdded] Notifications sent successfully`);
+}
+
+/**
+ * Notify startup team when removed from cohort (TASK-06)
+ * Trigger: Startup removed from cohort
+ */
+export async function notifyCohortMemberRemoved(params: {
+  cohortId: string;
+  cohortName: string;
+  startupId: string;
+  startupName: string;
+  reason?: string;
+  entrepreneurIds: string[];
+  removedByName: string;
+}) {
+  const { 
+    cohortId, 
+    cohortName, 
+    startupName, 
+    reason,
+    entrepreneurIds, 
+    removedByName 
+  } = params;
+
+  console.log(`[notifyCohortMemberRemoved] Notifying ${entrepreneurIds.length} team members about removal from ${cohortName}`);
+
+  if (!entrepreneurIds || entrepreneurIds.length === 0) {
+    console.log(`[notifyCohortMemberRemoved] No entrepreneurs to notify`);
+    return;
+  }
+
+  const reasonText = reason ? ` السبب: ${reason}.` : '';
+  const reasonEn = reason ? ` Reason: ${reason}.` : '';
+
+  await NotificationService.createNotification({
+    title: `إزالة من ${cohortName}`,
+    message: `تم إزالة ${startupName} من ${cohortName} بواسطة ${removedByName}.${reasonText}`,
+    titleEn: `Removed from ${cohortName}`,
+    messageEn: `${startupName} has been removed from ${cohortName} by ${removedByName}.${reasonEn}`,
+    type: 'cohort',
+    priority: 'high',
+    recipientIds: entrepreneurIds,
+    actionUrl: `/entrepreneur-dashboard/cohorts`,
+    actionLabel: 'عرض الدفعات',
+    actionLabelEn: 'View Cohorts',
+    metadata: { 
+      cohortId, 
+      startupId: params.startupId,
+      reason,
+      type: 'cohort_member_removed' 
+    },
+  });
+
+  console.log(`[notifyCohortMemberRemoved] Notifications sent successfully`);
+}
+
+// ============================================================================
+// MILESTONE NOTIFICATIONS (TASK-07, TASK-08, TASK-09)
+// ============================================================================
+
+/**
+ * Notify startup team when milestone is updated (TASK-07)
+ * Trigger: PM/Admin modifies milestone details
+ */
+export async function notifyMilestoneUpdated(params: {
+  milestoneId: string;
+  milestoneTitle: string;
+  startupId: string;
+  startupName: string;
+  changedFields: string[];
+  oldDueDate?: Date;
+  newDueDate?: Date;
+  updatedByName: string;
+  recipientIds: string[];
+}) {
+  const { 
+    milestoneId, 
+    milestoneTitle, 
+    startupName,
+    changedFields,
+    oldDueDate,
+    newDueDate,
+    updatedByName,
+    recipientIds 
+  } = params;
+
+  console.log(`[notifyMilestoneUpdated] Notifying about changes to: ${milestoneTitle}`);
+
+  if (!recipientIds || recipientIds.length === 0) {
+    console.log(`[notifyMilestoneUpdated] No recipients`);
+    return;
+  }
+
+  // Build message based on what changed
+  let messageAr = `تم تحديث المهمة "${milestoneTitle}" لـ ${startupName} بواسطة ${updatedByName}.`;
+  let messageEn = `The milestone "${milestoneTitle}" for ${startupName} has been updated by ${updatedByName}.`;
+  
+  if (changedFields.includes('dueDate') && oldDueDate && newDueDate) {
+    const oldDate = new Date(oldDueDate).toLocaleDateString('ar-SA');
+    const newDate = new Date(newDueDate).toLocaleDateString('ar-SA');
+    messageAr += ` تم تغيير تاريخ الاستحقاق من ${oldDate} إلى ${newDate}.`;
+    messageEn += ` Due date changed from ${oldDate} to ${newDate}.`;
+  }
+
+  await NotificationService.createNotification({
+    title: `تحديث المهمة: ${milestoneTitle}`,
+    message: messageAr,
+    titleEn: `Milestone Updated: ${milestoneTitle}`,
+    messageEn: messageEn,
+    type: 'milestone',
+    priority: changedFields.includes('dueDate') ? 'high' : 'medium',
+    recipientIds,
+    actionUrl: `/entrepreneur-dashboard/milestones?id=${milestoneId}`,
+    actionLabel: 'عرض المهمة',
+    actionLabelEn: 'View Milestone',
+    metadata: { 
+      milestoneId,
+      startupId: params.startupId,
+      changedFields,
+      type: 'milestone_updated'
+    },
+  });
+
+  console.log(`[notifyMilestoneUpdated] Notification sent to ${recipientIds.length} recipients`);
+}
+
+/**
+ * Notify startup team when milestone is deleted (TASK-08)
+ * Trigger: PM/Admin deletes milestone
+ */
+export async function notifyMilestoneDeleted(params: {
+  milestoneId: string;
+  milestoneTitle: string;
+  startupId: string;
+  startupName: string;
+  deletedByName: string;
+  reason?: string;
+  recipientIds: string[];
+}) {
+  const { 
+    milestoneId, 
+    milestoneTitle, 
+    startupName,
+    deletedByName,
+    reason,
+    recipientIds 
+  } = params;
+
+  console.log(`[notifyMilestoneDeleted] Notifying about deletion of: ${milestoneTitle}`);
+
+  if (!recipientIds || recipientIds.length === 0) {
+    console.log(`[notifyMilestoneDeleted] No recipients`);
+    return;
+  }
+
+  const reasonText = reason ? ` السبب: ${reason}.` : '';
+  const reasonEn = reason ? ` Reason: ${reason}.` : '';
+
+  await NotificationService.createNotification({
+    title: `حذف المهمة: ${milestoneTitle}`,
+    message: `تم حذف المهمة "${milestoneTitle}" لـ ${startupName} بواسطة ${deletedByName}.${reasonText}`,
+    titleEn: `Milestone Deleted: ${milestoneTitle}`,
+    messageEn: `The milestone "${milestoneTitle}" for ${startupName} has been deleted by ${deletedByName}.${reasonEn}`,
+    type: 'milestone',
+    priority: 'high',
+    recipientIds,
+    actionUrl: `/entrepreneur-dashboard/milestones`,
+    actionLabel: 'عرض المهام',
+    actionLabelEn: 'View Milestones',
+    metadata: { 
+      milestoneId,
+      startupId: params.startupId,
+      reason,
+      type: 'milestone_deleted'
+    },
+  });
+
+  console.log(`[notifyMilestoneDeleted] Notification sent to ${recipientIds.length} recipients`);
+}
+
+/**
+ * Notify startup team when milestone is completed (TASK-09)
+ * Trigger: Milestone marked as completed
+ */
+export async function notifyMilestoneCompleted(params: {
+  milestoneId: string;
+  milestoneTitle: string;
+  startupId: string;
+  startupName: string;
+  completedByName: string;
+  finalProgress: number;
+  recipientIds: string[];
+}) {
+  const { 
+    milestoneId, 
+    milestoneTitle, 
+    startupName,
+    completedByName,
+    finalProgress,
+    recipientIds 
+  } = params;
+
+  console.log(`[notifyMilestoneCompleted] Notifying about completion of: ${milestoneTitle}`);
+
+  if (!recipientIds || recipientIds.length === 0) {
+    console.log(`[notifyMilestoneCompleted] No recipients`);
+    return;
+  }
+
+  await NotificationService.createNotification({
+    title: `✅ اكتمال المهمة: ${milestoneTitle}`,
+    message: `تم إكمال المهمة "${milestoneTitle}" لـ ${startupName} بنسبة ${finalProgress}%. تم التحقق بواسطة ${completedByName}.`,
+    titleEn: `✅ Milestone Completed: ${milestoneTitle}`,
+    messageEn: `The milestone "${milestoneTitle}" for ${startupName} has been completed at ${finalProgress}%. Verified by ${completedByName}.`,
+    type: 'milestone',
+    priority: 'medium',
+    recipientIds,
+    actionUrl: `/entrepreneur-dashboard/milestones?id=${milestoneId}`,
+    actionLabel: 'عرض المهمة',
+    actionLabelEn: 'View Milestone',
+    metadata: { 
+      milestoneId,
+      startupId: params.startupId,
+      finalProgress,
+      type: 'milestone_completed'
+    },
+  });
+
+  console.log(`[notifyMilestoneCompleted] Notification sent to ${recipientIds.length} recipients`);
+}
+
+// ============================================================================
+// EVENT NOTIFICATIONS (TASK-10, TASK-11, TASK-12)
+// ============================================================================
+
+/**
+ * Notify registered users when event is updated (TASK-10)
+ * Trigger: Event time/location/details changed
+ */
+export async function notifyEventUpdated(params: {
+  eventId: string;
+  eventTitle: string;
+  changedFields: string[];
+  importantChanges: boolean;
+  oldValues: {
+    startDate?: Date;
+    location?: string;
+  };
+  newValues: {
+    startDate?: Date;
+    location?: string;
+  };
+  updatedByName: string;
+  recipientIds: string[];
+}) {
+  const { 
+    eventId, 
+    eventTitle, 
+    changedFields,
+    importantChanges,
+    oldValues,
+    newValues,
+    updatedByName,
+    recipientIds 
+  } = params;
+
+  console.log(`[notifyEventUpdated] Notifying about changes to: ${eventTitle}`);
+
+  if (!recipientIds || recipientIds.length === 0) {
+    console.log(`[notifyEventUpdated] No registered users to notify`);
+    return;
+  }
+
+  // Build message based on changes
+  let messageAr = `تم تحديث تفاصيل الفعالية "${eventTitle}" بواسطة ${updatedByName}.`;
+  let messageEn = `The event "${eventTitle}" has been updated by ${updatedByName}.`;
+
+  if (changedFields.includes('startDate') && oldValues.startDate && newValues.startDate) {
+    const oldDate = new Date(oldValues.startDate).toLocaleString('ar-SA');
+    const newDate = new Date(newValues.startDate).toLocaleString('ar-SA');
+    messageAr += ` تغير موعد الفعالية من ${oldDate} إلى ${newDate}.`;
+    messageEn += ` Event time changed from ${oldDate} to ${newDate}.`;
+  }
+
+  if (changedFields.includes('location') && oldValues.location && newValues.location) {
+    messageAr += ` تغير الموقع من "${oldValues.location}" إلى "${newValues.location}".`;
+    messageEn += ` Location changed from "${oldValues.location}" to "${newValues.location}".`;
+  }
+
+  await NotificationService.createNotification({
+    title: `⚠️ تحديث الفعالية: ${eventTitle}`,
+    message: messageAr,
+    titleEn: `⚠️ Event Update: ${eventTitle}`,
+    messageEn: messageEn,
+    type: 'event',
+    priority: importantChanges ? 'high' : 'medium',
+    recipientIds,
+    actionUrl: `/events/${eventId}`,
+    actionLabel: 'عرض التحديثات',
+    actionLabelEn: 'View Updates',
+    metadata: { 
+      eventId,
+      changedFields,
+      importantChanges,
+      type: 'event_updated'
+    },
+  });
+
+  console.log(`[notifyEventUpdated] Notification sent to ${recipientIds.length} users`);
+}
+
+/**
+ * Notify user when added to event waitlist (TASK-11)
+ * Trigger: User registered but event at capacity
+ */
+export async function notifyEventWaitlisted(params: {
+  registrationId: string;
+  eventId: string;
+  eventTitle: string;
+  userId: string;
+  waitlistPosition: number;
+}) {
+  const { eventId, eventTitle, userId, waitlistPosition } = params;
+
+  console.log(`[notifyEventWaitlisted] Notifying user ${userId} about waitlist position ${waitlistPosition}`);
+
+  await NotificationService.createNotification({
+    title: `قائمة الانتظار: ${eventTitle}`,
+    message: `أنت الآن في قائمة الانتظار للفعالية "${eventTitle}" في المركز ${waitlistPosition}. سيتم إعلامك عند توفر مكان.`,
+    titleEn: `Waitlisted: ${eventTitle}`,
+    messageEn: `You are now on the waitlist for "${eventTitle}" at position ${waitlistPosition}. You will be notified when a spot becomes available.`,
+    type: 'event',
+    priority: 'medium',
+    recipientIds: [userId],
+    actionUrl: `/events/${eventId}`,
+    actionLabel: 'عرض الفعالية',
+    actionLabelEn: 'View Event',
+    metadata: { 
+      eventId,
+      registrationId: params.registrationId,
+      waitlistPosition,
+      type: 'event_waitlisted'
+    },
+  });
+
+  console.log(`[notifyEventWaitlisted] Notification sent`);
+}
+
+/**
+ * Notify user when promoted from waitlist to confirmed (TASK-12)
+ * Trigger: User moved from waitlist to confirmed
+ */
+export async function notifyEventPromotedFromWaitlist(params: {
+  registrationId: string;
+  eventId: string;
+  eventTitle: string;
+  userId: string;
+  eventDate: Date;
+}) {
+  const { eventId, eventTitle, userId, eventDate } = params;
+
+  console.log(`[notifyEventPromotedFromWaitlist] Notifying user ${userId} about promotion for ${eventTitle}`);
+
+  const formattedDate = new Date(eventDate).toLocaleDateString('ar-SA', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  await NotificationService.createNotification({
+    title: `🎉 تم تأكيد تسجيلك: ${eventTitle}`,
+    message: `تم نقلك من قائمة الانتظار إلى المسجلين في "${eventTitle}". موعد الفعالية: ${formattedDate}.`,
+    titleEn: `🎉 Registration Confirmed: ${eventTitle}`,
+    messageEn: `You have been moved from the waitlist to confirmed for "${eventTitle}". Event date: ${formattedDate}.`,
+    type: 'event',
+    priority: 'high',
+    recipientIds: [userId],
+    actionUrl: `/events/${eventId}`,
+    actionLabel: 'عرض التفاصيل',
+    actionLabelEn: 'View Details',
+    metadata: { 
+      eventId,
+      registrationId: params.registrationId,
+      type: 'event_promoted_from_waitlist'
+    },
+  });
+
+  console.log(`[notifyEventPromotedFromWaitlist] Notification sent`);
+}
+
+// ============================================================================
+// MEDIUM PRIORITY NOTIFICATIONS (TASK-13 to TASK-20)
+// ============================================================================
+
+/**
+ * Notify when program details are updated (TASK-13)
+ * Trigger: PUT /api/program-manager/programs/[programId]
+ */
+export async function notifyProgramUpdated(params: {
+  programId: string;
+  programName: string;
+  updatedFields: string[];
+  updaterName: string;
+  cohortIds: string[];
+}) {
+  const { programId, programName, updatedFields, updaterName, cohortIds } = params;
+
+  console.log(`[notifyProgramUpdated] Notifying about program update: ${programName}`);
+
+  // Find all entrepreneurs in cohorts belonging to this program
+  const startups = await prisma.startup.findMany({
+    where: {
+      cohortId: { in: cohortIds }
+    },
+    select: {
+      entrepreneurs: { select: { id: true } }
+    }
+  });
+
+  const recipientIds = [...new Set(startups.flatMap(s => s.entrepreneurs.map(e => e.id)))];
+
+  if (!recipientIds.length) {
+    console.log(`[notifyProgramUpdated] No recipients found`);
+    return;
+  }
+
+  const fieldNamesAr: Record<string, string> = {
+    'name': 'الاسم',
+    'description': 'الوصف',
+    'startDate': 'تاريخ البدء',
+    'endDate': 'تاريخ الانتهاء',
+    'status': 'الحالة',
+    'requirements': 'المتطلبات'
+  };
+
+  const fieldNamesEn: Record<string, string> = {
+    'name': 'Name',
+    'description': 'Description',
+    'startDate': 'Start Date',
+    'endDate': 'End Date',
+    'status': 'Status',
+    'requirements': 'Requirements'
+  };
+
+  const changedFieldsAr = updatedFields.map(f => fieldNamesAr[f] || f).join('، ');
+  const changedFieldsEn = updatedFields.map(f => fieldNamesEn[f] || f).join(', ');
+
+  await NotificationService.createNotification({
+    title: `📋 تحديث على البرنامج: ${programName}`,
+    message: `تم تحديث ${changedFieldsAr} في برنامج "${programName}" بواسطة ${updaterName}.`,
+    titleEn: `📋 Program Updated: ${programName}`,
+    messageEn: `${changedFieldsEn} updated in program "${programName}" by ${updaterName}.`,
+    type: 'program',
+    priority: 'medium',
+    recipientIds,
+    actionUrl: `/programs/${programId}`,
+    actionLabel: 'عرض البرنامج',
+    actionLabelEn: 'View Program',
+    metadata: { 
+      programId,
+      type: 'program_updated',
+      updatedFields
+    },
+  });
+
+  console.log(`[notifyProgramUpdated] Notification sent to ${recipientIds.length} recipients`);
+}
+
+/**
+ * Notify when program is cancelled (TASK-14)
+ * Trigger: Program status changed to CANCELLED
+ */
+export async function notifyProgramCancelled(params: {
+  programId: string;
+  programName: string;
+  cancelledByName: string;
+  reason?: string;
+  cohortIds: string[];
+}) {
+  const { programId, programName, cancelledByName, reason, cohortIds } = params;
+
+  console.log(`[notifyProgramCancelled] Notifying about program cancellation: ${programName}`);
+
+  // Find all entrepreneurs in cohorts belonging to this program
+  const startups = await prisma.startup.findMany({
+    where: {
+      cohortId: { in: cohortIds }
+    },
+    select: {
+      entrepreneurs: { select: { id: true } }
+    }
+  });
+
+  const recipientIds = [...new Set(startups.flatMap(s => s.entrepreneurs.map(e => e.id)))];
+
+  if (!recipientIds.length) {
+    console.log(`[notifyProgramCancelled] No recipients found`);
+    return;
+  }
+
+  const reasonTextAr = reason ? ` السبب: ${reason}.` : '';
+  const reasonTextEn = reason ? ` Reason: ${reason}.` : '';
+
+  await NotificationService.createNotification({
+    title: `⛔ إلغاء البرنامج: ${programName}`,
+    message: `تم إلغاء برنامج "${programName}" بواسطة ${cancelledByName}.${reasonTextAr}`,
+    titleEn: `⛔ Program Cancelled: ${programName}`,
+    messageEn: `Program "${programName}" has been cancelled by ${cancelledByName}.${reasonTextEn}`,
+    type: 'program',
+    priority: 'high',
+    recipientIds,
+    actionUrl: `/programs/${programId}`,
+    actionLabel: 'عرض التفاصيل',
+    actionLabelEn: 'View Details',
+    metadata: { 
+      programId,
+      type: 'program_cancelled',
+      reason
+    },
+  });
+
+  console.log(`[notifyProgramCancelled] Notification sent to ${recipientIds.length} recipients`);
+}
+
+/**
+ * Notify when new cohort is created (TASK-15)
+ * Trigger: POST /api/program-manager/cohorts
+ */
+export async function notifyCohortCreated(params: {
+  cohortId: string;
+  cohortName: string;
+  programName: string;
+  startDate: Date;
+  createdByName: string;
+  startupIds: string[];
+}) {
+  const { cohortId, cohortName, programName, startDate, createdByName, startupIds } = params;
+
+  console.log(`[notifyCohortCreated] Notifying about new cohort: ${cohortName}`);
+
+  // Get entrepreneurs from startups
+  const startups = await prisma.startup.findMany({
+    where: { id: { in: startupIds } },
+    select: {
+      entrepreneurs: { select: { id: true } }
+    }
+  });
+
+  const recipientIds = [...new Set(startups.flatMap(s => s.entrepreneurs.map(e => e.id)))];
+
+  if (!recipientIds.length) {
+    console.log(`[notifyCohortCreated] No recipients found`);
+    return;
+  }
+
+  const formattedDate = new Date(startDate).toLocaleDateString('ar-SA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  await NotificationService.createNotification({
+    title: `🎉 انضمام إلى برنامج ${programName}`,
+    message: `تم إنشاء ${cohortName} ضمن ${programName} وتم إضافتك إليها. تاريخ البدء: ${formattedDate}.`,
+    titleEn: `🎉 Joined ${programName}`,
+    messageEn: `You have been added to ${cohortName} in ${programName}. Start date: ${formattedDate}.`,
+    type: 'cohort',
+    priority: 'medium',
+    recipientIds,
+    actionUrl: `/cohorts/${cohortId}`,
+    actionLabel: 'عرض التفاصيل',
+    actionLabelEn: 'View Details',
+    metadata: { 
+      cohortId,
+      type: 'cohort_created'
+    },
+  });
+
+  console.log(`[notifyCohortCreated] Notification sent to ${recipientIds.length} recipients`);
+}
+
+/**
+ * Notify when team invitation is accepted (TASK-16)
+ * Trigger: Team invitation accepted
+ */
+export async function notifyTeamInvitationAccepted(params: {
+  invitationId: string;
+  startupId: string;
+  startupName: string;
+  invitedEmail: string;
+  invitedName: string;
+  acceptedAt: Date;
+  entrepreneurIds: string[];
+}) {
+  const { startupName, invitedEmail, invitedName, acceptedAt, entrepreneurIds } = params;
+
+  console.log(`[notifyTeamInvitationAccepted] Notifying about invitation acceptance for ${invitedEmail}`);
+
+  if (!entrepreneurIds.length) {
+    console.log(`[notifyTeamInvitationAccepted] No recipients found`);
+    return;
+  }
+
+  const formattedDate = new Date(acceptedAt).toLocaleDateString('ar-SA');
+
+  await NotificationService.createNotification({
+    title: `✅ تم قبول دعوة الفريق`,
+    message: `${invitedName} (${invitedEmail}) قبل دعوة الانضمام إلى ${startupName} بتاريخ ${formattedDate}.`,
+    titleEn: `✅ Team Invitation Accepted`,
+    messageEn: `${invitedName} (${invitedEmail}) accepted the invitation to join ${startupName} on ${formattedDate}.`,
+    type: 'team',
+    priority: 'medium',
+    recipientIds: entrepreneurIds,
+    actionUrl: `/startups/${params.startupId}/team`,
+    actionLabel: 'عرض الفريق',
+    actionLabelEn: 'View Team',
+    metadata: { 
+      startupId: params.startupId,
+      invitationId: params.invitationId,
+      type: 'team_invitation_accepted'
+    },
+  });
+
+  console.log(`[notifyTeamInvitationAccepted] Notification sent`);
+}
+
+/**
+ * Notify when team invitation is rejected (TASK-17)
+ * Trigger: Team invitation rejected
+ */
+export async function notifyTeamInvitationRejected(params: {
+  invitationId: string;
+  startupId: string;
+  startupName: string;
+  invitedEmail: string;
+  invitedName: string;
+  rejectedAt: Date;
+  reason?: string;
+  entrepreneurIds: string[];
+}) {
+  const { startupName, invitedEmail, invitedName, rejectedAt, reason, entrepreneurIds } = params;
+
+  console.log(`[notifyTeamInvitationRejected] Notifying about invitation rejection for ${invitedEmail}`);
+
+  if (!entrepreneurIds.length) {
+    console.log(`[notifyTeamInvitationRejected] No recipients found`);
+    return;
+  }
+
+  const formattedDate = new Date(rejectedAt).toLocaleDateString('ar-SA');
+  const reasonTextAr = reason ? ` السبب: ${reason}.` : '';
+  const reasonTextEn = reason ? ` Reason: ${reason}.` : '';
+
+  await NotificationService.createNotification({
+    title: `❌ تم رفض دعوة الفريق`,
+    message: `${invitedName} (${invitedEmail}) رفض دعوة الانضمام إلى ${startupName} بتاريخ ${formattedDate}.${reasonTextAr}`,
+    titleEn: `❌ Team Invitation Rejected`,
+    messageEn: `${invitedName} (${invitedEmail}) rejected the invitation to join ${startupName} on ${formattedDate}.${reasonTextEn}`,
+    type: 'team',
+    priority: 'medium',
+    recipientIds: entrepreneurIds,
+    actionUrl: `/startups/${params.startupId}/team`,
+    actionLabel: 'عرض الفريق',
+    actionLabelEn: 'View Team',
+    metadata: { 
+      startupId: params.startupId,
+      invitationId: params.invitationId,
+      type: 'team_invitation_rejected',
+      reason
+    },
+  });
+
+  console.log(`[notifyTeamInvitationRejected] Notification sent`);
+}
+
+/**
+ * Notify when team member is removed (TASK-18)
+ * Trigger: DELETE /api/startups/[id]/team/[memberId]
+ */
+export async function notifyTeamMemberRemoved(params: {
+  startupId: string;
+  startupName: string;
+  memberName: string;
+  memberEmail: string;
+  removedByName: string;
+  removedAt: Date;
+  entrepreneurIds: string[];
+  removedUserId: string;
+}) {
+  const { startupName, memberName, memberEmail, removedByName, removedAt, entrepreneurIds, removedUserId } = params;
+
+  console.log(`[notifyTeamMemberRemoved] Notifying about team member removal: ${memberName}`);
+
+  // Notify remaining entrepreneurs
+  const remainingEntrepreneurs = entrepreneurIds.filter(id => id !== removedUserId);
+
+  if (remainingEntrepreneurs.length) {
+    const formattedDate = new Date(removedAt).toLocaleDateString('ar-SA');
+
+    await NotificationService.createNotification({
+      title: `🚫 إزالة عضو من الفريق`,
+      message: `تم إزالة ${memberName} (${memberEmail}) من فريق ${startupName} بواسطة ${removedByName} بتاريخ ${formattedDate}.`,
+      titleEn: `🚫 Team Member Removed`,
+      messageEn: `${memberName} (${memberEmail}) was removed from ${startupName} team by ${removedByName} on ${formattedDate}.`,
+      type: 'team',
+      priority: 'medium',
+      recipientIds: remainingEntrepreneurs,
+      actionUrl: `/startups/${params.startupId}/team`,
+      actionLabel: 'عرض الفريق',
+      actionLabelEn: 'View Team',
+      metadata: { 
+        startupId: params.startupId,
+        removedUserId,
+        type: 'team_member_removed'
+      },
+    });
+
+    console.log(`[notifyTeamMemberRemoved] Notification sent to remaining team members`);
+  }
+
+  // Notify the removed user
+  await NotificationService.createNotification({
+    title: `🚫 تمت إزالتك من الفريق`,
+    message: `تم إزالتك من فريق ${startupName} بواسطة ${removedByName}.`,
+    titleEn: `🚫 Removed from Team`,
+    messageEn: `You have been removed from ${startupName} team by ${removedByName}.`,
+    type: 'team',
+    priority: 'high',
+    recipientIds: [removedUserId],
+    actionUrl: `/dashboard`,
+    actionLabel: 'الذهاب للرئيسية',
+    actionLabelEn: 'Go to Dashboard',
+    metadata: { 
+      startupId: params.startupId,
+      type: 'team_member_removed'
+    },
+  });
+
+  console.log(`[notifyTeamMemberRemoved] Notification sent to removed user`);
+}
+
+/**
+ * Notify when team member account is created (TASK-19)
+ * Trigger: POST /api/startups/[id]/team/invite (when creating new user)
+ */
+export async function notifyTeamMemberAccountCreated(params: {
+  startupId: string;
+  startupName: string;
+  memberName: string;
+  memberEmail: string;
+  tempPassword: string;
+  invitedByName: string;
+  memberUserId: string;
+}) {
+  const { startupName, memberName, memberEmail, tempPassword, invitedByName, memberUserId } = params;
+
+  console.log(`[notifyTeamMemberAccountCreated] Notifying new team member: ${memberEmail}`);
+
+  await NotificationService.createNotification({
+    title: `🎉 تم إنشاء حسابك وإضافتك لفريق ${startupName}`,
+    message: `مرحباً ${memberName}! تم إنشاء حسابك بواسطة ${invitedByName} وإضافتك إلى فريق ${startupName}. بيانات الدخول: ${memberEmail} / كلمة المرور المؤقتة: ${tempPassword}. يرجى تغيير كلمة المرور فور الدخول.`,
+    titleEn: `🎉 Account Created - Joined ${startupName} Team`,
+    messageEn: `Welcome ${memberName}! Your account was created by ${invitedByName} and you were added to ${startupName} team. Login: ${memberEmail} / Temporary password: ${tempPassword}. Please change your password after logging in.`,
+    type: 'team',
+    priority: 'high',
+    recipientIds: [memberUserId],
+    actionUrl: `/settings/password`,
+    actionLabel: 'تغيير كلمة المرور',
+    actionLabelEn: 'Change Password',
+    metadata: { 
+      startupId: params.startupId,
+      type: 'team_member_account_created'
+    },
+  });
+
+  console.log(`[notifyTeamMemberAccountCreated] Notification sent to new team member`);
+}
+
+/**
+ * Notify when event registration is removed/cancelled (TASK-20)
+ * Trigger: DELETE /api/events/[eventId]/register or admin removes registration
+ */
+export async function notifyEventRegistrationRemoved(params: {
+  eventId: string;
+  eventTitle: string;
+  userId: string;
+  userName: string;
+  removedByName: string;
+  removedAt: Date;
+  reason?: string;
+  isSelfCancelled: boolean;
+}) {
+  const { eventId, eventTitle, userId, userName, removedByName, removedAt, reason, isSelfCancelled } = params;
+
+  console.log(`[notifyEventRegistrationRemoved] Notifying ${userName} about registration removal for ${eventTitle}`);
+
+  const formattedDate = new Date(removedAt).toLocaleDateString('ar-SA');
+  const reasonTextAr = reason ? ` السبب: ${reason}.` : '';
+  const reasonTextEn = reason ? ` Reason: ${reason}.` : '';
+
+  const actionTextAr = isSelfCancelled ? 'ألغيت' : `تم إلغاء تسجيلك`;
+  const actionTextEn = isSelfCancelled ? 'You cancelled' : `Your registration was cancelled`;
+  const byTextAr = isSelfCancelled ? '' : ` بواسطة ${removedByName}`;
+  const byTextEn = isSelfCancelled ? '' : ` by ${removedByName}`;
+
+  await NotificationService.createNotification({
+    title: `🚫 إلغاء تسجيل الفعالية: ${eventTitle}`,
+    message: `${actionTextAr} تسجيلك في "${eventTitle}"${byTextAr} بتاريخ ${formattedDate}.${reasonTextAr}`,
+    titleEn: `🚫 Event Registration Cancelled: ${eventTitle}`,
+    messageEn: `${actionTextEn} for "${eventTitle}"${byTextEn} on ${formattedDate}.${reasonTextEn}`,
+    type: 'event',
+    priority: 'medium',
+    recipientIds: [userId],
+    actionUrl: `/events/${eventId}`,
+    actionLabel: 'عرض الفعالية',
+    actionLabelEn: 'View Event',
+    metadata: { 
+      eventId,
+      type: 'event_registration_removed',
+      isSelfCancelled,
+      reason
+    },
+  });
+
+  console.log(`[notifyEventRegistrationRemoved] Notification sent`);
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 

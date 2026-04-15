@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
 import { checkPermission } from '@/lib/permissions';
+import { notifyProgramUpdated, notifyProgramCancelled } from '@/lib/services/notification-events';
 
 // GET /api/admin/programs/[id] - Get a specific program by ID
 export async function GET(
@@ -146,7 +147,11 @@ export async function PUT(
     // Check if program exists
     const existingProgram = await prisma.program.findUnique({
       where: { id },
-      select: { id: true }
+      include: {
+        cohorts: {
+          select: { id: true }
+        }
+      }
     });
     
     if (!existingProgram) {
@@ -189,6 +194,9 @@ export async function PUT(
     if (requirements !== undefined) updateData.requirements = requirements;
     if (benefits !== undefined) updateData.benefits = benefits;
     
+    // Track updated fields for notification
+    const updatedFields = Object.keys(updateData);
+
     // Update the program
     const updatedProgram = await prisma.program.update({
       where: { id },
@@ -203,6 +211,33 @@ export async function PUT(
         }
       }
     });
+
+    // Send notifications for program update (TASK-13)
+    if (updatedFields.length > 0) {
+      try {
+        if (status === 'CANCELLED' && existingProgram.status !== 'CANCELLED') {
+          // Program was cancelled (TASK-14)
+          await notifyProgramCancelled({
+            programId: id,
+            programName: updatedProgram.name,
+            cancelledByName: permissionCheck.userName || 'Admin',
+            reason: body.cancellationReason,
+            cohortIds: existingProgram.cohorts.map(c => c.id)
+          });
+        } else {
+          // Regular program update (TASK-13)
+          await notifyProgramUpdated({
+            programId: id,
+            programName: updatedProgram.name,
+            updatedFields,
+            updaterName: permissionCheck.userName || 'Admin',
+            cohortIds: existingProgram.cohorts.map(c => c.id)
+          });
+        }
+      } catch (notifyError) {
+        console.error('[Admin Programs PUT] Notification error:', notifyError);
+      }
+    }
     
     return NextResponse.json(updatedProgram);
   } catch (error) {

@@ -52,6 +52,11 @@ model User {
   createdPayments Payment[] @relation("UserToPayment") // Payments created by this user
   integrations Integration[] // Integrations connected by this user
   integrationSyncs IntegrationSync[] // Integration syncs triggered by this user
+  
+  // Email system relations
+  createdEmailTemplates EmailTemplate[] @relation("CreatedEmailTemplates") // Email templates created by this user
+  receivedEmails EmailLog[] @relation("ReceivedEmails") // Emails sent to this user
+  createdScheduledEmails ScheduledEmail[] @relation("CreatedScheduledEmails") // Scheduled emails created by this user
 }
 
 model Profile {
@@ -564,6 +569,9 @@ model Notification {
   scheduledFor    DateTime?     // When to deliver scheduled notifications
   sendEmail       Boolean       @default(false) // Whether to also send as email
   sendPush        Boolean       @default(false) // Whether to also send as push notification
+  emailSent       Boolean       @default(false) // Track if email was actually sent
+  emailLogId      String?       // Link to EmailLog
+  emailLog        EmailLog?     @relation(fields: [emailLogId], references: [id])
   actionUrl       String?       // Deep link URL for action button
   actionLabel     String?       // Action button label (Arabic)
   actionLabelEn   String?       // Action button label (English)
@@ -578,6 +586,7 @@ model Notification {
   @@index([type])
   @@index([priority])
   @@index([createdAt])
+  @@index([emailSent])
 }
 
 // Junction table for notification recipients
@@ -596,6 +605,127 @@ model NotificationRecipient {
   @@unique([notificationId, userId]) // Each user can only have one recipient record per notification
   @@index([userId]) // Index for faster queries by user
   @@index([notificationId]) // Index for faster queries by notification
+}
+
+// ============================================================================
+// EMAIL SYSTEM MODELS
+// ============================================================================
+
+// SMTP Configuration (Single record, system-wide)
+model SmtpConfig {
+  id            String   @id @default(uuid())
+  host          String   // smtp.sendgrid.net, smtp.gmail.com, etc.
+  port          Int      // 587, 465, 25
+  secure        Boolean  @default(true) // TLS/SSL
+  username      String   // API key or username
+  password      String   // Encrypted password/API key
+  fromEmail     String   // noreply@haam.com
+  fromName      String   @default("HAAM Platform")
+  isActive      Boolean  @default(false)
+  testMode      Boolean  @default(true) // Don't send real emails in test mode
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Email Templates (Editable via admin UI)
+model EmailTemplate {
+  id                String   @id @default(uuid())
+  name              String   @unique // "welcome_user", "milestone_due", etc.
+  description       String?  // Human-readable description
+  subject           String   // Email subject line with {{variables}}
+  subjectEn         String?  // English subject
+  htmlBody          String   // HTML template with {{variables}}
+  htmlBodyEn        String?  // English HTML template
+  textBody          String?  // Plain text fallback
+  textBodyEn        String?  // English plain text fallback
+  scenarioType      String?  // "user_created", "milestone_created", etc.
+  isActive          Boolean  @default(true)
+  allowCustomEdit   Boolean  @default(true) // Can admin modify content?
+  category          String   // "system", "milestone", "event", "application"
+  variables         String?  // JSON array of available variables
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdById       String?
+  createdBy         User?    @relation("CreatedEmailTemplates", fields: [createdById], references: [id])
+  
+  // Relations
+  scenarioSettings  EmailScenarioSettings[]
+  emailLogs         EmailLog[]
+  scheduledEmails   ScheduledEmail[]
+  
+  @@index([scenarioType])
+  @@index([category])
+  @@index([isActive])
+}
+
+// Email Notification Settings per Scenario
+model EmailScenarioSettings {
+  id                String   @id @default(uuid())
+  scenarioType      String   @unique // "user_created", "milestone_created", etc.
+  isEnabled         Boolean  @default(true) // Master on/off switch
+  templateId        String   // Which template to use
+  template          EmailTemplate @relation(fields: [templateId], references: [id])
+  sendToRoles       String?  // JSON array ["ADMIN", "PROGRAM_MANAGER"]
+  delayMinutes      Int      @default(0) // Delay before sending
+  digestMode        String   @default("immediate") // "immediate", "hourly", "daily"
+  requireApproval   Boolean  @default(false) // For bulk emails
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Email Log (Audit trail)
+model EmailLog {
+  id              String   @id @default(uuid())
+  recipientEmail  String
+  recipientId     String?  // User ID if registered
+  recipient       User?    @relation("ReceivedEmails", fields: [recipientId], references: [id])
+  subject         String
+  templateId      String?
+  template        EmailTemplate? @relation(fields: [templateId], references: [id])
+  scenarioType    String?  // Which triggered this
+  status          String   @default("pending") // "pending", "sent", "failed", "bounced", "opened"
+  errorMessage    String?
+  sentAt          DateTime?
+  openedAt        DateTime?
+  clickedAt       DateTime?
+  ipAddress       String?
+  metadata        String?  // JSON with variables used
+  createdAt       DateTime @default(now())
+  
+  // Relation to Notification
+  notification    Notification[]
+  
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([createdAt])
+  @@index([scenarioType])
+}
+
+// Scheduled Emails (For marketing/campaigns)
+model ScheduledEmail {
+  id              String   @id @default(uuid())
+  name            String   // Campaign name
+  subject         String
+  subjectEn       String?
+  htmlBody        String
+  htmlBodyEn      String?
+  templateId      String?  // Optional: use template instead of custom body
+  template        EmailTemplate? @relation(fields: [templateId], references: [id])
+  recipientFilter String?  // JSON filter criteria
+  recipientList   String?  // JSON array of specific emails
+  scheduledFor    DateTime
+  status          String   @default("scheduled") // "scheduled", "sending", "completed", "cancelled", "paused"
+  sentCount       Int      @default(0)
+  failedCount     Int      @default(0)
+  totalCount      Int      @default(0)
+  errorLog        String?  // JSON array of failed sends
+  createdById     String
+  createdBy       User     @relation("CreatedScheduledEmails", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([status])
+  @@index([scheduledFor])
 }
 
 // Model for system integrations (e.g., Stripe, Google Calendar, Slack, etc.)

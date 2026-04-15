@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
-import { notifyApplicationStatusChanged } from '@/lib/services/notification-events';
+import { notifyApplicationStatusChanged, notifyCohortMemberAdded } from '@/lib/services/notification-events';
 
 // GET /api/program-manager/cohorts/[id]/applications - Get all applications for a cohort
 export async function GET(
@@ -243,6 +243,37 @@ export async function PUT(
           console.log(`[Applications API] Status change notification sent successfully`);
         } else {
           console.log(`[Applications API] No entrepreneurs found to notify`);
+        }
+        
+        // TASK-05: Send cohort welcome notification when application is accepted (ACTIVE)
+        if (status === 'ACTIVE' && entrepreneurIds.length > 0) {
+          console.log(`[Applications API] Sending cohort welcome notification (TASK-05)...`);
+          try {
+            // Get cohort details with program info
+            const cohortWithProgram = await prisma.cohort.findUnique({
+              where: { id },
+              include: {
+                program: { select: { id: true, name: true } },
+                manager: { select: { id: true } }
+              }
+            });
+            
+            if (cohortWithProgram) {
+              await notifyCohortMemberAdded({
+                cohortId: id,
+                cohortName: cohortWithProgram.name,
+                programId: cohortWithProgram.program.id,
+                programName: cohortWithProgram.program.name,
+                startupId: oldApplication.startupId,
+                startupName: oldApplication.startup.name,
+                entrepreneurIds,
+                programManagerId: cohortWithProgram.manager?.id || user.userId,
+              });
+              console.log(`[Applications API] Cohort welcome notification sent (TASK-05)`);
+            }
+          } catch (welcomeError: any) {
+            console.error('[Applications API] Failed to send cohort welcome notification:', welcomeError.message);
+          }
         }
       } else {
         console.log(`[Applications API] No old application data found`);

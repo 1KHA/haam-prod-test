@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
+import { notifyEventRegistrationRemoved } from '@/lib/services/notification-events';
 
 // GET /api/program-manager/events/[id]/registrations - Get event registrations
 export async function GET(
@@ -257,6 +258,7 @@ export async function DELETE(
       where: { id: eventId },
       select: { 
         id: true, 
+        title: true,
         creatorId: true, 
         status: true 
       }
@@ -289,10 +291,32 @@ export async function DELETE(
       }, { status: 404 });
     }
     
+    // Get admin name for notification
+    const adminUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { name: true }
+    });
+
     // Delete the registration
     await prisma.eventRegistration.delete({
       where: { id: registrationId }
     });
+
+    // Notify user about registration removal (TASK-20)
+    try {
+      await notifyEventRegistrationRemoved({
+        eventId,
+        eventTitle: event?.title || 'Event',
+        userId: registration.userId,
+        userName: registration.user.name || registration.user.email,
+        removedByName: adminUser?.name || 'Admin',
+        removedAt: new Date(),
+        isSelfCancelled: false,
+        reason: 'Removed by event administrator'
+      });
+    } catch (notifyError) {
+      console.error('[PM Registrations DELETE] Notification error:', notifyError);
+    }
     
     return NextResponse.json({
       message: 'Registration removed successfully',

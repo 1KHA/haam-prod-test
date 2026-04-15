@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { InvitationStatus, InvitationType, MemberStatus } from '@prisma/client';
 import { sendEmail } from '@/lib/email'; // Import email functions
+import { notifyTeamInvitationAccepted, notifyTeamInvitationRejected } from '@/lib/services/notification-events';
 
 export async function PATCH(
   request: NextRequest,
@@ -129,6 +130,52 @@ export async function PATCH(
           <p>The Accelerator Dashboard Team</p>
         `,
       });
+    }
+
+    // Get user details for notification
+    const inviteeUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { name: true, email: true }
+    });
+
+    // Get all entrepreneurs in the startup for notification
+    const startup = await prisma.startup.findUnique({
+      where: { id: startupId },
+      include: {
+        entrepreneurs: { select: { id: true } }
+      }
+    });
+
+    const entrepreneurIds = startup?.entrepreneurs.map(e => e.id) || [];
+
+    // Send in-app notification (TASK-16 or TASK-17)
+    try {
+      if (status === InvitationStatus.ACCEPTED) {
+        // TASK-16: Invitation accepted
+        await notifyTeamInvitationAccepted({
+          invitationId,
+          startupId,
+          startupName: invitation.startup?.name || 'Your Startup',
+          invitedEmail: invitation.inviteeEmail,
+          invitedName: inviteeUser?.name || invitation.inviteeEmail,
+          acceptedAt: new Date(),
+          entrepreneurIds
+        });
+      } else if (status === InvitationStatus.REJECTED) {
+        // TASK-17: Invitation rejected
+        await notifyTeamInvitationRejected({
+          invitationId,
+          startupId,
+          startupName: invitation.startup?.name || 'Your Startup',
+          invitedEmail: invitation.inviteeEmail,
+          invitedName: inviteeUser?.name || invitation.inviteeEmail,
+          rejectedAt: new Date(),
+          reason: body.reason,
+          entrepreneurIds
+        });
+      }
+    } catch (notifyError) {
+      console.error('[Invitation PATCH] Notification error:', notifyError);
     }
 
     return NextResponse.json(

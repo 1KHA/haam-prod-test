@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
-import { notifyEventRegistration } from '@/lib/services/notification-events';
+import { notifyEventRegistration, notifyEventWaitlisted, notifyEventPromotedFromWaitlist, notifyEventRegistrationRemoved } from '@/lib/services/notification-events';
 
 // GET /api/events/[id]/register - Check registration status for an event
 export async function GET(
@@ -162,6 +162,23 @@ export async function POST(
           status: 'waitlist'
         }
       });
+
+      // Notify user about waitlist status (TASK-11)
+      try {
+        const waitlistCount = await prisma.eventRegistration.count({
+          where: { eventId, status: 'waitlist' }
+        });
+
+        await notifyEventWaitlisted({
+          registrationId: registration.id,
+          eventId,
+          eventTitle: event.title,
+          userId: user.userId,
+          waitlistPosition: waitlistCount
+        });
+      } catch (notifyError) {
+        console.error('[Event Register] Waitlist notification error:', notifyError);
+      }
       
       return NextResponse.json({
         registration,
@@ -310,6 +327,12 @@ export async function DELETE(
       );
     }
     
+    // Get user details before deletion for notification
+    const userData = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { name: true, email: true }
+    });
+
     // Delete registration
     await prisma.eventRegistration.delete({
       where: {
@@ -319,6 +342,21 @@ export async function DELETE(
         }
       }
     });
+
+    // Notify user about registration cancellation (TASK-20)
+    try {
+      await notifyEventRegistrationRemoved({
+        eventId,
+        eventTitle: event.title,
+        userId: user.userId,
+        userName: userData?.name || user.email,
+        removedByName: userData?.name || user.email,
+        removedAt: new Date(),
+        isSelfCancelled: true
+      });
+    } catch (notifyError) {
+      console.error('[Event Register] Registration removal notification error:', notifyError);
+    }
     
     // If this user was confirmed and there are people on the waitlist, 
     // move the first waitlisted person to confirmed
@@ -329,7 +367,10 @@ export async function DELETE(
           eventId,
           status: 'waitlist'
         },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' },
+        include: {
+          user: { select: { id: true } }
+        }
       });
       
       if (waitlistedRegistration) {
@@ -338,8 +379,19 @@ export async function DELETE(
           where: { id: waitlistedRegistration.id },
           data: { status: 'confirmed' }
         });
-        
-        // TODO: Send notification to this user that they're now confirmed
+
+        // Notify user about promotion from waitlist (TASK-12)
+        try {
+          await notifyEventPromotedFromWaitlist({
+            registrationId: waitlistedRegistration.id,
+            eventId,
+            eventTitle: event.title,
+            userId: waitlistedRegistration.user.id,
+            eventDate: event.startDate
+          });
+        } catch (notifyError) {
+          console.error('[Event Register] Promotion notification error:', notifyError);
+        }
       }
     }
     

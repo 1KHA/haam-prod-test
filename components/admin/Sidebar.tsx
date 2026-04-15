@@ -20,7 +20,8 @@ import {
   Plug,
   ClipboardList,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Mail
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -110,6 +111,12 @@ const navItems: NavItem[] = [
     href: "/admin-dashboard/notifications", 
     icon: Bell
     // No permission required - all admins can see notifications
+  },
+  { 
+    name: "البريد الإلكتروني", 
+    href: "/admin-dashboard/email/settings", 
+    icon: Mail,
+    permission: { category: "settings", action: "edit" }
   },
   { 
     name: "التقارير", 

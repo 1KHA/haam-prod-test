@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest) {
         data: {
           isEnabled: isEnabled ?? existing.isEnabled,
           templateId: templateId !== undefined ? templateId : existing.templateId,
-          sendToRoles: sendToRoles ?? existing.sendToRoles,
+          sendToRoles: sendToRoles !== undefined ? JSON.stringify(sendToRoles) : existing.sendToRoles,
           delayMinutes: delayMinutes ?? existing.delayMinutes,
           digestMode: digestMode ?? existing.digestMode,
           requireApproval: requireApproval ?? existing.requireApproval,
@@ -132,7 +132,7 @@ export async function PUT(request: NextRequest) {
           scenarioType,
           isEnabled: isEnabled ?? false,
           templateId: templateId || null,
-          sendToRoles: sendToRoles || ['all'],
+          sendToRoles: sendToRoles ? JSON.stringify(sendToRoles) : JSON.stringify(['all']),
           delayMinutes: delayMinutes || 0,
           digestMode: digestMode || 'immediate',
           requireApproval: requireApproval ?? false,

@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         htmlBodyEn: htmlBodyEn || htmlBody,
         scenarioType: scenarioType || 'general',
         category: category || 'general',
-        variables: allVars,
+        variables: JSON.stringify(allVars),
         isActive: true,
         createdById: permissionCheck.userId,
       },
@@ -164,7 +164,7 @@ export async function PUT(request: NextRequest) {
         htmlBodyEn,
         scenarioType,
         category,
-        variables: allVars,
+        variables: JSON.stringify(allVars),
         isActive,
       },
     });

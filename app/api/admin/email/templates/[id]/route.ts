@@ -98,7 +98,7 @@ export async function PUT(
         htmlBodyEn,
         scenarioType,
         category,
-        variables: allVars,
+        variables: JSON.stringify(allVars),
         isActive,
       },
     });

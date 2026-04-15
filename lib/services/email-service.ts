@@ -8,6 +8,30 @@
 import nodemailer from 'nodemailer';
 import Handlebars from 'handlebars';
 import { prisma } from '@/lib/prisma';
+import crypto from 'crypto';
+
+// Decrypt SMTP password (must match smtp/route.ts encryption)
+const ENCRYPTION_KEY = process.env.JWT_SECRET || 'default-key-32-chars-long!!!!!';
+function decryptPassword(text: string): string {
+  try {
+    const parts = text.split(':');
+    if (parts.length !== 3) return text; // not encrypted, return as-is
+    const iv = Buffer.from(parts[0], 'hex');
+    const authTag = Buffer.from(parts[1], 'hex');
+    const encrypted = parts[2];
+    const decipher = crypto.createDecipheriv(
+      'aes-256-gcm',
+      Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)),
+      iv
+    );
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch {
+    return text; // if decryption fails, return as-is
+  }
+}
 
 // Types
 export interface SendEmailParams {
@@ -79,7 +103,7 @@ export class EmailService {
         port: config.port,
         secure: config.secure,
         username: config.username,
-        password: config.password,
+        password: decryptPassword(config.password),
         fromEmail: config.fromEmail,
         fromName: config.fromName,
         isActive: config.isActive,

@@ -457,7 +457,7 @@ export async function notifyTeamInvitationSent(params: {
  * Notify founder when team member account is created
  * Trigger: When new team member account is created
  */
-export async function notifyTeamMemberAccountCreated(params: {
+export async function notifyFounderTeamMemberCreated(params: {
   memberId: string;
   memberName: string;
   memberEmail: string;

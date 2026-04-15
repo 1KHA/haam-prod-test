@@ -140,7 +140,6 @@ export async function POST(request: NextRequest) {
           fromName: fromName || 'HAAM Platform',
           isActive: isActive ?? true,
           testMode: testMode ?? true,
-          createdById: permissionCheck.userId,
         },
       });
     }

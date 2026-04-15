@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         htmlBody,
         scheduledFor: new Date(scheduledFor),
         status: 'scheduled',
-        recipientFilter: recipientFilter || {},
+        recipientFilter: recipientFilter ? JSON.stringify(recipientFilter) : null,
         totalCount,
         sentCount: 0,
         failedCount: 0,

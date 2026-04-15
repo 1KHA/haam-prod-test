@@ -1,7 +1,5 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
-
 // Re-export UserRole from Prisma client (single source of truth)
 export { UserRole } from '@prisma/client';
 import { UserRole } from '@prisma/client';
@@ -51,6 +49,8 @@ export function getTokenFromHeader(authHeader?: string): string | null {
 // Get token from HTTP-only cookie
 export function getTokenFromCookie(): string | null {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { cookies } = require('next/headers');
     const cookieStore = cookies();
     return cookieStore.get('token')?.value || null;
   } catch (error) {

@@ -74,14 +74,8 @@ export function PermissionsProvider({
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       const response = await fetch("/api/auth/permissions", {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -109,11 +103,8 @@ export function PermissionsProvider({
     if (user.role === UserRole.ADMIN) return;
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       const sse = new EventSource(
-        `/api/auth/permissions/sse?token=${encodeURIComponent(token)}&userId=${user.id}&t=${Date.now()}`,
+        `/api/auth/permissions/sse?userId=${user.id}&t=${Date.now()}`,
         { withCredentials: true }
       );
       sseRef.current = sse;

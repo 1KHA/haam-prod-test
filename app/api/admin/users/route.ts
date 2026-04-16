@@ -85,11 +85,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
     }
 
-    const { name, email, password, role, specialization } = await request.json();
+    const { name, email, password, role: rawRole, specialization } = await request.json();
 
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password || !rawRole) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Map Arabic display names to Prisma enum values
+    const roleMap: Record<string, string> = {
+      'مدير النظام': 'ADMIN',
+      'مدير برنامج': 'PROGRAM_MANAGER',
+      'موجه': 'MENTOR',
+      'مستثمر': 'INVESTOR',
+      'رائد أعمال': 'ENTREPRENEUR',
+      'محكم': 'MENTOR',
+    };
+    const role = roleMap[rawRole] ?? rawRole;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {

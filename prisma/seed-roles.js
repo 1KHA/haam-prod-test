@@ -65,38 +65,38 @@ async function main() {
   // Create roles
   const adminRole = await prisma.role.upsert({
     where: { name: 'مدير النظام' },
-    update: { description: 'وصول كامل إلى جميع ميزات النظام وإعداداته' },
-    create: { name: 'مدير النظام', description: 'وصول كامل إلى جميع ميزات النظام وإعداداته' },
+    update: { description: 'وصول كامل إلى جميع ميزات النظام وإعداداته', roleEnum: 'ADMIN' },
+    create: { name: 'مدير النظام', description: 'وصول كامل إلى جميع ميزات النظام وإعداداته', roleEnum: 'ADMIN' },
   });
 
   const programManagerRole = await prisma.role.upsert({
     where: { name: 'مدير برنامج' },
-    update: { description: 'إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة' },
-    create: { name: 'مدير برنامج', description: 'إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة' },
+    update: { description: 'إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة', roleEnum: 'PROGRAM_MANAGER' },
+    create: { name: 'مدير برنامج', description: 'إدارة برامج المسرعات والحاضنات والشركات الناشئة المشاركة', roleEnum: 'PROGRAM_MANAGER' },
   });
 
   const mentorRole = await prisma.role.upsert({
     where: { name: 'موجه' },
-    update: { description: 'تقديم الإرشاد والتوجيه للشركات الناشئة' },
-    create: { name: 'موجه', description: 'تقديم الإرشاد والتوجيه للشركات الناشئة' },
+    update: { description: 'تقديم الإرشاد والتوجيه للشركات الناشئة', roleEnum: 'MENTOR' },
+    create: { name: 'موجه', description: 'تقديم الإرشاد والتوجيه للشركات الناشئة', roleEnum: 'MENTOR' },
   });
 
   const investorRole = await prisma.role.upsert({
     where: { name: 'مستثمر' },
-    update: { description: 'عرض الشركات الناشئة وتقديم التمويل' },
-    create: { name: 'مستثمر', description: 'عرض الشركات الناشئة وتقديم التمويل' },
+    update: { description: 'عرض الشركات الناشئة وتقديم التمويل', roleEnum: 'INVESTOR' },
+    create: { name: 'مستثمر', description: 'عرض الشركات الناشئة وتقديم التمويل', roleEnum: 'INVESTOR' },
   });
 
   const judgeRole = await prisma.role.upsert({
     where: { name: 'محكم' },
-    update: { description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات' },
-    create: { name: 'محكم', description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات' },
+    update: { description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات', roleEnum: 'MENTOR' },
+    create: { name: 'محكم', description: 'تقييم الشركات الناشئة في الهاكاثونات والمسابقات', roleEnum: 'MENTOR' },
   });
 
   const entrepreneurRole = await prisma.role.upsert({
     where: { name: 'ENTREPRENEUR' },
-    update: { description: 'Manage company, access resources and funding' },
-    create: { name: 'ENTREPRENEUR', description: 'Manage company, access resources and funding' },
+    update: { description: 'Manage company, access resources and funding', roleEnum: 'ENTREPRENEUR' },
+    create: { name: 'ENTREPRENEUR', description: 'Manage company, access resources and funding', roleEnum: 'ENTREPRENEUR' },
   });
 
   // Add permissions to entrepreneur role

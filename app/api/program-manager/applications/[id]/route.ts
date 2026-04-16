@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth";
 
 // PUT /api/program-manager/applications/[id]
 // Update application (CohortMember) status for a startup
@@ -12,14 +12,11 @@ export async function PUT(
     const startupId = params.id;
     const { status, cohortId, reviewers, notes } = await req.json();
 
-    // Verify token and check if user is a program manager
-    const token = req.headers.get("Authorization")?.split(" ")[1];
-    if (!token) {
+    const payload = await isAuthenticated(req.headers.get('authorization') || undefined);
+    if (!payload) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const payload = await verifyToken(token);
-    if (!payload || payload.role !== "PROGRAM_MANAGER") {
+    if (payload.role !== "PROGRAM_MANAGER") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

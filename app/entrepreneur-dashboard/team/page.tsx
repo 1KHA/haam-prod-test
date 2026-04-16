@@ -68,10 +68,8 @@ export default function TeamPage() {
   // Fetch entrepreneur's companies and set companyId
   useEffect(() => {
     const fetchCompanyId = async () => {
-      if (!token) return;
       try {
         const response = await fetch("/api/startups", {
-          headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
           const data = await response.json();
@@ -93,11 +91,10 @@ export default function TeamPage() {
   // Fetch company members and invitations
   useEffect(() => {
     const fetchMembers = async () => {
-      if (!token || !companyId) return;
+      if (!companyId) return;
       setIsLoading(true);
       try {
         const response = await fetch(`/api/company/${companyId}/members`, {
-          headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
           const data = await response.json();
@@ -116,12 +113,12 @@ export default function TeamPage() {
   }, [token, companyId]);
 
   const handleInvite = async () => {
-    if (!inviteEmail || !companyId || !token) return;
+    if (!inviteEmail || !companyId) return;
     setInviting(true);
     try {
       const res = await fetch(`/api/company/${companyId}/members`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail }),
       });
       const data = await res.json();
@@ -141,12 +138,12 @@ export default function TeamPage() {
   };
 
   const handleCreateMember = async () => {
-    if (!createForm.name || !createForm.email || !createForm.password || !companyId || !token) return;
+    if (!createForm.name || !createForm.email || !createForm.password || !companyId) return;
     setCreating(true);
     try {
       const res = await fetch(`/api/company/${companyId}/create-member`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createForm),
       });
       const data = await res.json();
@@ -156,7 +153,6 @@ export default function TeamPage() {
         setCreatedCredentials({ name: createForm.name, email: createForm.email, password: createForm.password });
         // Refresh members list
         const membersRes = await fetch(`/api/company/${companyId}/members`, {
-          headers: { Authorization: `Bearer ${token}` },
         });
         if (membersRes.ok) {
           const membersData = await membersRes.json();

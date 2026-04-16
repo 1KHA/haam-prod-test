@@ -63,14 +63,9 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
 
   useEffect(() => {
     const fetchStartupDetails = async () => {
-      if (!token) return
-      
       try {
         setIsLoading(true)
         const response = await fetch(`/api/startups/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         
         if (response.ok) {
@@ -89,13 +84,9 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
     }
 
     const fetchTeamMembers = async () => {
-      if (!token) return
       try {
         setTeamLoading(true)
         const response = await fetch('/api/team', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         if (response.ok) {
           const data = await response.json()
@@ -109,14 +100,9 @@ export default function StartupDetailsPage({ params }: { params: { id: string } 
     }
 
     const fetchMilestones = async () => {
-      if (!token) return
-
       try {
         setMilestonesLoading(true)
         const response = await fetch(`/api/milestones?startupId=${params.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
         })
 
         if (response.ok) {

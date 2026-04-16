@@ -85,14 +85,9 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     const fetchStartupDetails = async () => {
-      if (!token) return
-      
       try {
         setIsLoading(true)
         const response = await fetch(`/api/startups/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         
         if (response.ok) {
@@ -170,9 +165,6 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       // Send data to API
       const response = await fetch(`/api/startups/${params.id}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
         body: formDataToSend
       })
       

@@ -27,14 +27,9 @@ export default function StartupsPage() {
 
   useEffect(() => {
     const fetchCompanies = async () => {
-      if (!token) return
-      
       try {
         setIsLoading(true)
         const response = await fetch('/api/startups', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         
         if (response.ok) {

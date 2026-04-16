@@ -83,11 +83,8 @@ export default function MilestonesPage() {
 
   useEffect(() => {
     const fetchCompanyId = async () => {
-      if (!token) return
-
       try {
         const response = await fetch("/api/startups", {
-          headers: { Authorization: `Bearer ${token}` },
         })
 
         if (!response.ok) {
@@ -113,14 +110,13 @@ export default function MilestonesPage() {
 
   useEffect(() => {
     const fetchMilestones = async () => {
-      if (!token || !companyId) return
+      if (!companyId) return
 
       setLoading(true)
       setError(null)
 
       try {
         const response = await fetch(`/api/milestones?startupId=${companyId}`, {
-          headers: { Authorization: `Bearer ${token}` },
         })
 
         const data = await response.json()
@@ -152,7 +148,7 @@ export default function MilestonesPage() {
 
   useEffect(() => {
     const fetchSubmissions = async () => {
-      if (!token || !companyId || !selectedMilestoneId) return
+      if (!companyId || !selectedMilestoneId) return
 
       setSubmissionsLoading(true)
       setError(null)
@@ -161,7 +157,6 @@ export default function MilestonesPage() {
         const response = await fetch(
           `/api/milestones/${selectedMilestoneId}/submissions?startupId=${companyId}`,
           {
-            headers: { Authorization: `Bearer ${token}` },
           }
         )
 
@@ -340,10 +335,9 @@ export default function MilestonesPage() {
   }
 
   const refreshData = async () => {
-    if (!token || !companyId) return
+    if (!companyId) return
 
     const milestoneResponse = await fetch(`/api/milestones?startupId=${companyId}`, {
-      headers: { Authorization: `Bearer ${token}` },
     })
     const milestoneData = await milestoneResponse.json()
     if (milestoneResponse.ok) {
@@ -354,7 +348,6 @@ export default function MilestonesPage() {
       const submissionsResponse = await fetch(
         `/api/milestones/${selectedMilestoneId}/submissions?startupId=${companyId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
         }
       )
       const submissionData = await submissionsResponse.json()
@@ -366,7 +359,7 @@ export default function MilestonesPage() {
   }
 
   const handleSubmitResponse = async () => {
-    if (!token || !companyId || !selectedMilestoneId || (!responseMessage.trim() && responseFiles.length === 0)) {
+    if (!companyId || !selectedMilestoneId || (!responseMessage.trim() && responseFiles.length === 0)) {
       return
     }
 
@@ -383,9 +376,6 @@ export default function MilestonesPage() {
 
       const response = await fetch(`/api/milestones/${selectedMilestoneId}/submissions`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formData,
       })
 

@@ -81,14 +81,9 @@ export default function ProfilePage() {
   // Fetch user data from API
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!token) return
-      
       try {
         setIsLoading(true)
         const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         
         if (response.ok) {
@@ -209,7 +204,6 @@ export default function ProfilePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(profileData)
       })
@@ -257,9 +251,6 @@ export default function ProfilePage() {
 
       const response = await fetch('/api/profile/avatar', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
         body: formData
       })
 

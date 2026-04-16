@@ -81,16 +81,11 @@ export default function ApplyPage() {
   
   // Fetch active cohorts
   useEffect(() => {
-    if (!token) return;
-    
     const fetchCohorts = async () => {
       setLoading(true);
-      
+
       try {
         const response = await fetch('/api/cohorts/active', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         });
         
         if (!response.ok) {
@@ -113,17 +108,12 @@ export default function ApplyPage() {
     
     fetchCohorts();
   }, [token, toast]);
-  
+
   // Fetch user's companies
   useEffect(() => {
-    if (!token) return;
-    
     const fetchCompanies = async () => {
       try {
         const response = await fetch('/api/startups', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         });
         
         if (!response.ok) {
@@ -199,7 +189,6 @@ export default function ApplyPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           cohortId: selectedCohort.id,
@@ -247,14 +236,6 @@ export default function ApplyPage() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   if (loading) {
     return (

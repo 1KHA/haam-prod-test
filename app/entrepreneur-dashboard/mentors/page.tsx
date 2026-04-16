@@ -264,8 +264,7 @@ export default function MentorsPage() {
 
   // Load real mentors from API (overrides mock data)
   useEffect(() => {
-    if (!token) return
-    fetch("/api/mentor", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/mentor", {})
       .then((r) => r.json())
       .then((data) => {
         const apiMentors = (data.mentors || []).map((m: {
@@ -299,8 +298,7 @@ export default function MentorsPage() {
 
   // Load user's startups
   useEffect(() => {
-    if (!token) return
-    fetch("/api/startups", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/startups", {})
       .then((r) => r.json())
       .then((data) => {
         const startups = data.companies || []
@@ -314,9 +312,9 @@ export default function MentorsPage() {
 
   // Load booked sessions
   useEffect(() => {
-    if (!token || activeTab !== "sessions") return
+    if (activeTab !== "sessions") return
     setIsLoadingSessions(true)
-    fetch("/api/entrepreneur/sessions", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/entrepreneur/sessions", {})
       .then((r) => r.json())
       .then((data) => {
         setBookedSessions(data.sessions || [])
@@ -362,7 +360,7 @@ export default function MentorsPage() {
   }
 
   const handleSubmitBooking = async () => {
-    if (!token || !bookingMentor) return
+    if (!bookingMentor) return
     if (!bookingForm.startupId || !bookingForm.topic || !bookingForm.date) {
       toast({ title: "خطأ", description: "يرجى ملء جميع الحقول المطلوبة", variant: "destructive" })
       return
@@ -372,9 +370,8 @@ export default function MentorsPage() {
     try {
       const res = await fetch("/api/entrepreneur/sessions", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          Authorization: `Bearer ${token}` 
+        headers: {
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           mentorId: bookingMentor.id,
@@ -407,7 +404,7 @@ export default function MentorsPage() {
         // Refresh sessions if on sessions tab
         if (activeTab === "sessions") {
           setIsLoadingSessions(true)
-          fetch("/api/entrepreneur/sessions", { headers: { Authorization: `Bearer ${token}` } })
+          fetch("/api/entrepreneur/sessions", {})
             .then((r) => r.json())
             .then((data) => setBookedSessions(data.sessions || []))
             .finally(() => setIsLoadingSessions(false))
@@ -421,13 +418,11 @@ export default function MentorsPage() {
   }
 
   const handleCancelSession = async (sessionId: string) => {
-    if (!token) return
     try {
       const res = await fetch("/api/entrepreneur/sessions", {
         method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json", 
-          Authorization: `Bearer ${token}` 
+        headers: {
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ sessionId, action: "cancel" }),
       })
@@ -438,7 +433,7 @@ export default function MentorsPage() {
         toast({ title: "تم", description: "تم إلغاء الجلسة بنجاح" })
         // Refresh sessions
         setIsLoadingSessions(true)
-        fetch("/api/entrepreneur/sessions", { headers: { Authorization: `Bearer ${token}` } })
+        fetch("/api/entrepreneur/sessions", {})
           .then((r) => r.json())
           .then((data) => setBookedSessions(data.sessions || []))
           .finally(() => setIsLoadingSessions(false))

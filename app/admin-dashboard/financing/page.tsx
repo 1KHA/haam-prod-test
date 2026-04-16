@@ -326,20 +326,10 @@ export default function FinancingManagement() {
                 size="sm" 
                 className="flex items-center gap-1" 
                 onClick={async () => {
-                  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                  if (!token) {
-                    toast.error('غير مصرح لك بتصدير البيانات');
-                    return;
-                  }
-
                   try {
                     const exportUrl = `/api/admin/financing/export?format=csv&type=${activeTab === 'funding' ? 'funding' : activeTab === 'payments' ? 'payments' : 'all'}`;
-                    
-                    const response = await fetch(exportUrl, {
-                      headers: {
-                        'Authorization': `Bearer ${token}`
-                      }
-                    });
+
+                    const response = await fetch(exportUrl);
 
                     if (!response.ok) {
                       throw new Error('فشل في تصدير البيانات');

@@ -88,15 +88,6 @@ export default function StartupsManagement() {
 
   // Fetch startups from API
   const fetchStartups = async () => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -157,10 +148,8 @@ export default function StartupsManagement() {
 
   // Initial fetch
   useEffect(() => {
-    if (token) {
-      fetchStartups();
-    }
-  }, [token, activeTab]);
+    fetchStartups();
+  }, [activeTab]);
 
   // Handle search
   const handleSearch = () => {
@@ -169,15 +158,6 @@ export default function StartupsManagement() {
 
   // Handle export
   const handleExport = async () => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setExportLoading(true);
     
     try {
@@ -255,15 +235,6 @@ export default function StartupsManagement() {
 
   // Handle bulk actions
   const handleBulkAction = async (action: string, data?: any) => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (selectedStartups.length === 0) {
       showAdminToast({
         title: "تنبيه",
@@ -316,15 +287,6 @@ export default function StartupsManagement() {
 
   // Handle delete startup
   const handleDeleteStartup = async (startupId: string) => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!confirm('هل أنت متأكد من حذف هذه الشركة الناشئة؟')) {
       return;
     }
@@ -418,14 +380,6 @@ export default function StartupsManagement() {
         );
     }
   };
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 text-right">

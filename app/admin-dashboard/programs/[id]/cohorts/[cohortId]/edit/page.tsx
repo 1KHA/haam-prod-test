@@ -32,14 +32,14 @@ export default function EditCohortPage({ params }: { params: { id: string; cohor
   })
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) setToken(storedToken);
   }, [])
 
   useEffect(() => {
-    if (!token) return;
     fetchCohort();
-  }, [token, params.cohortId])
+  }, [params.cohortId])
 
   const fetchCohort = async () => {
     setFetching(true)
@@ -112,10 +112,6 @@ export default function EditCohortPage({ params }: { params: { id: string; cohor
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
-  }
-
-  if (!token) {
-    return <div className="flex justify-center items-center py-8"><p>يجب تسجيل الدخول أولاً</p></div>
   }
 
   if (fetching) {

@@ -53,15 +53,15 @@ export default function EditProgramPage() {
   
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
   }, []);
-  
+
   // Fetch program details
   useEffect(() => {
-    if (!token) return;
     
     const fetchProgram = async () => {
       setFetchingProgram(true);
@@ -108,7 +108,7 @@ export default function EditProgramPage() {
     };
     
     fetchProgram();
-  }, [token, params.id]);
+  }, [params.id]);
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,14 +169,6 @@ export default function EditProgramPage() {
       setLoading(false);
     }
   };
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   if (fetchingProgram) {
     return (

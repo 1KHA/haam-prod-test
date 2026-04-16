@@ -79,15 +79,15 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
   
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
   }, []);
-  
+
   // Fetch program details (includes cohorts)
   useEffect(() => {
-    if (!token) return;
     
     const fetchProgram = async () => {
       setLoading(true);
@@ -118,7 +118,7 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
     };
     
     fetchProgram();
-  }, [token, params.id]);
+  }, [params.id]);
   
   // Handle delete program
   const handleDelete = async () => {
@@ -183,14 +183,6 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   if (loading) {
     return (

@@ -57,6 +57,12 @@ export async function GET(request: NextRequest) {
       total,
       limit,
       offset,
+      pagination: {
+        total,
+        limit,
+        offset,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error fetching users:', error);

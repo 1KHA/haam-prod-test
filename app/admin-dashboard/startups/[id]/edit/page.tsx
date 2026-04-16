@@ -42,7 +42,8 @@ export default function EditStartup({ params }: { params: { id: string } }) {
 
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -50,7 +51,6 @@ export default function EditStartup({ params }: { params: { id: string } }) {
 
   // Fetch startup details
   useEffect(() => {
-    if (!token) return;
 
     const fetchStartupDetails = async () => {
       setLoading(true);
@@ -100,20 +100,13 @@ export default function EditStartup({ params }: { params: { id: string } }) {
     };
 
     fetchStartupDetails();
-  }, [params.id, token]);
+  }, [params.id]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!token || !startup) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
+
+    if (!startup) return;
 
     setSaving(true);
 
@@ -160,14 +153,6 @@ export default function EditStartup({ params }: { params: { id: string } }) {
   const handleSelectChange = (name: string, value: string) => {
     setStartup(prev => prev ? { ...prev, [name]: value } : null);
   };
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

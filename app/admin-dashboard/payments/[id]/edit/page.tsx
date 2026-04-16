@@ -60,22 +60,10 @@ export default function EditPaymentPage() {
   const fetchPaymentDetails = async () => {
     try {
       setIsLoading(true)
-      
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-      
-      if (!token) {
-        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
-        router.push('/admin-dashboard/payments')
-        return
-      }
-      
-      console.log('Fetching payment details with token for ID:', id)
-      
+
       // Fetch payment details
       const response = await fetch(`/api/admin/payments/${id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
@@ -151,28 +139,16 @@ export default function EditPaymentPage() {
         return
       }
       
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-      
-      if (!token) {
-        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
-        setIsSaving(false)
-        return
-      }
-      
       // Prepare the request body
       const requestBody = {
         ...formData,
         amount: parseFloat(formData.amount)
       }
-      
-      console.log('Updating payment with token for ID:', id)
-      
+
       // Update payment
       const response = await fetch(`/api/admin/payments/${id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)

@@ -33,14 +33,14 @@ export default function CohortDetailsPage({ params }: { params: { id: string; co
   const [activeTab, setActiveTab] = useState("details")
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) setToken(storedToken);
   }, [])
 
   useEffect(() => {
-    if (!token) return;
     fetchCohort();
-  }, [token, params.cohortId])
+  }, [params.cohortId])
 
   const fetchCohort = async () => {
     setLoading(true)
@@ -90,10 +90,6 @@ export default function CohortDetailsPage({ params }: { params: { id: string; co
       case 'COMPLETED': return <Badge variant="secondary">مكتمل</Badge>
       default: return <Badge variant="outline">{status}</Badge>
     }
-  }
-
-  if (!token) {
-    return <div className="flex justify-center items-center py-8"><p>يجب تسجيل الدخول أولاً</p></div>
   }
 
   if (loading) {

@@ -110,20 +110,10 @@ export default function PaymentDetailsPage() {
   const fetchPaymentDetails = async () => {
     try {
       setIsLoading(true)
-      
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-      
-      if (!token) {
-        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
-        router.push('/admin-dashboard/payments')
-        return
-      }
-      
+
       // Fetch payment details
       const response = await fetch(`/api/admin/payments/${id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
@@ -151,18 +141,9 @@ export default function PaymentDetailsPage() {
   // Fetch payment processing status
   const fetchProcessingStatus = async () => {
     try {
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-      
-      if (!token) {
-        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
-        return
-      }
-      
       // Fetch payment processing status
       const response = await fetch(`/api/admin/payments/process?paymentId=${id}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
@@ -189,21 +170,11 @@ export default function PaymentDetailsPage() {
   const processPayment = async (action: string, notes: string = '') => {
     try {
       setIsProcessing(true)
-      
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-      
-      if (!token) {
-        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
-        setIsProcessing(false)
-        return
-      }
-      
+
       // Process payment
       const response = await fetch('/api/admin/payments/process', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

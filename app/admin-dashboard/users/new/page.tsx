@@ -47,24 +47,20 @@ export default function NewUserPage() {
   
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
   }, []);
-  
+
   // Fetch available roles
   useEffect(() => {
     const fetchRoles = async () => {
-      if (!token) return;
       
       try {
         setRolesLoading(true);
-        const response = await fetch('/api/admin/roles', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch('/api/admin/roles');
         
         if (response.ok) {
           const data = await response.json();
@@ -96,7 +92,7 @@ export default function NewUserPage() {
     };
     
     fetchRoles();
-  }, [token]);
+  }, []);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,23 +127,11 @@ export default function NewUserPage() {
     
     setIsLoading(true)
     
-    // Check for authentication token
-    if (!token) {
-      toast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      })
-      setIsLoading(false)
-      return
-    }
-    
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name,
@@ -185,35 +169,6 @@ export default function NewUserPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-  
-  // Show login notice if not authenticated
-  if (!token) {
-    return (
-      <div className="space-y-6 text-right">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => router.push("/admin-dashboard/users")}
-          >
-            <ArrowRight className="h-4 w-4" />
-            <span>العودة إلى قائمة المستخدمين</span>
-          </Button>
-          <h1 className="text-3xl font-bold">إضافة مستخدم جديد</h1>
-        </div>
-        
-        <Card>
-          <CardContent className="py-8">
-            <div className="text-center">
-              <p className="mb-4 text-muted-foreground">يجب تسجيل الدخول أولاً لإضافة مستخدم جديد</p>
-              <Button onClick={() => router.push("/auth/signin")}>تسجيل الدخول</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
   
   return (

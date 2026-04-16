@@ -325,32 +325,8 @@ export default function PaymentsManagement() {
                 params.append("search", searchQuery);
               }
               
-              // Get token from localStorage
-              // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const token = null; // Cookie-based auth - no localStorage token needed
-              
-              if (!token) {
-                toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى');
-                return;
-              }
-              
-              // Create a temporary form to submit the export request with token
-              const form = document.createElement('form');
-              form.method = 'GET';
-              form.action = `/api/admin/payments/export?${params.toString()}`;
-              form.target = '_blank';
-              
-              // Add token as a hidden field
-              const tokenField = document.createElement('input');
-              tokenField.type = 'hidden';
-              tokenField.name = 'token';
-              tokenField.value = token;
-              form.appendChild(tokenField);
-              
-              // Submit the form
-              document.body.appendChild(form);
-              form.submit();
-              document.body.removeChild(form);
+              // Open export URL directly (cookie-based auth)
+              window.open(`/api/admin/payments/export?${params.toString()}`, '_blank');
             }}
           >
             <Download className="h-4 w-4" />
@@ -519,41 +495,15 @@ export default function PaymentsManagement() {
                     size="sm" 
                     className="flex items-center gap-1"
                     onClick={() => {
-                      // Get token from localStorage
-                      // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const token = null; // Cookie-based auth - no localStorage token needed
-                      if (!token) return;
-                      
-                      // Export only selected payments
+                        // Export only selected payments (cookie-based auth)
                       const params = new URLSearchParams();
-                      
+
                       // Join selected payment IDs with commas
                       if (selectedPayments.length > 0) {
                         params.append("ids", selectedPayments.join(','));
                       }
-                      
-                      if (!token) {
-                        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى');
-                        return;
-                      }
-                      
-                      // Create a temporary form to submit the export request with token
-                      const form = document.createElement('form');
-                      form.method = 'GET';
-                      form.action = `/api/admin/payments/export?${params.toString()}`;
-                      form.target = '_blank';
-                      
-                      // Add token as a hidden field
-                      const tokenField = document.createElement('input');
-                      tokenField.type = 'hidden';
-                      tokenField.name = 'token';
-                      tokenField.value = token;
-                      form.appendChild(tokenField);
-                      
-                      // Submit the form
-                      document.body.appendChild(form);
-                      form.submit();
-                      document.body.removeChild(form);
+
+                      window.open(`/api/admin/payments/export?${params.toString()}`, '_blank');
                     }}
                   >
                     <Download className="h-4 w-4" />

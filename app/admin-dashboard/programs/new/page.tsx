@@ -30,7 +30,8 @@ export default function NewProgramPage() {
   
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -115,14 +116,6 @@ export default function NewProgramPage() {
       setLoading(false);
     }
   };
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-6 text-right">

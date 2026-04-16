@@ -458,7 +458,8 @@ export default function RolesPermissions() {
 
   // Get token from localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
+    const storedToken = null; // Cookie-based auth - no localStorage token needed
     if (storedToken) {
       setToken(storedToken);
     }
@@ -479,15 +480,6 @@ export default function RolesPermissions() {
 
   // Fetch roles from API
   const fetchRoles = async () => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(true);
     try {
       let url = '/api/admin/roles';
@@ -528,10 +520,8 @@ export default function RolesPermissions() {
 
   // Initial fetch
   useEffect(() => {
-    if (token) {
-      fetchRoles();
-    }
-  }, [token]);
+    fetchRoles();
+  }, []);
 
   // Handle search
   const handleSearch = () => {
@@ -540,15 +530,6 @@ export default function RolesPermissions() {
 
   // Handle add role
   const handleAddRole = async () => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!newRoleName) {
       showAdminToast({
         title: "خطأ",
@@ -619,15 +600,6 @@ export default function RolesPermissions() {
 
   // Handle delete role
   const handleDeleteRole = async (roleId: string) => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (window.confirm("هل أنت متأكد أنك تريد حذف هذا الدور؟")) {
       try {
         const response = await fetch(`/api/admin/roles/${roleId}`, {
@@ -678,15 +650,6 @@ export default function RolesPermissions() {
 
   // Save edited role
   const saveEditedRole = async (roleId: string) => {
-    if (!token) {
-      showAdminToast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول أولاً",
-        variant: "destructive"
-      });
-      return;
-    }
-
     const role = roles.find(r => r.id === roleId);
     if (!role) return;
     
@@ -804,14 +767,6 @@ export default function RolesPermissions() {
     }
     return true;
   });
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 text-right">

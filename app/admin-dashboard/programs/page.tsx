@@ -84,8 +84,6 @@ export default function ProgramsPage() {
 
   // Fetch programs
   useEffect(() => {
-    if (!token) return;
-    
     const fetchPrograms = async () => {
       setLoading(true);
       
@@ -133,7 +131,7 @@ export default function ProgramsPage() {
     };
     
     fetchPrograms();
-  }, [token, page, searchQuery, statusFilter, typeFilter]);
+  }, [page, searchQuery, statusFilter, typeFilter]);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
@@ -327,14 +325,6 @@ export default function ProgramsPage() {
     },
   ];
 
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 text-right">
       <div className="flex items-center justify-between">
@@ -497,26 +487,24 @@ export default function ProgramsPage() {
           <Button 
             variant="outline" 
             onClick={() => {
-              if (token) {
-                // Build the export URL with filters
-                let exportUrl = '/api/admin/programs/export?';
-                const params = new URLSearchParams();
-                
-                if (searchQuery) {
-                  params.append('search', searchQuery);
-                }
-                
-                if (statusFilter && statusFilter !== 'ALL') {
-                  params.append('status', statusFilter);
-                }
-                
-                if (typeFilter && typeFilter !== 'ALL') {
-                  params.append('type', typeFilter);
-                }
-                
-                // Open export URL in new tab
-                window.open(`${exportUrl}${params.toString()}`, '_blank');
+              // Build the export URL with filters
+              let exportUrl = '/api/admin/programs/export?';
+              const params = new URLSearchParams();
+
+              if (searchQuery) {
+                params.append('search', searchQuery);
               }
+
+              if (statusFilter && statusFilter !== 'ALL') {
+                params.append('status', statusFilter);
+              }
+
+              if (typeFilter && typeFilter !== 'ALL') {
+                params.append('type', typeFilter);
+              }
+
+              // Open export URL in new tab
+              window.open(`${exportUrl}${params.toString()}`, '_blank');
             }}
           >
             <Download className="h-4 w-4 ml-2" />

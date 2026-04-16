@@ -66,28 +66,16 @@ export default function CreatePaymentPage() {
         return
       }
       
-      // Get token from localStorage
-      const token = localStorage.getItem('token')
-      
-      if (!token) {
-        toast.error('لم يتم العثور على بيانات المستخدم - الرجاء تسجيل الدخول مرة أخرى')
-        setIsSaving(false)
-        return
-      }
-      
       // Prepare the request body
       const requestBody = {
         ...formData,
         amount: parseFloat(formData.amount)
       }
-      
-      console.log('Creating payment with token:', token)
-      
+
       // Create payment
       const response = await fetch('/api/admin/payments', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)

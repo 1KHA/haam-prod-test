@@ -58,34 +58,19 @@ export default function CohortApplicationsPage({ params }: { params: { id: strin
     dropped: 0
   })
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [currentTab, setCurrentTab] = useState("all")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<"approve" | "reject" | "drop" | null>(null)
   
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-  
   // Fetch applications
   useEffect(() => {
-    if (!token) return;
-    
     const fetchApplications = async () => {
       setLoading(true);
-      
+
       try {
-        const response = await fetch(`/api/program-manager/cohorts/${params.id}/applications`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`/api/program-manager/cohorts/${params.id}/applications`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch applications');
@@ -113,7 +98,7 @@ export default function CohortApplicationsPage({ params }: { params: { id: strin
     };
     
     fetchApplications();
-  }, [token, params.id, toast]);
+  }, [params.id, toast]);
   
   // Handle application action (approve, reject, drop)
   const handleApplicationAction = async (applicationId: string, status: string) => {
@@ -121,8 +106,7 @@ export default function CohortApplicationsPage({ params }: { params: { id: strin
       const response = await fetch(`/api/program-manager/cohorts/${params.id}/applications`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           applicationId,
@@ -222,14 +206,6 @@ export default function CohortApplicationsPage({ params }: { params: { id: strin
     if (currentTab === 'dropped') return app.status.toUpperCase() === 'DROPPED';
     return true;
   });
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   if (loading) {
     return (

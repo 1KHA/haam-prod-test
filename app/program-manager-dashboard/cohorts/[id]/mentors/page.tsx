@@ -64,7 +64,6 @@ export default function CohortMentorsPage() {
   const cohortId = params.id as string
   
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
   const [cohort, setCohort] = useState<Cohort | null>(null)
   const [mentors, setMentors] = useState<CohortMentor[]>([])
   const [availableMentors, setAvailableMentors] = useState<Mentor[]>([])
@@ -74,26 +73,12 @@ export default function CohortMentorsPage() {
   const [mentorRole, setMentorRole] = useState("MENTOR")
   const [adding, setAdding] = useState(false)
 
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-
   // Fetch cohort and mentors data
   useEffect(() => {
-    if (!token) return;
-    
     const fetchData = async () => {
       try {
         // Fetch cohort details
-        const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`);
         
         if (!cohortResponse.ok) {
           throw new Error('Failed to fetch cohort');
@@ -104,11 +89,7 @@ export default function CohortMentorsPage() {
         setMentors(cohortData.mentors || []);
         
         // Fetch available mentors
-        const mentorsResponse = await fetch('/api/mentor', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const mentorsResponse = await fetch('/api/mentor');
         
         if (mentorsResponse.ok) {
           const mentorsData = await mentorsResponse.json();
@@ -122,7 +103,7 @@ export default function CohortMentorsPage() {
     };
     
     fetchData();
-  }, [token, cohortId]);
+  }, [cohortId]);
 
   const handleAddMentor = async () => {
     if (!selectedMentor) return;
@@ -133,8 +114,7 @@ export default function CohortMentorsPage() {
       const response = await fetch(`/api/program-manager/cohorts/${cohortId}/mentors`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           userId: selectedMentor,
@@ -147,11 +127,7 @@ export default function CohortMentorsPage() {
       }
       
       // Refresh mentors list
-      const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`);
       
       if (cohortResponse.ok) {
         const cohortData = await cohortResponse.json();
@@ -174,10 +150,7 @@ export default function CohortMentorsPage() {
     
     try {
       const response = await fetch(`/api/program-manager/cohorts/${cohortId}/mentors?userId=${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        method: 'DELETE'
       });
       
       if (!response.ok) {
@@ -249,14 +222,6 @@ export default function CohortMentorsPage() {
     mentor.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     mentor.user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

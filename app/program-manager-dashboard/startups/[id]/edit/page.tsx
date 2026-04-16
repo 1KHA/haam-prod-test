@@ -25,7 +25,6 @@ interface StartupData {
 
 export default function EditStartupPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<StartupData>({
@@ -41,18 +40,10 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
   })
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token")
-    if (storedToken) setToken(storedToken)
-  }, [])
-
-  useEffect(() => {
-    if (!token) return
     const fetchStartup = async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/program-manager/startups/${params.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const res = await fetch(`/api/program-manager/startups/${params.id}`)
         if (!res.ok) throw new Error("Failed to fetch startup")
         const data = await res.json()
         setForm({
@@ -73,21 +64,19 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
       }
     }
     fetchStartup()
-  }, [token, params.id])
+  }, [params.id])
 
   const handleChange = (field: keyof StartupData, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async () => {
-    if (!token) return
     setSaving(true)
     try {
       const res = await fetch(`/api/program-manager/startups/${params.id}`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           name: form.name,
@@ -109,10 +98,6 @@ export default function EditStartupPage({ params }: { params: { id: string } }) 
     } finally {
       setSaving(false)
     }
-  }
-
-  if (!token) {
-    return <div className="flex justify-center items-center py-8"><p>يجب تسجيل الدخول أولاً</p></div>
   }
 
   if (loading) {

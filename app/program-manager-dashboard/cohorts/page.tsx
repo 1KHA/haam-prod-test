@@ -71,21 +71,8 @@ export default function CohortsPage() {
   const [programFilter, setProgramFilter] = useState<string>("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [token, setToken] = useState<string | null>(null)
-
-  // Get token from localStorage
-  useEffect(() => {
-    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const storedToken = null; // Cookie-based auth - no localStorage token needed
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-
   // Fetch cohorts
   useEffect(() => {
-    if (!token) return;
-    
     const fetchCohorts = async () => {
       setLoading(true);
       
@@ -130,7 +117,7 @@ export default function CohortsPage() {
     };
     
     fetchCohorts();
-  }, [token, page, searchQuery, statusFilter, programFilter]);
+  }, [page, searchQuery, statusFilter, programFilter]);
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
@@ -156,9 +143,7 @@ export default function CohortsPage() {
         // For delete, we need to delete each cohort individually
         for (const cohortId of selectedCohorts) {
           await fetch(`/api/program-manager/cohorts/${cohortId}`, {
-            method: 'DELETE',
-            headers: {
-                          }
+            method: 'DELETE'
           });
         }
       } else if (action === 'activate') {
@@ -168,19 +153,19 @@ export default function CohortsPage() {
         await fetch(endpoint, {
           method,
           headers: {
-            'Content-Type': 'application/json',
-                      },
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(body)
         });
       } else if (action === 'complete') {
         body.action = 'updateStatus';
         body.data = { status: 'COMPLETED' };
-        
+
         await fetch(endpoint, {
           method,
           headers: {
-            'Content-Type': 'application/json',
-                      },
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(body)
         });
       }
@@ -315,14 +300,6 @@ export default function CohortsPage() {
       },
     },
   ];
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 text-right">

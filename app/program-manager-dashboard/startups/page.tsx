@@ -68,29 +68,14 @@ export default function StartupsPage() {
   const [activeTab, setActiveTab] = useState("all")
   const [data, setData] = useState<StartupsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
-  
-  // Get token from localStorage
-  useEffect(() => {
-    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const storedToken = null; // Cookie-based auth - no localStorage token needed
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-  
+
   // Fetch startups data
   useEffect(() => {
-    if (!token) return;
-    
     const fetchStartups = async () => {
       setLoading(true);
       
       try {
-        const response = await fetch('/api/program-manager/startups', {
-          headers: {
-                      }
-        });
+        const response = await fetch('/api/program-manager/startups');
         
         if (!response.ok) {
           throw new Error('Failed to fetch startups');
@@ -111,16 +96,8 @@ export default function StartupsPage() {
     };
     
     fetchStartups();
-  }, [token]);
+  }, []);
 
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
-  
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">

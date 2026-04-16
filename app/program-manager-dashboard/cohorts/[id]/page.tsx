@@ -33,29 +33,14 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
   const router = useRouter()
   const [cohort, setCohort] = useState<Cohort | null>(null)
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
-  
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-  
+
   // Fetch cohort details
   useEffect(() => {
-    if (!token) return;
-    
     const fetchCohort = async () => {
       setLoading(true);
-      
+
       try {
-        const response = await fetch(`/api/program-manager/cohorts/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`/api/program-manager/cohorts/${params.id}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch cohort');
@@ -76,7 +61,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
     };
     
     fetchCohort();
-  }, [token, params.id]);
+  }, [params.id]);
   
   // Handle delete cohort
   const handleDelete = async () => {
@@ -86,10 +71,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
     
     try {
       const response = await fetch(`/api/program-manager/cohorts/${params.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        method: 'DELETE'
       });
       
       if (!response.ok) {
@@ -125,14 +107,6 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   if (loading) {
     return (

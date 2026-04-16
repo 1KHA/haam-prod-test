@@ -61,7 +61,6 @@ export default function CohortMembersPage() {
   const cohortId = params.id as string
   
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
   const [cohort, setCohort] = useState<Cohort | null>(null)
   const [members, setMembers] = useState<CohortMember[]>([])
   const [availableStartups, setAvailableStartups] = useState<Startup[]>([])
@@ -70,26 +69,12 @@ export default function CohortMembersPage() {
   const [selectedStartup, setSelectedStartup] = useState("")
   const [adding, setAdding] = useState(false)
 
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-
   // Fetch cohort and members data
   useEffect(() => {
-    if (!token) return;
-    
     const fetchData = async () => {
       try {
         // Fetch cohort details
-        const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`);
         
         if (!cohortResponse.ok) {
           throw new Error('Failed to fetch cohort');
@@ -100,11 +85,7 @@ export default function CohortMembersPage() {
         setMembers(cohortData.startups || []);
         
         // Fetch available startups
-        const startupsResponse = await fetch('/api/program-manager/startups', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const startupsResponse = await fetch('/api/program-manager/startups');
         
         if (startupsResponse.ok) {
           const startupsData = await startupsResponse.json();
@@ -118,7 +99,7 @@ export default function CohortMembersPage() {
     };
     
     fetchData();
-  }, [token, cohortId]);
+  }, [cohortId]);
 
   const handleAddMember = async () => {
     if (!selectedStartup) return;
@@ -129,8 +110,7 @@ export default function CohortMembersPage() {
       const response = await fetch(`/api/program-manager/cohorts/${cohortId}/members`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           startupId: selectedStartup
@@ -142,11 +122,7 @@ export default function CohortMembersPage() {
       }
       
       // Refresh members list
-      const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const cohortResponse = await fetch(`/api/program-manager/cohorts/${cohortId}`);
       
       if (cohortResponse.ok) {
         const cohortData = await cohortResponse.json();
@@ -168,10 +144,7 @@ export default function CohortMembersPage() {
     
     try {
       const response = await fetch(`/api/program-manager/cohorts/${cohortId}/members?startupId=${startupId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        method: 'DELETE'
       });
       
       if (!response.ok) {
@@ -256,14 +229,6 @@ export default function CohortMembersPage() {
   const filteredMembers = members.filter(member =>
     member.startup.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

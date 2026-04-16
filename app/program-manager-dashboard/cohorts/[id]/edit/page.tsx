@@ -33,7 +33,6 @@ export default function EditCohortPage() {
   
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
   const [cohort, setCohort] = useState<Cohort | null>(null)
   
   const [formData, setFormData] = useState({
@@ -45,25 +44,11 @@ export default function EditCohortPage() {
     capacity: ''
   })
 
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-
   // Fetch cohort data
   useEffect(() => {
-    if (!token) return;
-    
     const fetchCohort = async () => {
       try {
-        const response = await fetch(`/api/program-manager/cohorts/${cohortId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`/api/program-manager/cohorts/${cohortId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch cohort');
@@ -87,7 +72,7 @@ export default function EditCohortPage() {
     };
     
     fetchCohort();
-  }, [token, cohortId]);
+  }, [cohortId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,8 +88,7 @@ export default function EditCohortPage() {
       const response = await fetch(`/api/program-manager/cohorts/${cohortId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name: formData.name,
@@ -128,14 +112,6 @@ export default function EditCohortPage() {
       setSaving(false);
     }
   };
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

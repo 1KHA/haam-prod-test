@@ -105,30 +105,15 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
   const router = useRouter()
   const [startup, setStartup] = useState<Startup | null>(null)
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
-  
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
   
   // Fetch startup data
   useEffect(() => {
-    if (!token) return;
-    
     const fetchStartup = async () => {
       setLoading(true);
-      
+
       try {
-        const response = await fetch(`/api/program-manager/startups/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`/api/program-manager/startups/${params.id}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch startup details');
@@ -149,16 +134,8 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
     };
     
     fetchStartup();
-  }, [token, params.id]);
+  }, [params.id]);
 
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
-  
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">

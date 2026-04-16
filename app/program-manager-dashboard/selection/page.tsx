@@ -60,29 +60,14 @@ export default function SelectionPage() {
     totalCount: 0
   })
   const [loading, setLoading] = useState(true)
-  const [token, setToken] = useState<string | null>(null)
-  
-  // Get token from localStorage
-  useEffect(() => {
-    // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const storedToken = null; // Cookie-based auth - no localStorage token needed
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-  
+
   // Fetch applications
   useEffect(() => {
-    if (!token) return;
-    
     const fetchApplications = async () => {
       setLoading(true);
       
       try {
-        const response = await fetch(`/api/program-manager/selection`, {
-          headers: {
-                      }
-        });
+        const response = await fetch(`/api/program-manager/selection`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch selection data');
@@ -130,12 +115,10 @@ export default function SelectionPage() {
     };
     
     fetchApplications();
-  }, [token]);
+  }, []);
   
   // Handle status update
   const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
-    if (!token) return;
-    
     try {
       // Map UI status to API status
       const apiStatus = newStatus === "shortlisted" ? "SHORTLISTED" : 
@@ -258,11 +241,7 @@ export default function SelectionPage() {
         </div>
       </div>
 
-      {!token ? (
-        <div className="flex justify-center items-center py-8">
-          <p>يجب تسجيل الدخول أولاً</p>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div className="flex justify-center items-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="mr-2">جاري التحميل...</p>

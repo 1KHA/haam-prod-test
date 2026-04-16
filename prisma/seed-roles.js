@@ -99,6 +99,89 @@ async function main() {
     create: { name: 'ENTREPRENEUR', description: 'Manage company, access resources and funding', roleEnum: 'ENTREPRENEUR' },
   });
 
+  // Helper to assign permissions to a role
+  async function assignPermissions(roleId, permissions) {
+    for (const { category, action } of permissions) {
+      const permission = await prisma.permission.findUnique({
+        where: { category_action: { category, action } },
+      });
+      if (permission) {
+        const existing = await prisma.rolePermission.findFirst({
+          where: { roleId, permissionId: permission.id, userId: null },
+        });
+        if (!existing) {
+          await prisma.rolePermission.create({ data: { roleId, permissionId: permission.id } });
+        }
+      }
+    }
+  }
+
+  // Program Manager permissions
+  await assignPermissions(programManagerRole.id, [
+    { category: 'dashboard', action: 'view' },
+    { category: 'programs', action: 'view' },
+    { category: 'programs', action: 'add' },
+    { category: 'programs', action: 'edit' },
+    { category: 'cohorts', action: 'view' },
+    { category: 'cohorts', action: 'add' },
+    { category: 'cohorts', action: 'edit' },
+    { category: 'cohorts', action: 'delete' },
+    { category: 'applications', action: 'view' },
+    { category: 'applications', action: 'edit' },
+    { category: 'events', action: 'view' },
+    { category: 'events', action: 'add' },
+    { category: 'events', action: 'edit' },
+    { category: 'events', action: 'delete' },
+    { category: 'startups', action: 'view' },
+    { category: 'startups', action: 'edit' },
+    { category: 'users', action: 'view' },
+    { category: 'mentorship', action: 'view' },
+    { category: 'mentorship', action: 'add' },
+    { category: 'mentorship', action: 'edit' },
+    { category: 'reports', action: 'view' },
+    { category: 'analytics', action: 'view' },
+    { category: 'resources', action: 'view' },
+    { category: 'resources', action: 'add' },
+    { category: 'resources', action: 'edit' },
+    { category: 'discussions', action: 'view' },
+    { category: 'discussions', action: 'add' },
+    { category: 'discussions', action: 'edit' },
+    { category: 'notifications', action: 'view' },
+  ]);
+
+  // Mentor permissions
+  await assignPermissions(mentorRole.id, [
+    { category: 'dashboard', action: 'view' },
+    { category: 'mentorship', action: 'view' },
+    { category: 'mentorship', action: 'add' },
+    { category: 'mentorship', action: 'edit' },
+    { category: 'startups', action: 'view' },
+    { category: 'programs', action: 'view' },
+    { category: 'events', action: 'view' },
+    { category: 'resources', action: 'view' },
+    { category: 'discussions', action: 'view' },
+    { category: 'discussions', action: 'add' },
+    { category: 'reports', action: 'view' },
+    { category: 'notifications', action: 'view' },
+  ]);
+
+  // Investor permissions
+  await assignPermissions(investorRole.id, [
+    { category: 'dashboard', action: 'view' },
+    { category: 'startups', action: 'view' },
+    { category: 'programs', action: 'view' },
+    { category: 'funding', action: 'view' },
+    { category: 'funding', action: 'add' },
+    { category: 'events', action: 'view' },
+    { category: 'reports', action: 'view' },
+    { category: 'analytics', action: 'view' },
+    { category: 'portfolio', action: 'view' },
+    { category: 'portfolio', action: 'add' },
+    { category: 'portfolio', action: 'edit' },
+    { category: 'discussions', action: 'view' },
+    { category: 'notifications', action: 'view' },
+  ]);
+
   // Add permissions to entrepreneur role
   const entrepreneurPermissions = [
     { category: 'dashboard', action: 'view' },
@@ -121,35 +204,7 @@ async function main() {
     { category: 'discussions', action: 'edit' },
   ];
 
-  for (const { category, action } of entrepreneurPermissions) {
-    const permission = await prisma.permission.findUnique({
-      where: {
-        category_action: {
-          category,
-          action,
-        },
-      },
-    });
-
-    if (permission) {
-      const existingRolePermission = await prisma.rolePermission.findFirst({
-        where: {
-          roleId: entrepreneurRole.id,
-          permissionId: permission.id,
-          userId: null,
-        },
-      });
-
-      if (!existingRolePermission) {
-        await prisma.rolePermission.create({
-          data: {
-            roleId: entrepreneurRole.id,
-            permissionId: permission.id,
-          },
-        });
-      }
-    }
-  }
+  await assignPermissions(entrepreneurRole.id, entrepreneurPermissions);
 
   console.log('Seeding completed successfully!');
 }

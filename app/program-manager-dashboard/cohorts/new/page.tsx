@@ -20,10 +20,9 @@ interface Program {
 export default function NewCohortPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
   const [programs, setPrograms] = useState<Program[]>([])
   const [loadingPrograms, setLoadingPrograms] = useState(true)
-  
+
   // Form state
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -33,27 +32,13 @@ export default function NewCohortPage() {
   const [endDate, setEndDate] = useState("")
   const [status, setStatus] = useState("UPCOMING")
   
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-  
   // Fetch available programs
   useEffect(() => {
-    if (!token) return;
-    
     const fetchPrograms = async () => {
       setLoadingPrograms(true);
-      
+
       try {
-        const response = await fetch('/api/programs?limit=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch('/api/programs?limit=100');
         
         if (!response.ok) {
           throw new Error('Failed to fetch programs');
@@ -74,7 +59,7 @@ export default function NewCohortPage() {
     };
     
     fetchPrograms();
-  }, [token]);
+  }, []);
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,8 +80,7 @@ export default function NewCohortPage() {
       const response = await fetch('/api/program-manager/cohorts', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name,
@@ -133,14 +117,6 @@ export default function NewCohortPage() {
       setLoading(false);
     }
   };
-  
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-6 text-right">

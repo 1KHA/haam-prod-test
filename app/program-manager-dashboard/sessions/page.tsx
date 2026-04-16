@@ -53,17 +53,14 @@ export default function SessionsPage() {
   })
 
   useEffect(() => {
-    if (!token) return
     fetchSessions()
     fetchOptions()
-  }, [token])
+  }, [])
 
   const fetchSessions = async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/program-manager/sessions", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch("/api/program-manager/sessions")
       if (res.ok) {
         const data = await res.json()
         setSessions(data.sessions || [])
@@ -78,8 +75,8 @@ export default function SessionsPage() {
   const fetchOptions = async () => {
     try {
       const [startupRes, mentorRes] = await Promise.all([
-        fetch("/api/program-manager/startups", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/admin/users?role=MENTOR", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("/api/program-manager/startups"),
+        fetch("/api/admin/users?role=MENTOR"),
       ])
       if (startupRes.ok) {
         const d = await startupRes.json()
@@ -102,7 +99,7 @@ export default function SessionsPage() {
       const dateTime = new Date(`${form.date}T${form.time}:00`)
       const res = await fetch("/api/program-manager/sessions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, date: dateTime.toISOString() }),
       })
       if (res.ok) {
@@ -126,7 +123,7 @@ export default function SessionsPage() {
     try {
       const res = await fetch(`/api/program-manager/sessions/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       })
       if (res.ok) {

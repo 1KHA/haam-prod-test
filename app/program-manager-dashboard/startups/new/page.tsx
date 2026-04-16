@@ -59,31 +59,16 @@ export default function NewStartup() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [token, setToken] = useState<string | null>(null)
 
-  // Get token from localStorage
+  // Fetch users
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-
-    // Fetch users
-  useEffect(() => {
-    if (!token) return;
-
     const fetchUsers = async () => {
       setLoading(true);
       setError(null);
 
       try {
         // Fetch all users instead of just entrepreneurs
-        const response = await fetch('/api/admin/users', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch('/api/admin/users');
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -112,16 +97,11 @@ export default function NewStartup() {
     };
 
     fetchUsers();
-  }, [token]);
+  }, []);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!token) {
-      toast.error("يجب تسجيل الدخول أولاً");
-      return;
-    }
 
     if (!startup.creatorId) {
       toast.error("يجب اختيار مستخدم");
@@ -134,8 +114,7 @@ export default function NewStartup() {
       const response = await fetch('/api/program-manager/startups', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(startup)
       });
@@ -168,14 +147,6 @@ export default function NewStartup() {
   const handleSelectChange = (name: string, value: string) => {
     setStartup(prev => ({ ...prev, [name]: value }));
   };
-
-  if (!token) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>يجب تسجيل الدخول أولاً</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 text-right">

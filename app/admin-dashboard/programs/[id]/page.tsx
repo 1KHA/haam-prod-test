@@ -344,27 +344,27 @@ export default function ProgramDetailsPage({ params }: { params: { id: string } 
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
+                  <span className="font-bold">{program.stats.cohortsCount}</span>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                     <span>عدد الدفعات</span>
                   </div>
-                  <span className="font-bold">{program.stats.cohortsCount}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
+                  <span className="font-bold">{program.stats.activeCohortsCount}</span>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-green-500" />
                     <span>الدفعات النشطة</span>
                   </div>
-                  <span className="font-bold">{program.stats.activeCohortsCount}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
+                  <span className="font-bold">{program.stats.totalStartups}</span>
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <span>عدد الشركات</span>
                   </div>
-                  <span className="font-bold">{program.stats.totalStartups}</span>
                 </div>
               </div>
             </CardContent>

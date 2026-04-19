@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma, UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { hashPassword } from '@/lib/auth';
+
+function normalizeApprovalStatus(status?: string | null) {
+  if (status === 'PENDING') {
+    return 'PENDING_APPROVAL';
+  }
+
+  if (status === 'ACTIVE' || status === 'PENDING_APPROVAL' || status === 'SUSPENDED') {
+    return status;
+  }
+
+  return 'ACTIVE';
+}
 
 /**
  * GET /api/admin/users
@@ -18,12 +31,16 @@ export async function GET(request: NextRequest) {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const page = parseInt(searchParams.get('page') || '0');
+    const offsetParam = parseInt(searchParams.get('offset') || '0');
     const role = searchParams.get('role');
     const search = searchParams.get('search');
+    const offset = Number.isFinite(page) && page > 0
+      ? (page - 1) * limit
+      : offsetParam;
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
     if (role) {
       where.role = role;
     }
@@ -43,7 +60,14 @@ export async function GET(request: NextRequest) {
           name: true,
           email: true,
           role: true,
+          specialization: true,
+          approvalStatus: true,
           createdAt: true,
+          programManagerProfile: {
+            select: {
+              programs: true,
+            },
+          },
         },
         orderBy: { name: 'asc' },
         take: limit,
@@ -52,9 +76,20 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
+    const formattedUsers = users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      specialization: user.specialization,
+      createdAt: user.createdAt,
+      status: normalizeApprovalStatus(user.approvalStatus),
+      program: user.programManagerProfile?.programs || '-',
+    }));
+
     return NextResponse.json({
       success: true,
-      users,
+      users: formattedUsers,
       total,
       limit,
       offset,
@@ -62,6 +97,7 @@ export async function GET(request: NextRequest) {
         total,
         limit,
         offset,
+        page: Number.isFinite(page) && page > 0 ? page : Math.floor(offset / limit) + 1,
         pages: Math.ceil(total / limit),
       },
     });
@@ -92,15 +128,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Map Arabic display names to Prisma enum values
-    const roleMap: Record<string, string> = {
-      'مدير النظام': 'ADMIN',
-      'مدير برنامج': 'PROGRAM_MANAGER',
-      'موجه': 'MENTOR',
-      'مستثمر': 'INVESTOR',
-      'رائد أعمال': 'ENTREPRENEUR',
-      'محكم': 'MENTOR',
+    const roleMap: Record<string, UserRole> = {
+      'مدير النظام': UserRole.ADMIN,
+      'مدير برنامج': UserRole.PROGRAM_MANAGER,
+      'موجه': UserRole.MENTOR,
+      'مستثمر': UserRole.INVESTOR,
+      'رائد أعمال': UserRole.ENTREPRENEUR,
+      'محكم': UserRole.MENTOR,
     };
-    const role = roleMap[rawRole] ?? rawRole;
+    const role = (roleMap[rawRole] ?? rawRole) as UserRole;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -114,9 +150,9 @@ export async function POST(request: NextRequest) {
         name,
         email,
         password: hashedPassword,
-        role: role as any,
+        role,
         specialization: specialization || null,
-        approvalStatus: 'ACTIVE' as any,
+        approvalStatus: 'ACTIVE',
       },
       select: { id: true, name: true, email: true, role: true, createdAt: true },
     });

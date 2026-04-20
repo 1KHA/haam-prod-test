@@ -65,6 +65,11 @@ export async function notifyMilestoneResponseReviewed(params: {
 }) {
   const { milestoneTitle, status, feedback, reviewedByName, entrepreneurIds } = params;
 
+  if (!entrepreneurIds || entrepreneurIds.length === 0) {
+    console.log('[notifyMilestoneResponseReviewed] SKIPPED: No entrepreneur recipients');
+    return;
+  }
+
   const statusConfig = {
     approved: {
       title: 'تم قبول ردك ✓',
@@ -128,6 +133,11 @@ export async function notifyMilestoneCreated(params: {
 }) {
   const { milestoneId, title, dueDate, priority, startupName, recipientIds } = params;
 
+  if (!recipientIds || recipientIds.length === 0) {
+    console.log('[notifyMilestoneCreated] SKIPPED: No entrepreneur recipients');
+    return;
+  }
+
   const priorityLabel = priority === 'high' ? 'عالية' : priority === 'medium' ? 'متوسطة' : 'منخفضة';
   const priorityLabelEn = priority === 'high' ? 'High' : priority === 'medium' ? 'Medium' : 'Low';
   
@@ -165,7 +175,12 @@ export async function notifyMilestoneDueSoon(params: {
   recipientIds: string[];
 }) {
   const { milestoneId, title, daysUntil, recipientIds } = params;
-  
+
+  if (!recipientIds || recipientIds.length === 0) {
+    console.log('[notifyMilestoneDueSoon] SKIPPED: No entrepreneur recipients');
+    return;
+  }
+
   const isOverdue = daysUntil < 0;
   const daysText = isOverdue 
     ? `متأخرة بـ ${Math.abs(daysUntil)} يوم`
@@ -218,6 +233,11 @@ export async function notifyApplicationStatusChanged(params: {
   entrepreneurIds: string[];
 }) {
   const { newStatus, cohortName, feedback, entrepreneurIds } = params;
+
+  if (!entrepreneurIds || entrepreneurIds.length === 0) {
+    console.log('[notifyApplicationStatusChanged] SKIPPED: No entrepreneur recipients');
+    return;
+  }
 
   const statusConfig = {
     ACCEPTED: {

@@ -136,6 +136,11 @@ export async function POST(
         ...submission.startup.members.map(m => m.userId),
       ].filter((id): id is string => !!id);
 
+      if (entrepreneurIds.length === 0 && submission.startup.creatorId) {
+        entrepreneurIds.push(submission.startup.creatorId);
+        console.log(`[Milestone Review] Used startup.creatorId as fallback entrepreneur ID`);
+      }
+
       console.log(`[Milestone Review] Found ${entrepreneurIds.length} entrepreneurs to notify`);
       console.log(`[Milestone Review] Entrepreneur IDs: ${JSON.stringify(entrepreneurIds)}`);
 

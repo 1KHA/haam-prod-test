@@ -128,9 +128,12 @@ export async function POST(request: NextRequest) {
         
         for (const member of cohort.members) {
           console.log(`[PM Milestones API] Processing startup: ${member.startup?.name}, Creator: ${member.startup?.creator?.id}`);
-          // Add startup creator
+          // Add startup creator (with fallback to creatorId if relation is null)
           if (member.startup?.creator) {
             recipientIds.add(member.startup.creator.id);
+          } else if (member.startup?.creatorId) {
+            recipientIds.add(member.startup.creatorId);
+            console.log(`[PM Milestones API] Used startup.creatorId as fallback for ${member.startup.name}`);
           }
           // Add all team members
           for (const teamMember of member.startup?.members || []) {

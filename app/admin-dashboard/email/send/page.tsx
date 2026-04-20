@@ -55,7 +55,7 @@ export default function SendEmailPage() {
   const [previewMode, setPreviewMode] = useState(false);
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [customSubject, setCustomSubject] = useState('');
   const [customBody, setCustomBody] = useState('');
@@ -100,7 +100,7 @@ export default function SendEmailPage() {
   };
 
   const handleSend = async () => {
-    if (selectedUsers.length === 0 && !selectedRole) {
+    if (selectedUsers.length === 0 && selectedRole === 'ALL') {
       toast({
         title: 'تنبيه',
         description: 'الرجاء اختيار مستلمين',
@@ -120,7 +120,7 @@ export default function SendEmailPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userIds: selectedUsers,
-            role: selectedRole || undefined,
+            role: selectedRole === 'ALL' ? undefined : selectedRole,
             templateId: selectedTemplate,
             variables,
             language,
@@ -173,7 +173,7 @@ export default function SendEmailPage() {
   };
 
   const getFilteredUsers = () => {
-    if (selectedRole) {
+    if (selectedRole !== 'ALL') {
       return users.filter((u) => u.role === selectedRole);
     }
     return users;
@@ -247,7 +247,7 @@ export default function SendEmailPage() {
                   <SelectValue placeholder="جميع المستخدمين" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">جميع المستخدمين</SelectItem>
+                  <SelectItem value="ALL">جميع المستخدمين</SelectItem>
                   <SelectItem value="ADMIN">المسؤولون</SelectItem>
                   <SelectItem value="MANAGER">المدراء</SelectItem>
                   <SelectItem value="ADVISOR">الموجهون</SelectItem>
@@ -409,7 +409,7 @@ export default function SendEmailPage() {
               </Button>
               <Button
                 onClick={handleSend}
-                disabled={sending || (selectedUsers.length === 0 && !selectedRole)}
+                disabled={sending || (selectedUsers.length === 0 && selectedRole === 'ALL')}
                 className="flex-1"
               >
                 {sending ? (

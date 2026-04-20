@@ -73,7 +73,7 @@ export default function ScheduledEmailsPage() {
     subject: '',
     htmlBody: '',
     scheduledFor: '',
-    recipientRole: '',
+    recipientRole: 'ALL',
     recipientStatus: '',
   });
 
@@ -111,7 +111,7 @@ export default function ScheduledEmailsPage() {
           htmlBody: formData.htmlBody,
           scheduledFor: new Date(formData.scheduledFor).toISOString(),
           recipientFilter: {
-            role: formData.recipientRole || undefined,
+            role: formData.recipientRole === 'ALL' ? undefined : formData.recipientRole,
             status: formData.recipientStatus || undefined,
           },
         }),
@@ -213,7 +213,7 @@ export default function ScheduledEmailsPage() {
       subject: '',
       htmlBody: '',
       scheduledFor: '',
-      recipientRole: '',
+      recipientRole: 'ALL',
       recipientStatus: '',
     });
   };
@@ -431,7 +431,7 @@ export default function ScheduledEmailsPage() {
                     <SelectValue placeholder="الجميع" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">الجميع</SelectItem>
+                    <SelectItem value="ALL">الجميع</SelectItem>
                     <SelectItem value="ADMIN">المسؤولون</SelectItem>
                     <SelectItem value="MANAGER">المدراء</SelectItem>
                     <SelectItem value="ADVISOR">الموجهون</SelectItem>

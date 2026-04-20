@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { notifyStartupApproved } from '@/lib/services/notification-events';
+import { isAuthenticated } from '@/lib/auth';
 
 // GET /api/admin/startups - Get all startups with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -256,6 +258,21 @@ export async function PUT(request: NextRequest) {
     }
     
     let result;
+    const newStatus = data.status?.toUpperCase();
+    
+    // Get startup details before update for notification
+    let startupsToNotify: any[] = [];
+    if (action === 'updateStatus' && newStatus === 'APPROVED') {
+      console.log(`[Admin Startups API] Fetching startup details for approval notification...`);
+      startupsToNotify = await prisma.startup.findMany({
+        where: { id: { in: startupIds }, status: { not: 'APPROVED' } },
+        include: {
+          creator: { select: { id: true, name: true } },
+          members: { select: { userId: true } },
+        },
+      });
+      console.log(`[Admin Startups API] Found ${startupsToNotify.length} startups to approve`);
+    }
     
     switch (action) {
       case 'updateStatus':
@@ -270,11 +287,45 @@ export async function PUT(request: NextRequest) {
           startupIds.map(id => 
             prisma.startup.update({
               where: { id },
-              data: { status: data.status.toUpperCase() },
-              select: { id: true }
+              data: { status: newStatus },
+              select: { id: true, name: true, status: true, creatorId: true }
             })
           )
         );
+        
+        // Send notifications after successful approval
+        if (newStatus === 'APPROVED' && startupsToNotify.length > 0) {
+          console.log(`[Admin Startups API] Sending approval notifications...`);
+          try {
+            // Get the current user for "approved by" name
+            const authHeader = request.headers.get('authorization') ?? undefined;
+            const currentUser = await isAuthenticated(authHeader);
+            const approvedBy = currentUser ? await prisma.user.findUnique({ 
+              where: { id: currentUser.userId }, 
+              select: { name: true } 
+            }) : null;
+            
+            for (const startup of startupsToNotify) {
+              const entrepreneurIds = [
+                startup.creator?.id,
+                ...startup.members.map((m: any) => m.userId),
+              ].filter((id): id is string => !!id);
+              
+              if (entrepreneurIds.length > 0) {
+                await notifyStartupApproved({
+                  startupId: startup.id,
+                  startupName: startup.name,
+                  entrepreneurIds,
+                  approvedByName: approvedBy?.name || 'Admin',
+                });
+                console.log(`[Admin Startups API] Approval notification sent for ${startup.name}`);
+              }
+            }
+          } catch (notifyError: any) {
+            console.error('[Admin Startups API] Failed to send approval notifications:', notifyError.message);
+            // Don't fail the update if notification fails
+          }
+        }
         break;
         
       case 'updateStage':

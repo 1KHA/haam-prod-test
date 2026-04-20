@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
+import { notifyStartupApproved } from '@/lib/services/notification-events';
 
 // GET /api/admin/startups/[startupId] - Get a specific startup by ID
 export async function GET(
@@ -116,19 +117,6 @@ export async function PUT(
 
     const { startupId } = params;
     
-    // Check if startup exists
-    const existingStartup = await prisma.startup.findUnique({
-      where: { id: startupId },
-      select: { id: true }
-    });
-    
-    if (!existingStartup) {
-      return NextResponse.json(
-        { error: 'Startup not found' },
-        { status: 404 }
-      );
-    }
-    
     // Get request body
     const body = await request.json();
     const { 
@@ -147,6 +135,22 @@ export async function PUT(
       status,
       creatorId 
     } = body;
+    
+    // Get current startup details (for checking status change and notification)
+    const currentStartup = await prisma.startup.findUnique({
+      where: { id: startupId },
+      include: {
+        creator: { select: { id: true, name: true } },
+        members: { select: { userId: true } },
+      }
+    });
+    
+    if (!currentStartup) {
+      return NextResponse.json(
+        { error: 'Startup not found' },
+        { status: 404 }
+      );
+    }
     
     // Prepare update data
     const updateData: any = {};
@@ -203,6 +207,37 @@ export async function PUT(
         }
       }
     });
+    
+    // Notify entrepreneur if status changed to APPROVED
+    if (status === 'APPROVED' && currentStartup.status !== 'APPROVED') {
+      console.log(`[Admin Startup API] Sending approval notification for ${updatedStartup.name}...`);
+      try {
+        const authHeader = request.headers.get('authorization') ?? undefined;
+        const currentUser = await isAuthenticated(authHeader);
+        const approvedBy = currentUser ? await prisma.user.findUnique({ 
+          where: { id: currentUser.userId }, 
+          select: { name: true } 
+        }) : null;
+        
+        const entrepreneurIds = [
+          currentStartup.creator?.id,
+          ...currentStartup.members.map(m => m.userId),
+        ].filter((id): id is string => !!id);
+        
+        if (entrepreneurIds.length > 0) {
+          await notifyStartupApproved({
+            startupId,
+            startupName: updatedStartup.name,
+            entrepreneurIds,
+            approvedByName: approvedBy?.name || 'Admin',
+          });
+          console.log(`[Admin Startup API] Approval notification sent successfully`);
+        }
+      } catch (notifyError: any) {
+        console.error('[Admin Startup API] Failed to send approval notification:', notifyError.message);
+        // Don't fail the update if notification fails
+      }
+    }
     
     return NextResponse.json(updatedStartup);
   } catch (error) {

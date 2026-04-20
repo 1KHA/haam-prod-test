@@ -1952,6 +1952,50 @@ export async function notifyEventRegistrationRemoved(params: {
 }
 
 // ============================================================================
+// STARTUP APPROVAL NOTIFICATION
+// ============================================================================
+
+/**
+ * Notify entrepreneur when their startup is approved by admin
+ * Trigger: Startup status changed from PENDING to APPROVED
+ */
+export async function notifyStartupApproved(params: {
+  startupId: string;
+  startupName: string;
+  entrepreneurIds: string[];
+  approvedByName: string;
+}) {
+  const { startupId, startupName, entrepreneurIds, approvedByName } = params;
+
+  console.log(`[notifyStartupApproved] Notifying ${entrepreneurIds.length} entrepreneurs about approval of ${startupName}`);
+
+  if (!entrepreneurIds || entrepreneurIds.length === 0) {
+    console.log(`[notifyStartupApproved] No entrepreneurs to notify`);
+    return;
+  }
+
+  await NotificationService.createNotification({
+    title: `🎉 تم الموافقة على شركتك: ${startupName}`,
+    message: `تمت الموافقة على شركتك الناشئة "${startupName}" بواسطة ${approvedByName}. يمكنك الآن المشاركة في البرامج والفعاليات.`,
+    titleEn: `🎉 Your Startup Has Been Approved: ${startupName}`,
+    messageEn: `Your startup "${startupName}" has been approved by ${approvedByName}. You can now participate in programs and events.`,
+    type: 'application',
+    priority: 'high',
+    recipientIds: entrepreneurIds,
+    actionUrl: `/entrepreneur-dashboard/startups/${startupId}`,
+    actionLabel: 'عرض الشركة',
+    actionLabelEn: 'View Startup',
+    metadata: { 
+      startupId, 
+      type: 'startup_approved',
+      approvedBy: approvedByName 
+    },
+  });
+
+  console.log(`[notifyStartupApproved] Notification sent successfully`);
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 

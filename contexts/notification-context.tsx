@@ -47,7 +47,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
-  const { token, user } = useAuth();
+  const { token, user, isLoading: authLoading } = useAuth();
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -169,6 +169,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const refreshNotifications = async () => {
     await fetchNotifications();
   };
+
+  // Clear loading when auth is done but no user is present (logged out / unauthenticated)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [authLoading, user]);
 
   // Initial fetch and setup SSE when component mounts and user changes
   useEffect(() => {

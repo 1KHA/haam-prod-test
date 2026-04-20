@@ -7,9 +7,12 @@
 
 import { prisma } from '@/lib/prisma';
 
-// Default admin user ID for system-generated notifications
-// This user must exist in the database (foreign key constraint)
-const DEFAULT_ADMIN_ID = '5c7e918d-1c6b-49db-8fa2-b4a2303dccae';
+// Dynamic lookup for system-generated notifications — avoids hardcoded ID that breaks after DB resets
+async function getDefaultAdminId(): Promise<string> {
+  const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  if (!admin) throw new Error('No admin user found in database');
+  return admin.id;
+}
 
 // Global SSE connections store
 // Map of userId -> array of controller functions
@@ -134,7 +137,7 @@ export class NotificationService {
             actionLabel,
             actionLabelEn,
             metadata: metadata ? JSON.stringify(metadata) : null,
-            createdById: createdBy || DEFAULT_ADMIN_ID,
+            createdById: createdBy || await getDefaultAdminId(),
             recipients: {
               create: uniqueRecipientIds.map((userId) => ({
                 userId,
@@ -502,6 +505,7 @@ data: ${JSON.stringify(payload.data)}
       metadata: notification.metadata ? JSON.parse(notification.metadata) : null,
       createdAt: notification.createdAt.toISOString(),
       createdById: notification.createdById,
+      isRead: false, // new_notification SSE event always means unread
     };
   }
 }

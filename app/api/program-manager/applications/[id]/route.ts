@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
+import { notifyApplicationStatusChanged, notifyCohortMemberAdded } from '@/lib/services/notification-events';
 
 // PUT /api/program-manager/applications/[id]
 // Update application (CohortMember) status for a startup
@@ -24,8 +25,18 @@ export async function PUT(
     const startup = await prisma.startup.findUnique({
       where: { id: startupId },
       include: {
+        creator: { select: { id: true } },
+        members: { select: { userId: true } },
         cohortMemberships: {
-          where: cohortId ? { cohortId } : {}
+          where: cohortId ? { cohortId } : {},
+          include: {
+            cohort: {
+              include: {
+                program: { select: { id: true, name: true } },
+                manager: { select: { id: true } },
+              }
+            }
+          }
         }
       }
     });
@@ -45,6 +56,49 @@ export async function PUT(
       await prisma.cohortMember.create({
         data: { cohortId, startupId, status }
       });
+    }
+
+    // Send notifications to entrepreneur on accept/reject
+    try {
+      const membership = startup.cohortMemberships[0];
+      if (membership && ['ACTIVE', 'REJECTED'].includes(status)) {
+        const entrepreneurIds = [
+          startup.creator?.id,
+          ...startup.members.map((m: { userId: string }) => m.userId),
+        ].filter((id): id is string => !!id);
+        if (entrepreneurIds.length === 0 && (startup as any).creatorId) {
+          entrepreneurIds.push((startup as any).creatorId);
+        }
+        const statusMap: Record<string, 'ACCEPTED' | 'REJECTED' | 'PENDING'> = {
+          ACTIVE: 'ACCEPTED', REJECTED: 'REJECTED', PENDING: 'PENDING',
+        };
+        if (entrepreneurIds.length > 0) {
+          await notifyApplicationStatusChanged({
+            applicationId: membership.id,
+            startupId,
+            startupName: startup.name,
+            cohortId: membership.cohortId,
+            cohortName: (membership as any).cohort.name,
+            oldStatus: membership.status,
+            newStatus: statusMap[status] || 'PENDING',
+            entrepreneurIds,
+          });
+          if (status === 'ACTIVE') {
+            await notifyCohortMemberAdded({
+              cohortId: membership.cohortId,
+              cohortName: (membership as any).cohort.name,
+              programId: (membership as any).cohort.program.id,
+              programName: (membership as any).cohort.program.name,
+              startupId,
+              startupName: startup.name,
+              entrepreneurIds,
+              programManagerId: (membership as any).cohort.manager?.id || payload.userId,
+            });
+          }
+        }
+      }
+    } catch (notifyError: any) {
+      console.error('[Applications PUT] Failed to send notification:', notifyError.message);
     }
 
     const updatedStartup = await prisma.startup.findUnique({

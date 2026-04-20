@@ -118,7 +118,13 @@ export class NotificationService {
     try {
       // Resolve createdById BEFORE starting the transaction to avoid nested queries
       // inside an SQLite transaction (which causes "database is locked" errors)
-      const resolvedCreatedById = createdBy || await getDefaultAdminId();
+      // Handle 'system' or invalid createdBy values by falling back to admin
+      let resolvedCreatedById: string;
+      if (createdBy && createdBy !== 'system') {
+        resolvedCreatedById = createdBy;
+      } else {
+        resolvedCreatedById = await getDefaultAdminId();
+      }
 
       // Create notification with recipients in a transaction
       console.log(`[NotificationService] Starting database transaction...`);

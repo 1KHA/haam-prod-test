@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           name: user.name,
           role: user.role,
-          createdBy: 'system',
+          // createdBy defaults to admin via getDefaultAdminId()
         });
       }
     } catch (notifyError) {

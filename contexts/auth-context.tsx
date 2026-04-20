@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      setToken('cookie');
     }
 
     // Small delay to ensure state updates are applied before marking loading complete

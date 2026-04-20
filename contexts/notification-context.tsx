@@ -74,18 +74,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Set up SSE for real-time notifications
   const setupSSE = () => {
-    if (!token) return;
-    
+    if (!user) return;
+
     // Close any existing connection
     if (eventSource) {
       eventSource.close();
     }
-    
-    // Properly encode the token to prevent issues with special characters
-    const encodedToken = encodeURIComponent(token);
-    
-    // Create a new SSE connection
-    const sse = new EventSource(`/api/admin/notifications/sse?token=${encodedToken}`);
+
+    // Use withCredentials so the HTTP-only cookie is sent automatically
+    const sse = new EventSource('/api/admin/notifications/sse', { withCredentials: true });
     
     sse.addEventListener('notifications', (event) => {
       try {
@@ -173,18 +170,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     await fetchNotifications();
   };
 
-  // Initial fetch and setup SSE when component mounts and token changes
+  // Initial fetch and setup SSE when component mounts and user changes
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchNotifications();
       const cleanup = setupSSE();
-      
-      // Clean up on unmount
+
       return () => {
         if (cleanup) cleanup();
       };
     }
-  }, [token]);
+  }, [user?.id]);
 
   const value = {
     notifications,

@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/lib/auth';
+import { NotificationService } from '@/lib/services/notification-service';
 
 // POST handler to send notifications
 export async function POST(request: NextRequest) {
@@ -144,6 +145,26 @@ export async function POST(request: NextRequest) {
       }
     });
     
+    // Broadcast real-time SSE push to connected recipients (skip scheduled)
+    if (!isScheduled) {
+      await NotificationService.broadcastToUsers(recipientUserIds, {
+        type: 'new_notification',
+        data: {
+          id: notification.id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          priority: notification.priority,
+          actionUrl: notification.actionUrl,
+          actionLabel: notification.actionLabel,
+          actionLabelEn: notification.actionLabelEn,
+          metadata: notification.metadata ? JSON.parse(notification.metadata) : null,
+          createdAt: notification.createdAt.toISOString(),
+          isRead: false,
+        },
+      });
+    }
+
     // If email sending is requested, queue emails
     if (sendEmail && !isScheduled) {
       // In a real implementation, we would queue email sending here

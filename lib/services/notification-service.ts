@@ -116,11 +116,15 @@ export class NotificationService {
     console.log(`[NotificationService] Deduplicated recipients: ${uniqueRecipientIds.length}`);
 
     try {
+      // Resolve createdById BEFORE starting the transaction to avoid nested queries
+      // inside an SQLite transaction (which causes "database is locked" errors)
+      const resolvedCreatedById = createdBy || await getDefaultAdminId();
+
       // Create notification with recipients in a transaction
       console.log(`[NotificationService] Starting database transaction...`);
-      console.log(`[NotificationService] createdById: ${createdBy || 'system'}`);
+      console.log(`[NotificationService] createdById: ${resolvedCreatedById}`);
       console.log(`[NotificationService] recipientIds: ${JSON.stringify(uniqueRecipientIds)}`);
-      
+
       const notification = await prisma.$transaction(async (tx) => {
         console.log(`[NotificationService] Creating notification record inside transaction...`);
         const created = await (tx as any).notification.create({
@@ -137,7 +141,7 @@ export class NotificationService {
             actionLabel,
             actionLabelEn,
             metadata: metadata ? JSON.stringify(metadata) : null,
-            createdById: createdBy || await getDefaultAdminId(),
+            createdById: resolvedCreatedById,
             recipients: {
               create: uniqueRecipientIds.map((userId) => ({
                 userId,
@@ -253,7 +257,7 @@ data: ${JSON.stringify(payload.data)}
    * Broadcast to specific users via SSE
    * If user is not connected, notification is queued for later delivery
    */
-  private static async broadcastToUsers(
+  static async broadcastToUsers(
     userIds: string[],
     payload: { type: string; data: unknown }
   ): Promise<void> {

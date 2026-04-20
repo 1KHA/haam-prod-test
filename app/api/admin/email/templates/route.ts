@@ -41,7 +41,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, templates });
+    // Ensure variables is always an array
+    const sanitizedTemplates = templates.map((t: any) => ({
+      ...t,
+      variables: Array.isArray(t.variables) ? t.variables : [],
+    }));
+
+    return NextResponse.json({ success: true, templates: sanitizedTemplates });
   } catch (error) {
     console.error('Error fetching templates:', error);
     return NextResponse.json(

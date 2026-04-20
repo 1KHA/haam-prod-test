@@ -345,7 +345,7 @@ export default function SendEmailPage() {
                   <div className="space-y-2">
                     <Label>المتغيرات</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {getSelectedTemplate()?.variables.map((variable) => (
+                      {(getSelectedTemplate()?.variables || []).map((variable) =>(
                         <div key={variable} className="space-y-1">
                           <Label className="text-xs">{variable}</Label>
                           <Input

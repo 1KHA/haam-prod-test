@@ -127,7 +127,7 @@ export default function EmailTemplatesPage() {
       const response = await fetch('/api/admin/email/templates');
       const data = await response.json();
       if (data.success) {
-        setTemplates(data.templates);
+        setTemplates(data.templates || []);
       }
     } catch (error) {
       toast({
@@ -332,14 +332,14 @@ export default function EmailTemplatesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {template.variables.slice(0, 3).map((v) => (
+                        {(template.variables || []).slice(0, 3).map((v) => (
                           <Badge key={v} variant="outline" className="text-xs">
                             {v}
                           </Badge>
                         ))}
-                        {template.variables.length > 3 && (
+                        {(template.variables || []).length > 3 && (
                           <Badge variant="outline" className="text-xs">
-                            +{template.variables.length - 3}
+                            +{(template.variables || []).length - 3}
                           </Badge>
                         )}
                       </div>

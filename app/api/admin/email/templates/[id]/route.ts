@@ -30,7 +30,10 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, template });
+    return NextResponse.json({ 
+      success: true, 
+      template: { ...template, variables: Array.isArray(template.variables) ? template.variables : [] }
+    });
   } catch (error) {
     console.error('Error fetching template:', error);
     return NextResponse.json(
@@ -103,7 +106,10 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ success: true, template });
+    return NextResponse.json({ 
+      success: true, 
+      template: { ...template, variables: Array.isArray(template.variables) ? template.variables : [] }
+    });
   } catch (error) {
     console.error('Error updating template:', error);
     return NextResponse.json(

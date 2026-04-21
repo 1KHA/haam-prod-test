@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { notifyProgramCreated } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // GET /api/admin/programs - Get all programs with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -223,6 +224,9 @@ export async function POST(request: NextRequest) {
           createdBy: permissionCheck.userId,
         });
         console.log(`[Programs API] Program creation notification sent successfully`);
+        await EmailService.fireScenario('program_created', recipientIds, {
+          program: { name: program.name, type: program.type },
+        });
       } else {
         console.log(`[Programs API] No Program Managers found, skipping notification`);
       }

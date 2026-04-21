@@ -5,6 +5,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { mkdir } from 'fs/promises';
 import { notifyStartupCreated } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // Define the allowed file types
 const ALLOWED_FILE_TYPES = [
@@ -163,6 +164,10 @@ export async function POST(request: NextRequest) {
           programManagerIds: allRecipients,
         });
         console.log(`[Create Startup] Notification function completed`);
+        await EmailService.fireScenario('startup_created', allRecipients, {
+          startup: { name: startup.name, industry: startup.industry, stage: startup.stage },
+          founder: { name: founderName },
+        });
         
         // Final verification - check if any startup notifications exist
         console.log(`[Create Startup] Verifying notifications were saved...`);

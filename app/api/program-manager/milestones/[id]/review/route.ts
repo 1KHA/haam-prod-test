@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { notifyMilestoneResponseReviewed } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 export async function POST(
   request: NextRequest,
@@ -165,6 +166,14 @@ export async function POST(
           entrepreneurIds,
         });
         console.log(`[Milestone Review] Notification sent successfully`);
+        const scenarioType = status === 'approved' ? 'milestone_completed' : 'milestone_due';
+        await EmailService.fireScenario(scenarioType, entrepreneurIds, {
+          milestone: { title: submission.milestone.title },
+          startup: { name: submission.startup.name },
+          status,
+          feedback,
+          reviewedBy: reviewedByName,
+        });
       } else {
         console.log(`[Milestone Review] No entrepreneurs found to notify`);
       }

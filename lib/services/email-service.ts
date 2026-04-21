@@ -613,6 +613,38 @@ export class EmailService {
   }
 
   /**
+   * Fire an email scenario by type — checks if enabled, resolves template, sends to all recipientUserIds.
+   * Use this as a one-liner in route files after the in-app notification call.
+   */
+  static async fireScenario(
+    scenarioType: string,
+    recipientUserIds: string[],
+    variables: Record<string, any> = {}
+  ): Promise<void> {
+    try {
+      if (recipientUserIds.length === 0) return;
+
+      const scenario = await (prisma as any).emailScenarioSettings.findUnique({
+        where: { scenarioType },
+        include: { template: { select: { name: true } } },
+      });
+
+      if (!scenario?.isEnabled || !scenario?.template?.name) return;
+
+      for (const userId of recipientUserIds) {
+        await this.sendToUser({
+          userId,
+          templateName: scenario.template.name,
+          variables,
+          scenarioType,
+        });
+      }
+    } catch (error: any) {
+      console.error(`[EmailService] fireScenario(${scenarioType}) failed:`, error.message);
+    }
+  }
+
+  /**
    * Clear cache (call when config/templates change)
    */
   static clearCache() {

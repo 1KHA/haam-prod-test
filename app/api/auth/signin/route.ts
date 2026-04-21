@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { comparePassword, generateToken, UserRole } from '@/lib/auth';
 import { notifyLoginFailed } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // In-memory store for failed login attempts (use Redis in production)
 const failedAttempts = new Map<string, { count: number; lastAttempt: Date; notified: boolean }>();
@@ -69,6 +70,10 @@ export async function POST(request: NextRequest) {
           });
           currentAttempt.notified = true;
           failedAttempts.set(email, currentAttempt);
+          await EmailService.fireScenario('login_failed', [user.id], {
+            user: { name: user.name, email: user.email },
+            attemptCount: currentAttempt.count,
+          });
         } catch (notifyError: any) {
           console.error('[Signin] Failed to send login failed notification:', notifyError.message);
         }

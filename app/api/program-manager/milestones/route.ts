@@ -9,6 +9,7 @@ import {
 } from '@/lib/milestones';
 import { notifyMilestoneCreated } from '@/lib/services/notification-events';
 import { prisma } from '@/lib/prisma';
+import { EmailService } from '@/lib/services/email-service';
 
 function matchesSearch(value: string, query: string) {
   return value.toLowerCase().includes(query.toLowerCase());
@@ -156,6 +157,10 @@ export async function POST(request: NextRequest) {
             recipientIds: Array.from(recipientIds),
           });
           console.log(`[PM Milestones API] Milestone creation notification sent successfully`);
+          await EmailService.fireScenario('milestone_created', Array.from(recipientIds), {
+            milestone: { title: milestone.title, dueDate, priority },
+            cohort: { name: cohort.name },
+          });
         } else {
           console.log(`[PM Milestones API] No recipients found in cohort`);
         }

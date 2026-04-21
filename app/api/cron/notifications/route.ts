@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notifyMilestoneDueSoon, notifyEventReminder } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // Run every hour
 export async function GET(request: NextRequest) {
@@ -112,6 +113,10 @@ export async function GET(request: NextRequest) {
             daysUntil,
             recipientIds: Array.from(recipientIds),
           });
+          await EmailService.fireScenario('milestone_due', Array.from(recipientIds), {
+            milestone: { title: milestone.title, dueDate: milestone.dueDate },
+            daysUntil,
+          });
           results.milestoneReminders++;
         }
       } catch (error) {
@@ -198,6 +203,11 @@ export async function GET(request: NextRequest) {
             daysUntil: -daysOverdue, // Negative to indicate overdue
             recipientIds: Array.from(recipientIds),
           });
+          await EmailService.fireScenario('milestone_due', Array.from(recipientIds), {
+            milestone: { title: milestone.title, dueDate: milestone.dueDate },
+            daysOverdue,
+            overdue: true,
+          });
           results.overdueMilestones++;
         }
       } catch (error) {
@@ -263,6 +273,10 @@ export async function GET(request: NextRequest) {
             eventDate: event.startDate,
             hoursBefore: hoursUntil,
             recipientIds,
+          });
+          await EmailService.fireScenario('event_reminder', recipientIds, {
+            event: { name: event.title, date: event.startDate },
+            hoursBefore: hoursUntil,
           });
           results.eventReminders++;
         }

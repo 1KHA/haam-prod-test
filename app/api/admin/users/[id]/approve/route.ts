@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { notifyAccountApproved, notifyAccountSuspended } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const permissionCheck = await checkPermission(req, { category: 'users', action: 'edit' });
@@ -37,12 +38,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           name: user.name,
           approvedBy: permissionCheck.userId,
         });
+        await EmailService.fireScenario('account_approved', [user.id], {
+          user: { name: user.name, email: user.email },
+        });
       } else {
         await notifyAccountSuspended({
           userId: user.id,
           name: user.name,
           reason: body.reason || 'Account suspended by administrator',
           suspendedBy: permissionCheck.userId,
+        });
+        await EmailService.fireScenario('account_suspended', [user.id], {
+          user: { name: user.name, email: user.email },
+          reason: body.reason || 'Account suspended by administrator',
         });
       }
     } catch (notifyError) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole, TokenPayload } from '@/lib/auth';
 import { notifyEventCreated, notifyEventCancelled } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // GET /api/admin/events - Get all events
 export async function GET(request: NextRequest) {
@@ -157,6 +158,9 @@ export async function POST(request: NextRequest) {
           recipientIds,
         });
         console.log(`[Events API] Event creation notification sent successfully`);
+        await EmailService.fireScenario('event_created', recipientIds, {
+          event: { name: event.title, date: event.startDate, organizer: body.organizer },
+        });
       } else {
         console.log(`[Events API] No active users found to notify`);
       }
@@ -234,6 +238,9 @@ export async function DELETE(request: NextRequest) {
             eventName: event.title,
             recipientIds: registeredUserIds,
             cancelledBy: user.userId,
+          });
+          await EmailService.fireScenario('event_cancelled', registeredUserIds, {
+            event: { name: event.title },
           });
         }
       }

@@ -82,9 +82,13 @@ export async function POST(request: NextRequest) {
       category,
     } = body;
 
-    if (!name || !subject || !htmlBody) {
+    const missing = [];
+    if (!name) missing.push('name');
+    if (!subject) missing.push('subject');
+    if (!htmlBody) missing.push('htmlBody');
+    if (missing.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: `Missing required fields: ${missing.join(', ')}` },
         { status: 400 }
       );
     }

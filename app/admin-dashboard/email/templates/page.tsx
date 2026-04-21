@@ -145,6 +145,19 @@ export default function EmailTemplatesPage() {
   }, []);
 
   const handleSave = async () => {
+    if (!formData.name.trim()) {
+      toast({ title: 'خطأ', description: 'اسم القالب مطلوب', variant: 'destructive' });
+      return;
+    }
+    if (!formData.subject.trim()) {
+      toast({ title: 'خطأ', description: 'موضوع الرسالة (العربي) مطلوب — افتح تبويب العربية وأدخل الموضوع', variant: 'destructive' });
+      return;
+    }
+    if (!formData.htmlBody.trim()) {
+      toast({ title: 'خطأ', description: 'محتوى الرسالة (العربي) مطلوب — افتح تبويب العربية وأدخل المحتوى', variant: 'destructive' });
+      return;
+    }
+
     try {
       const url = selectedTemplate
         ? `/api/admin/email/templates?id=${selectedTemplate.id}`

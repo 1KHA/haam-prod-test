@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, generateToken, UserRole } from '@/lib/auth';
 import { notifyUserCreated, notifyNewUserRegistered } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -176,6 +177,46 @@ export async function POST(request: NextRequest) {
     } catch (notifyError) {
       console.error('[Signup] Failed to send notifications:', notifyError);
       // Don't fail the signup if notification fails
+    }
+
+    // Fire user_created email scenario if enabled
+    try {
+      const scenario = await (prisma as any).emailScenarioSettings.findUnique({
+        where: { scenarioType: 'user_created' },
+        include: { template: { select: { name: true } } },
+      });
+      if (scenario?.isEnabled && scenario.template?.name) {
+        const sendToRoles: string[] = (() => {
+          try { return JSON.parse(scenario.sendToRoles || '["all"]'); }
+          catch { return ['all']; }
+        })();
+
+        // Send welcome email to the newly registered user
+        await EmailService.sendToUser({
+          userId: user.id,
+          templateName: scenario.template.name,
+          variables: { user: { name: user.name, email: user.email } },
+          scenarioType: 'user_created',
+        });
+
+        // Also notify admins if sendToRoles includes 'admin' or 'all'
+        if (sendToRoles.includes('admin') || sendToRoles.includes('all')) {
+          const adminUsers = await prisma.user.findMany({
+            where: { role: 'ADMIN' },
+            select: { id: true },
+          });
+          for (const admin of adminUsers) {
+            await EmailService.sendToUser({
+              userId: admin.id,
+              templateName: scenario.template.name,
+              variables: { user: { name: user.name, email: user.email } },
+              scenarioType: 'user_created',
+            });
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error('[Signup] Failed to send user_created email scenario:', emailError);
     }
 
     // Generate token

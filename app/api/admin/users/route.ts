@@ -165,12 +165,34 @@ export async function POST(request: NextRequest) {
         include: { template: { select: { name: true } } },
       });
       if (scenario?.isEnabled && scenario.template?.name) {
+        const sendToRoles: string[] = (() => {
+          try { return JSON.parse(scenario.sendToRoles || '["all"]'); }
+          catch { return ['all']; }
+        })();
+
+        // Always send welcome email to the newly created user
         await EmailService.sendToUser({
           userId: user.id,
           templateName: scenario.template.name,
           variables: { user: { name: user.name, email: user.email }, tempPassword: password },
           scenarioType: 'user_created',
         });
+
+        // Also notify admins if sendToRoles includes 'admin' or 'all'
+        if (sendToRoles.includes('admin') || sendToRoles.includes('all')) {
+          const admins = await prisma.user.findMany({
+            where: { role: 'ADMIN', id: { not: user.id } },
+            select: { id: true },
+          });
+          for (const admin of admins) {
+            await EmailService.sendToUser({
+              userId: admin.id,
+              templateName: scenario.template.name,
+              variables: { user: { name: user.name, email: user.email }, tempPassword: password },
+              scenarioType: 'user_created',
+            });
+          }
+        }
       }
     } catch (emailError) {
       console.error('[Admin Users POST] Failed to send user_created email:', emailError);

@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Test the specific config (not the cached active one)
-    const testResult = await EmailService.testSpecificConfig(config, user.email);
+    // Send test email to the configured fromEmail (real address), not the admin account email
+    const testResult = await EmailService.testSpecificConfig(config, config.fromEmail || config.username);
 
     if (!testResult.success) {
       return NextResponse.json(

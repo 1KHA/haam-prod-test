@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { InvitationStatus, InvitationType, MemberStatus } from '@prisma/client';
-import { sendEmail } from '@/lib/email'; // Import email functions
+import { EmailService } from '@/lib/services/email-service';
 import { notifyTeamInvitationAccepted, notifyTeamInvitationRejected } from '@/lib/services/notification-events';
 
 export async function PATCH(
@@ -120,16 +120,21 @@ export async function PATCH(
     });
 
     if (inviter) {
-      await sendEmail({
-        to: inviter.email,
-        subject: `Company Invitation ${status.toLowerCase()}: ${invitation.startup?.name || 'Your Startup'}`,
-        html: `
-          <p>Hello ${inviter.name},</p>
-          <p>Your invitation to ${invitation.inviteeEmail} to join ${invitation.startup?.name || 'your startup'} has been ${status.toLowerCase()}.</p>
-          <p>Thank you,</p>
-          <p>The Accelerator Dashboard Team</p>
-        `,
-      });
+      try {
+        await EmailService.sendEmail({
+          to: inviter.email,
+          subject: `Company Invitation ${status.toLowerCase()}: ${invitation.startup?.name || 'Your Startup'}`,
+          htmlBody: `
+            <p>Hello ${inviter.name},</p>
+            <p>Your invitation to ${invitation.inviteeEmail} to join ${invitation.startup?.name || 'your startup'} has been ${status.toLowerCase()}.</p>
+            <p>Thank you,</p>
+            <p>The Accelerator Dashboard Team</p>
+          `,
+          scenarioType: 'team_invitation_response',
+        });
+      } catch (emailError) {
+        console.error('[Invitation Response] Failed to send notification email:', emailError);
+      }
     }
 
     // Get user details for notification

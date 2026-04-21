@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { InvitationType, InvitationStatus } from '@prisma/client';
-import { sendEmail, generateInvitationEmailHtml } from '@/lib/email'; // Import email functions
+import { generateInvitationEmailHtml } from '@/lib/email';
+import { EmailService } from '@/lib/services/email-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,11 +76,16 @@ export async function POST(request: NextRequest) {
     const rejectLink = `${request.nextUrl.origin}/entrepreneur-dashboard/team/invitations/${invitation.id}?status=rejected`;
 
     // Send invitation email
-    await sendEmail({
-      to: inviteeEmail,
-      subject: `Invitation to connect from ${inviterUser.name}`,
-      html: generateInvitationEmailHtml(inviterUser.name, inviteeEmail, InvitationType.ENTREPRENEUR.toLowerCase() as 'entrepreneur', acceptLink, rejectLink),
-    });
+    try {
+      await EmailService.sendEmail({
+        to: inviteeEmail,
+        subject: `Invitation to connect from ${inviterUser.name}`,
+        htmlBody: generateInvitationEmailHtml(inviterUser.name, inviteeEmail, InvitationType.ENTREPRENEUR.toLowerCase() as 'entrepreneur', acceptLink, rejectLink),
+        scenarioType: 'team_invitation',
+      });
+    } catch (emailError) {
+      console.error('[Invitations] Failed to send invitation email:', emailError);
+    }
 
     return NextResponse.json(
       { message: 'Invitation sent successfully', invitation },

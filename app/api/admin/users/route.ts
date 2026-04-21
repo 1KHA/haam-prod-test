@@ -3,6 +3,7 @@ import { Prisma, UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { hashPassword } from '@/lib/auth';
+import { EmailService } from '@/lib/services/email-service';
 
 function normalizeApprovalStatus(status?: string | null) {
   if (status === 'PENDING') {
@@ -156,6 +157,24 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true, name: true, email: true, role: true, createdAt: true },
     });
+
+    // Fire user_created email scenario if enabled
+    try {
+      const scenario = await (prisma as any).emailScenarioSettings.findUnique({
+        where: { scenarioType: 'user_created' },
+        include: { template: { select: { name: true } } },
+      });
+      if (scenario?.isEnabled && scenario.template?.name) {
+        await EmailService.sendToUser({
+          userId: user.id,
+          templateName: scenario.template.name,
+          variables: { user: { name: user.name, email: user.email }, tempPassword: password },
+          scenarioType: 'user_created',
+        });
+      }
+    } catch (emailError) {
+      console.error('[Admin Users POST] Failed to send user_created email:', emailError);
+    }
 
     return NextResponse.json({ success: true, ...user }, { status: 201 });
   } catch (error) {

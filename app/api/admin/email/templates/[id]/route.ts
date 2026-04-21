@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { EmailService } from '@/lib/services/email-service';
 
 // GET - Get single template
 export async function GET(
@@ -106,8 +107,9 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    EmailService.clearCache();
+    return NextResponse.json({
+      success: true,
       template: { ...template, variables: Array.isArray(template.variables) ? template.variables : [] }
     });
   } catch (error) {

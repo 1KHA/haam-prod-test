@@ -186,9 +186,10 @@ export class EmailService {
    * Send a single email
    */
   static async sendEmail(params: SendEmailParams): Promise<{ success: boolean; logId?: string; error?: string }> {
+    let emailLogId: string | undefined;
     try {
       const config = await this.getSmtpConfig();
-      
+
       if (!config) {
         throw new Error('SMTP not configured');
       }
@@ -213,6 +214,7 @@ export class EmailService {
           ipAddress: params.ipAddress,
         },
       });
+      emailLogId = emailLog.id;
 
       // If in test mode, don't actually send
       if (config.testMode) {
@@ -220,27 +222,24 @@ export class EmailService {
           to: params.to,
           subject: params.subject,
         });
-        
+
         await (prisma as any).emailLog.update({
-          where: { id: emailLog.id },
-          data: {
-            status: 'sent',
-            sentAt: new Date(),
-          },
+          where: { id: emailLogId },
+          data: { status: 'sent', sentAt: new Date() },
         });
 
-        return { success: true, logId: emailLog.id };
+        return { success: true, logId: emailLogId };
       }
 
       // Create transporter and send
       const transporter = await this.createTransporter();
-      
+
       const recipients = Array.isArray(params.to) ? params.to.join(', ') : params.to;
-      
+
       // Use bilingual content if available
       const subject = params.subjectEn ? `${params.subject} / ${params.subjectEn}` : params.subject;
       let htmlBody = params.htmlBody;
-      
+
       if (params.htmlBodyEn) {
         htmlBody = `
           <div dir="rtl" style="text-align: right;">
@@ -265,29 +264,20 @@ export class EmailService {
 
       // Update log entry
       await (prisma as any).emailLog.update({
-        where: { id: emailLog.id },
-        data: {
-          status: 'sent',
-          sentAt: new Date(),
-        },
+        where: { id: emailLogId },
+        data: { status: 'sent', sentAt: new Date() },
       });
 
-      return { success: true, logId: emailLog.id };
+      return { success: true, logId: emailLogId };
     } catch (error: any) {
       console.error('[EmailService] Error sending email:', error);
-      
-      // Update log entry with error
-      if (params.userId) {
-        await (prisma as any).emailLog.create({
-          data: {
-            recipientEmail: Array.isArray(params.to) ? params.to.join(', ') : params.to,
-            recipientId: params.userId,
-            subject: params.subject,
-            status: 'failed',
-            errorMessage: error.message,
-            scenarioType: params.scenarioType,
-          },
-        });
+
+      // Update the existing log entry to failed (don't create a duplicate)
+      if (emailLogId) {
+        await (prisma as any).emailLog.update({
+          where: { id: emailLogId },
+          data: { status: 'failed', errorMessage: error.message },
+        }).catch(() => {}); // ignore secondary error
       }
 
       return { success: false, error: error.message };
@@ -431,22 +421,52 @@ export class EmailService {
   }
 
   /**
-   * Test SMTP configuration
+   * Test SMTP configuration (uses cached active config)
    */
   static async testSmtpConfig(testEmail: string): Promise<{ success: boolean; message: string }> {
     try {
       const config = await this.getSmtpConfig();
-      
+
       if (!config) {
         return { success: false, message: 'No SMTP configuration found' };
       }
 
       const transporter = await this.createTransporter();
-      
-      // Verify connection
+
       await transporter.verify();
-      
-      // Send test email
+
+      await transporter.sendMail({
+        from: `"${config.fromName}" <${config.fromEmail}>`,
+        to: testEmail,
+        subject: 'Test Email from HAAM Platform',
+        html: '<h1>SMTP Configuration Test</h1><p>If you receive this email, your SMTP configuration is working correctly!</p>',
+      });
+
+      return { success: true, message: 'Test email sent successfully!' };
+    } catch (error: any) {
+      console.error('[EmailService] SMTP test failed:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Test a specific SMTP config by its raw DB record (bypasses cache)
+   */
+  static async testSpecificConfig(
+    config: { host: string; port: number; secure: boolean; username: string; password: string; fromEmail: string; fromName: string },
+    testEmail: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        auth: { user: config.username, pass: decryptPassword(config.password) },
+        tls: { rejectUnauthorized: false },
+      });
+
+      await transporter.verify();
+
       await transporter.sendMail({
         from: `"${config.fromName}" <${config.fromEmail}>`,
         to: testEmail,

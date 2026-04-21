@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import crypto from 'crypto';
+import { EmailService } from '@/lib/services/email-service';
 
 // Encryption helpers for SMTP passwords
 const ENCRYPTION_KEY = process.env.JWT_SECRET || 'default-key-32-chars-long!!!!!'; // Must be 32 chars for AES-256
@@ -143,6 +144,9 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    // Clear cache so next send picks up new config immediately
+    EmailService.clearCache();
 
     // Don't return password
     const { password: _, ...sanitizedConfig } = config;

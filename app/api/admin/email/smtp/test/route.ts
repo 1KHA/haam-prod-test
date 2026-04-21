@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Test connection by sending test email
-    const testResult = await EmailService.testSmtpConfig(user.email);
+    // Test the specific config (not the cached active one)
+    const testResult = await EmailService.testSpecificConfig(config, user.email);
 
     if (!testResult.success) {
       return NextResponse.json(

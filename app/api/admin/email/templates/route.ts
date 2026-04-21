@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
+import { EmailService } from '@/lib/services/email-service';
 
 /**
  * Extract variables from template content
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    EmailService.clearCache();
     return NextResponse.json({ success: true, template });
   } catch (error) {
     console.error('Error creating template:', error);
@@ -175,6 +177,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    EmailService.clearCache();
     return NextResponse.json({ success: true, template });
   } catch (error) {
     console.error('Error updating template:', error);

@@ -51,20 +51,20 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    // Get daily stats
-    const dailyStats = await (prisma as any).emailLog.groupBy({
-      by: ['sentAt'],
-      where: {
-        sentAt: { gte: since },
-      },
-      _count: { id: true },
-    });
+    // Get daily stats — fetch sent and failed logs separately, group by date in JS
+    const [sentLogs, failedLogs] = await Promise.all([
+      (prisma as any).emailLog.findMany({
+        where: { status: 'sent', sentAt: { gte: since } },
+        select: { sentAt: true },
+      }),
+      (prisma as any).emailLog.findMany({
+        where: { status: 'failed', sentAt: { gte: since } },
+        select: { sentAt: true },
+      }),
+    ]);
 
-    // Format daily stats
-    const formattedDailyStats: { date: string; sent: number; failed: number }[] = [];
-    const dateMap = new Map();
-
-    // Initialize all dates in range
+    // Initialize dateMap with all dates in range
+    const dateMap = new Map<string, { date: string; sent: number; failed: number }>();
     for (let i = 0; i < days; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -72,8 +72,25 @@ export async function GET(request: NextRequest) {
       dateMap.set(dateStr, { date: dateStr, sent: 0, failed: 0 });
     }
 
-    // Fill in the data (simplified - actual implementation would query by day)
-    formattedDailyStats.push(...Array.from(dateMap.values()).reverse());
+    // Tally sent logs
+    for (const log of sentLogs) {
+      if (log.sentAt) {
+        const dateStr = new Date(log.sentAt).toISOString().split('T')[0];
+        const entry = dateMap.get(dateStr);
+        if (entry) entry.sent++;
+      }
+    }
+
+    // Tally failed logs
+    for (const log of failedLogs) {
+      if (log.sentAt) {
+        const dateStr = new Date(log.sentAt).toISOString().split('T')[0];
+        const entry = dateMap.get(dateStr);
+        if (entry) entry.failed++;
+      }
+    }
+
+    const formattedDailyStats = Array.from(dateMap.values()).reverse();
 
     // Get template usage
     const templateUsage = await (prisma as any).emailLog.groupBy({

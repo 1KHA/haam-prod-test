@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
 import { notifyApplicationStatusChanged, notifyCohortMemberAdded } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // PUT /api/program-manager/applications/[id]
 // Update application (CohortMember) status for a startup
@@ -99,6 +100,45 @@ export async function PUT(
       }
     } catch (notifyError: any) {
       console.error('[Applications PUT] Failed to send notification:', notifyError.message);
+    }
+
+    // Fire application_status_changed email scenario if enabled
+    if (['ACTIVE', 'REJECTED'].includes(status)) {
+      try {
+        const scenario = await (prisma as any).emailScenarioSettings.findUnique({
+          where: { scenarioType: 'application_status_changed' },
+          include: { template: { select: { name: true } } },
+        });
+        if (scenario?.isEnabled && scenario.template?.name) {
+          const membership = startup.cohortMemberships[0];
+          const recipientUsers = await prisma.user.findMany({
+            where: {
+              id: {
+                in: [
+                  startup.creator?.id,
+                  ...startup.members.map((m: { userId: string }) => m.userId),
+                ].filter((id): id is string => !!id),
+              },
+            },
+            select: { id: true, email: true, name: true },
+          });
+          for (const recipient of recipientUsers) {
+            await EmailService.sendToUser({
+              userId: recipient.id,
+              templateName: scenario.template.name,
+              variables: {
+                user: { name: recipient.name, email: recipient.email },
+                cohortName: (membership as any)?.cohort?.name || '',
+                startupName: startup.name,
+                status: status === 'ACTIVE' ? 'مقبول' : 'مرفوض',
+              },
+              scenarioType: 'application_status_changed',
+            });
+          }
+        }
+      } catch (emailError) {
+        console.error('[Applications PUT] Failed to send application_status_changed email:', emailError);
+      }
     }
 
     const updatedStartup = await prisma.startup.findUnique({

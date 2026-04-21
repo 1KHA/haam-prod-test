@@ -11,6 +11,7 @@ import {
   getSubmissionHistoryForMilestoneAndStartup,
 } from '@/lib/milestones';
 import { notifyMilestoneResponseSubmitted } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 import { prisma } from '@/lib/prisma';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -170,6 +171,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             programManagerId: cohort.manager.id,
           });
           console.log(`[Milestone Submissions] Notification sent successfully`);
+          await EmailService.fireScenario('document_uploaded', [cohort.manager.id], {
+            milestone: { title: milestone.title },
+            startup: { name: startupName },
+            submittedBy: submittedByName,
+            fileCount: files.length,
+          });
         } else {
           console.log(`[Milestone Submissions] No manager found for cohort, skipping notification`);
         }

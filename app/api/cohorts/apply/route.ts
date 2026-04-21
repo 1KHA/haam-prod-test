@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { notifyApplicationSubmitted } from '@/lib/services/notification-events';
+import { EmailService } from '@/lib/services/email-service';
 
 // POST /api/cohorts/apply - Apply to a cohort with a startup
 export async function POST(request: NextRequest) {
@@ -117,6 +118,11 @@ export async function POST(request: NextRequest) {
           programManagerIds: programManagers.map(pm => pm.id),
         });
         console.log(`[Cohort Apply] Application notification sent successfully`);
+        await EmailService.fireScenario('application_submitted', programManagers.map(pm => pm.id), {
+          startup: { name: startup.name },
+          cohort: { name: cohort.name },
+          applicant: { name: applicantName },
+        });
       } else {
         console.log(`[Cohort Apply] No Program Managers found, skipping notification`);
       }

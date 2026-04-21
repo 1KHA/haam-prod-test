@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       milestoneReminders: 0,
       overdueMilestones: 0,
       eventReminders: 0,
+      weeklyDigestSent: 0,
       errors: [] as string[],
     };
 
@@ -285,6 +286,41 @@ export async function GET(request: NextRequest) {
         console.error(errorMsg);
         results.errors.push(errorMsg);
       }
+    }
+
+    // 4. Weekly digest — runs only on Mondays (getDay() === 1)
+    try {
+      const dayOfWeek = now.getDay();
+      if (dayOfWeek === 1) {
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const [newUsers, newStartups, completedMilestones, upcomingEventsCount] = await Promise.all([
+          prisma.user.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+          prisma.startup.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+          prisma.milestone.count({ where: { status: 'completed', updatedAt: { gte: oneWeekAgo } } }),
+          prisma.event.count({ where: { startDate: { gte: now }, status: 'published' } }),
+        ]);
+
+        const digestRecipients = await prisma.user.findMany({
+          where: { role: { in: ['ADMIN', 'PROGRAM_MANAGER'] }, approvalStatus: 'ACTIVE' },
+          select: { id: true },
+        });
+
+        if (digestRecipients.length > 0) {
+          await EmailService.fireScenario('weekly_digest', digestRecipients.map(r => r.id), {
+            week: {
+              start: oneWeekAgo.toISOString().split('T')[0],
+              end: now.toISOString().split('T')[0],
+            },
+            stats: { newUsers, newStartups, completedMilestones, upcomingEventsCount },
+          });
+          results.weeklyDigestSent = digestRecipients.length;
+        }
+      }
+    } catch (error) {
+      const errorMsg = `Error sending weekly digest: ${error}`;
+      console.error(errorMsg);
+      results.errors.push(errorMsg);
     }
 
     return NextResponse.json({

@@ -174,6 +174,14 @@ export async function POST(
           feedback,
           reviewedBy: reviewedByName,
         });
+        if (status === 'approved') {
+          await EmailService.fireScenario('document_approved', entrepreneurIds, {
+            milestone: { title: submission.milestone.title },
+            startup: { name: submission.startup.name },
+            feedback,
+            reviewedBy: reviewedByName,
+          });
+        }
       } else {
         console.log(`[Milestone Review] No entrepreneurs found to notify`);
       }

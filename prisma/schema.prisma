@@ -57,6 +57,10 @@ model User {
   createdEmailTemplates EmailTemplate[] @relation("CreatedEmailTemplates") // Email templates created by this user
   receivedEmails EmailLog[] @relation("ReceivedEmails") // Emails sent to this user
   createdScheduledEmails ScheduledEmail[] @relation("CreatedScheduledEmails") // Scheduled emails created by this user
+
+  // Password reset
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
 }
 
 model Profile {

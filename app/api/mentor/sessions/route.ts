@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { isAuthenticated, UserRole } from "@/lib/auth"
+import { EmailService } from "@/lib/services/email-service"
 
 export async function GET(req: NextRequest) {
   try {
@@ -89,6 +90,29 @@ export async function POST(req: NextRequest) {
         startup: { select: { id: true, name: true } },
       },
     })
+
+    // Notify startup team about the scheduled meeting
+    try {
+      const startupWithMembers = await prisma.startup.findUnique({
+        where: { id: startupId },
+        include: {
+          creator: { select: { id: true } },
+          members: { select: { userId: true } },
+        },
+      });
+      const recipientIds = [
+        ...(startupWithMembers?.creator ? [startupWithMembers.creator.id] : []),
+        ...(startupWithMembers?.members.map(m => m.userId) || []),
+      ].filter(id => id !== user.userId);
+      if (recipientIds.length > 0) {
+        await EmailService.fireScenario('meeting_scheduled', recipientIds, {
+          session: { topic, date, duration: duration || 60, location: location || '' },
+          startup: { name: session.startup.name },
+        });
+      }
+    } catch (emailError) {
+      console.error('[Mentor Sessions] meeting_scheduled email scenario failed:', emailError);
+    }
 
     return NextResponse.json({ success: true, session }, { status: 201 })
   } catch (error) {

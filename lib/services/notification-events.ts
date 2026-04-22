@@ -1068,7 +1068,8 @@ export async function notifyCohortMemberAdded(params: {
 }) {
   const { 
     cohortId, 
-    cohortName, 
+    cohortName,
+    programId,
     programName,
     startupName, 
     entrepreneurIds, 
@@ -1537,14 +1538,18 @@ export async function notifyProgramUpdated(params: {
   // Find all entrepreneurs in cohorts belonging to this program
   const startups = await prisma.startup.findMany({
     where: {
-      cohortId: { in: cohortIds }
+      cohortMemberships: {
+        some: {
+          cohortId: { in: cohortIds }
+        }
+      }
     },
     select: {
-      entrepreneurs: { select: { id: true } }
+      members: { select: { userId: true } }
     }
   });
 
-  const recipientIds = [...new Set(startups.flatMap(s => s.entrepreneurs.map(e => e.id)))];
+  const recipientIds = Array.from(new Set(startups.flatMap(s => s.members.map(m => m.userId))));
 
   if (!recipientIds.length) {
     console.log(`[notifyProgramUpdated] No recipients found`);
@@ -1611,14 +1616,18 @@ export async function notifyProgramCancelled(params: {
   // Find all entrepreneurs in cohorts belonging to this program
   const startups = await prisma.startup.findMany({
     where: {
-      cohortId: { in: cohortIds }
+      cohortMemberships: {
+        some: {
+          cohortId: { in: cohortIds }
+        }
+      }
     },
     select: {
-      entrepreneurs: { select: { id: true } }
+      members: { select: { userId: true } }
     }
   });
 
-  const recipientIds = [...new Set(startups.flatMap(s => s.entrepreneurs.map(e => e.id)))];
+  const recipientIds = Array.from(new Set(startups.flatMap(s => s.members.map(m => m.userId))));
 
   if (!recipientIds.length) {
     console.log(`[notifyProgramCancelled] No recipients found`);
@@ -1670,11 +1679,11 @@ export async function notifyCohortCreated(params: {
   const startups = await prisma.startup.findMany({
     where: { id: { in: startupIds } },
     select: {
-      entrepreneurs: { select: { id: true } }
+      members: { select: { userId: true } }
     }
   });
 
-  const recipientIds = [...new Set(startups.flatMap(s => s.entrepreneurs.map(e => e.id)))];
+  const recipientIds = Array.from(new Set(startups.flatMap(s => s.members.map(m => m.userId))));
 
   if (!recipientIds.length) {
     console.log(`[notifyCohortCreated] No recipients found`);

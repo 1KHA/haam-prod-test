@@ -31,7 +31,9 @@ export type NotificationType =
   | 'event'
   | 'team'
   | 'funding'
-  | 'mentorship';
+  | 'mentorship'
+  | 'cohort'
+  | 'program';
 
 export type NotificationPriority = 'low' | 'medium' | 'high';
 
@@ -112,7 +114,7 @@ export class NotificationService {
     }
 
     // Remove duplicates from recipientIds
-    const uniqueRecipientIds = [...new Set(recipientIds)];
+    const uniqueRecipientIds = Array.from(new Set(recipientIds));
     console.log(`[NotificationService] Deduplicated recipients: ${uniqueRecipientIds.length}`);
 
     try {

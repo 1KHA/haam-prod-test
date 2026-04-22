@@ -214,8 +214,8 @@ export async function PUT(
           ...oldApplication.startup.members.map(m => m.userId),
         ].filter((id): id is string => !!id);
 
-        if (entrepreneurIds.length === 0 && oldApplication.startup.creatorId) {
-          entrepreneurIds.push(oldApplication.startup.creatorId);
+        if (entrepreneurIds.length === 0 && (oldApplication.startup as { creatorId?: string }).creatorId) {
+          entrepreneurIds.push((oldApplication.startup as { creatorId?: string }).creatorId!);
           console.log(`[Applications API] Used startup.creatorId as fallback entrepreneur ID`);
         }
 

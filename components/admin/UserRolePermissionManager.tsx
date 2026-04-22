@@ -144,10 +144,10 @@ export default function UserRolePermissionManager({ userId }: UserRolePermission
       if (rolesResponse.ok) {
         const rolesData = await rolesResponse.json();
         const normalizedRoles = ((rolesData.assignedRoles || rolesData.userRoles || []) as UserRolesResponseItem[]).map((role) => ({
-          id: role.id || role.role?.id,
-          name: role.name || role.role?.name,
+          id: (role.id || role.role?.id) as string,
+          name: (role.name || role.role?.name) as string,
           description: role.description || role.role?.description || null,
-          assignedAt: role.assignedAt,
+          assignedAt: role.assignedAt as string,
           permissionCount:
             role.permissionsCount ||
             countRolePermissions(role.permissions || role.role?.permissions),

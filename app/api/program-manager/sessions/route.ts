@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         ...(startupWithMembers?.creator ? [startupWithMembers.creator.id] : []),
         ...(startupWithMembers?.members.map(m => m.userId) || []),
       ];
-      const uniqueRecipients = [...new Set(recipientIds)];
+      const uniqueRecipients = Array.from(new Set(recipientIds));
       if (uniqueRecipients.length > 0) {
         await EmailService.fireScenario('meeting_scheduled', uniqueRecipients, {
           session: { topic, date, duration: duration || 60, location: location || '' },

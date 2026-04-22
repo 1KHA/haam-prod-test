@@ -8,7 +8,7 @@ function cn(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(" ")
 }
 
-interface ToastProps {
+export interface ToastProps {
   id: string
   title?: string
   description?: string
@@ -17,6 +17,8 @@ interface ToastProps {
   className?: string
   children?: React.ReactNode
 }
+
+export type ToastActionElement = React.ReactElement
 
 const Toast: React.FC<ToastProps> = ({ 
   variant = "default", 

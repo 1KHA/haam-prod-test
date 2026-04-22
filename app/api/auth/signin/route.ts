@@ -12,11 +12,11 @@ const ATTEMPT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 // Clean up old entries periodically
 setInterval(() => {
   const now = new Date();
-  for (const [email, data] of failedAttempts.entries()) {
+  Array.from(failedAttempts.entries()).forEach(([email, data]) => {
     if (now.getTime() - data.lastAttempt.getTime() > ATTEMPT_WINDOW_MS) {
       failedAttempts.delete(email);
     }
-  }
+  });
 }, 60 * 1000); // Clean every minute
 
 export async function POST(request: NextRequest) {

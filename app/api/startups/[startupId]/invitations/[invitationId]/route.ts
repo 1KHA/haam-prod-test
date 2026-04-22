@@ -147,11 +147,11 @@ export async function PATCH(
     const startup = await prisma.startup.findUnique({
       where: { id: startupId },
       include: {
-        entrepreneurs: { select: { id: true } }
+        members: { select: { userId: true } }
       }
     });
 
-    const entrepreneurIds = startup?.entrepreneurs.map(e => e.id) || [];
+    const entrepreneurIds = startup?.members.map(e => e.userId) || [];
 
     // Send in-app notification (TASK-16 or TASK-17)
     try {

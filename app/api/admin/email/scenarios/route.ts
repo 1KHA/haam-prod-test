@@ -12,6 +12,8 @@ const DEFAULT_SCENARIOS = [
   'application_submitted',
   'application_status_changed',
   'startup_created',
+  'startup_approved',
+  'startup_rejected',
   'program_created',
   'milestone_created',
   'milestone_due',

@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { RouteGuard } from "@/components/auth/RouteGuard"
 import { UserRole } from "@/lib/auth"
 import Sidebar from "@/components/admin/Sidebar"
@@ -13,6 +14,8 @@ export default function AdminDashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
   return (
     <RouteGuard
       requiredPermission={{ category: "dashboard", action: "view" }}
@@ -20,12 +23,12 @@ export default function AdminDashboardLayout({
     >
       <div className="flex flex-col min-h-screen text-right">
         <TopBar />
-        <div className="flex flex-1">
-          <main className="flex-1 overflow-y-auto p-6 mr-64">
-            <Header />
+        <div className="flex flex-1 relative">
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6 w-full lg:mr-64">
+            <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
             {children}
           </main>
-          <Sidebar />
+          <Sidebar mobileOpen={mobileSidebarOpen} onMobileClose={() => setMobileSidebarOpen(false)} />
         </div>
         <AdminToaster />
       </div>

@@ -390,7 +390,8 @@ export default function EmailSettingsPage() {
                   </Button>
                 </div>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[640px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>الخادم</TableHead>
@@ -483,6 +484,7 @@ export default function EmailSettingsPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>

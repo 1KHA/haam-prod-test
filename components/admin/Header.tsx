@@ -1,6 +1,6 @@
 "use client"
 
-import { User, LogOut } from "lucide-react"
+import { User, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -15,14 +15,23 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { NotificationBell } from "@/components/NotificationBell"
 
-export default function Header() {
+export default function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { setTheme, theme } = useTheme()
   const { signOut } = useAuth()
   const router = useRouter()
 
   return (
     <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4 text-right">
-      <div className="flex-1">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={onMenuToggle}
+          aria-label="فتح القائمة"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
         <h1 className="text-xl font-bold">لوحة تحكم المدير</h1>
       </div>
       <div className="flex items-center gap-4">

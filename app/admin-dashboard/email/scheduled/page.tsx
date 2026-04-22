@@ -312,7 +312,8 @@ export default function ScheduledEmailsPage() {
               </Button>
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>الاسم</TableHead>
@@ -392,6 +393,7 @@ export default function ScheduledEmailsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

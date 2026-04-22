@@ -434,8 +434,8 @@ export default function PaymentsManagement() {
               <p className="text-muted-foreground">جاري تحميل البيانات...</p>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
+            <div className="rounded-md border overflow-x-auto">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-right">الإجراءات</TableHead>

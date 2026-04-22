@@ -85,7 +85,7 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
+            <TabsList className="justify-end w-full overflow-x-auto">
               <TabsTrigger value="funding">التمويل</TabsTrigger>
               <TabsTrigger value="programs">البرامج</TabsTrigger>
               <TabsTrigger value="users">المستخدمون</TabsTrigger>

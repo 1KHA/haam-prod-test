@@ -324,7 +324,8 @@ export default function EmailAnalyticsPage() {
           <CardDescription>آخر 50 رسالة تم إرسالها</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead>المستلم</TableHead>
@@ -353,6 +354,7 @@ export default function EmailAnalyticsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

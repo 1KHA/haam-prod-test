@@ -321,7 +321,8 @@ export default function EmailTemplatesPage() {
               </Button>
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>الاسم</TableHead>
@@ -392,6 +393,7 @@ export default function EmailTemplatesPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

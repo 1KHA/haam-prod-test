@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { notifyStartupApproved } from '@/lib/services/notification-events';
 import { isAuthenticated } from '@/lib/auth';
+import { EmailService } from '@/lib/services/email-service';
 
 // GET /api/admin/startups - Get all startups with pagination and filtering
 export async function GET(request: NextRequest) {
@@ -275,6 +276,18 @@ export async function PUT(request: NextRequest) {
       });
       console.log(`[Admin Startups API] Found ${startupsToNotify.length} startups to approve`);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let startupsToReject: any[] = [];
+    if (action === 'updateStatus' && newStatus === 'REJECTED') {
+      startupsToReject = await prisma.startup.findMany({
+        where: { id: { in: startupIds }, status: { not: 'REJECTED' } },
+        include: {
+          creator: { select: { id: true, name: true } },
+          members: { select: { userId: true } },
+        },
+      });
+    }
     
     switch (action) {
       case 'updateStatus':
@@ -321,6 +334,10 @@ export async function PUT(request: NextRequest) {
                   entrepreneurIds,
                   approvedByName: approvedBy?.name || 'Admin',
                 });
+                await EmailService.fireScenario('startup_approved', entrepreneurIds, {
+                  startup: { name: startup.name },
+                  approvedBy: approvedBy?.name || 'Admin',
+                });
                 console.log(`[Admin Startups API] Approval notification sent for ${startup.name}`);
               }
             }
@@ -328,6 +345,36 @@ export async function PUT(request: NextRequest) {
           } catch (notifyError: any) {
             console.error('[Admin Startups API] Failed to send approval notifications:', notifyError.message);
             // Don't fail the update if notification fails
+          }
+        }
+
+        // Send rejection notifications
+        if (newStatus === 'REJECTED' && startupsToReject.length > 0) {
+          try {
+            const authHeader = request.headers.get('authorization') ?? undefined;
+            const currentUser = await isAuthenticated(authHeader);
+            const rejectedBy = currentUser ? await prisma.user.findUnique({
+              where: { id: currentUser.userId },
+              select: { name: true },
+            }) : null;
+
+            for (const startup of startupsToReject) {
+              const entrepreneurIds = [
+                startup.creator?.id,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ...startup.members.map((m: any) => m.userId),
+              ].filter((id): id is string => !!id);
+
+              if (entrepreneurIds.length > 0) {
+                await EmailService.fireScenario('startup_rejected', entrepreneurIds, {
+                  startup: { name: startup.name },
+                  rejectedBy: rejectedBy?.name || 'Admin',
+                });
+              }
+            }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (notifyError: any) {
+            console.error('[Admin Startups API] Failed to send rejection notifications:', notifyError.message);
           }
         }
         break;

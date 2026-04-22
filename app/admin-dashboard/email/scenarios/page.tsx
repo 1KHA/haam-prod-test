@@ -118,6 +118,20 @@ const scenarios = [
     category: 'الشركات الناشئة',
   },
   {
+    type: 'startup_approved',
+    label: 'موافقة على شركة ناشئة',
+    description: 'عند الموافقة على شركة ناشئة من قبل المسؤول',
+    icon: CheckCircle,
+    category: 'الشركات الناشئة',
+  },
+  {
+    type: 'startup_rejected',
+    label: 'رفض شركة ناشئة',
+    description: 'عند رفض شركة ناشئة من قبل المسؤول',
+    icon: XCircle,
+    category: 'الشركات الناشئة',
+  },
+  {
     type: 'program_created',
     label: 'إنشاء برنامج',
     description: 'عند إنشاء برنامج جديد',

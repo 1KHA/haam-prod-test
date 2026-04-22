@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -138,10 +138,11 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   mobileOpen?: boolean
   onMobileClose?: () => void
+  collapsed?: boolean
+  onCollapseChange?: (collapsed: boolean) => void
 }
 
-export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+export default function Sidebar({ mobileOpen = false, onMobileClose, collapsed = false, onCollapseChange }: SidebarProps) {
   const pathname = usePathname()
   const { hasPermission, loading } = usePermissions()
 
@@ -187,14 +188,15 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
         className={cn(
           "fixed top-12 right-0 bg-card text-card-foreground border-l h-[calc(100vh-3rem)] z-50",
           "hidden lg:block",
-          isCollapsed ? "w-16" : "w-64",
+          collapsed ? "w-16" : "w-64",
         )}
-        animate={{ width: isCollapsed ? 64 : 256 }}
+        animate={{ width: collapsed ? 64 : 256 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <div className="flex flex-col h-full text-right">
           <div className="flex items-center justify-end p-4 border-b">
-            <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
-              {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            <Button variant="ghost" size="icon" onClick={() => onCollapseChange?.(!collapsed)}>
+              {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           </div>
           <nav className="flex-1 overflow-y-auto">
@@ -211,7 +213,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarPr
                     )}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0" />
-                    <span className={cn("mr-2", { "sr-only": isCollapsed })}>{item.name}</span>
+                    <span className={cn("mr-2", { "sr-only": collapsed })}>{item.name}</span>
                   </Link>
                 </li>
               ))}

@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(url.searchParams.get('offset') || '0', 10);
 
     // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereClause: any = {};
     
     // Text search (title or message)
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query notifications with filters
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const notifications = await (prisma as any).notification.findMany({
       where: whereClause,
       include: {
@@ -124,13 +126,16 @@ export async function GET(request: NextRequest) {
     });
     
     // Count total notifications that match the filter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalCount = await (prisma as any).notification.count({
       where: whereClause
     });
     
     // Calculate read stats
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const readStats = notifications.map((notification: any) => {
       const recipientCount = notification.recipients.length;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const readCount = notification.recipients.filter((r: any) => r.isRead).length;
       
       return {

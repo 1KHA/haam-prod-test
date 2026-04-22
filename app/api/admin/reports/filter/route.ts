@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Build where clause
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
     
     // Text search
     if (search && search.trim() !== '') {
@@ -101,6 +102,7 @@ export async function POST(req: NextRequest) {
     const skip = (page - 1) * limit;
     
     // Prepare sort object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
     

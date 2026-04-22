@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState("personal")
   const [isLoading, setIsLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [userData, setUserData] = useState<any>(null)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
   
@@ -113,6 +114,7 @@ export default function ProfilePage() {
       const profile: ProfileData = userData.profile || {}
       
       // Get role-specific profile
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let roleProfile: any = {}
       if (userData.role === 'ENTREPRENEUR' && userData.entrepreneurProfile) {
         roleProfile = userData.entrepreneurProfile as EntrepreneurProfile

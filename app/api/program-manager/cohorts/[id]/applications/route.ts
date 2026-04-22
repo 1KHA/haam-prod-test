@@ -276,6 +276,7 @@ export async function PUT(
               });
               console.log(`[Applications API] Cohort welcome notification sent (TASK-05)`);
             }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (welcomeError: any) {
             console.error('[Applications API] Failed to send cohort welcome notification:', welcomeError.message);
           }
@@ -283,6 +284,7 @@ export async function PUT(
       } else {
         console.log(`[Applications API] No old application data found`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Applications API] Failed to send status change notification:', notifyError.message);
       console.error('[Applications API] Stack:', notifyError.stack);

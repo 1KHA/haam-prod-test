@@ -28,10 +28,12 @@ export async function GET(request: NextRequest) {
     const scenarioType = searchParams.get('scenarioType');
     const category = searchParams.get('category');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
     if (scenarioType) where.scenarioType = scenarioType;
     if (category) where.category = category;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const templates = await (prisma as any).emailTemplate.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
@@ -43,6 +45,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Ensure variables is always an array
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sanitizedTemplates = templates.map((t: any) => ({
       ...t,
       variables: Array.isArray(t.variables) ? t.variables : [],
@@ -98,6 +101,7 @@ export async function POST(request: NextRequest) {
     const enVars = htmlBodyEn ? extractVariables(htmlBodyEn) : [];
     const allVars = Array.from(new Set(arVars.concat(enVars)));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const template = await (prisma as any).emailTemplate.create({
       data: {
         name,
@@ -165,6 +169,7 @@ export async function PUT(request: NextRequest) {
     const enVars = htmlBodyEn ? extractVariables(htmlBodyEn) : [];
     const allVars = Array.from(new Set(arVars.concat(enVars)));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const template = await (prisma as any).emailTemplate.update({
       where: { id },
       data: {
@@ -214,6 +219,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).emailTemplate.delete({
       where: { id },
     });

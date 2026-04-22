@@ -71,6 +71,7 @@ export default function ProgramsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [token, setToken] = useState<string | null>(null)
 
   // Get token from localStorage
@@ -151,9 +152,10 @@ export default function ProgramsPage() {
     }
     
     try {
-      let endpoint = '/api/admin/programs';
-      let method = 'PUT';
-      let body: any = {
+      const endpoint = '/api/admin/programs';
+      const method = 'PUT';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: any = {
         programIds: selectedPrograms,
         action: ''
       };
@@ -488,7 +490,7 @@ export default function ProgramsPage() {
             variant="outline" 
             onClick={() => {
               // Build the export URL with filters
-              let exportUrl = '/api/admin/programs/export?';
+              const exportUrl = '/api/admin/programs/export?';
               const params = new URLSearchParams();
 
               if (searchQuery) {

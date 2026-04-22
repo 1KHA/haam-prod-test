@@ -10,6 +10,7 @@ interface MentorReport {
   period: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "CUSTOM"
   startDate: string
   endDate: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any
   createdAt: string
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,11 @@ import {
   Users,
   Search,
   Download,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Mail,
   Loader2,
   UserCheck,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   UserX,
   Calendar
 } from "lucide-react"
@@ -48,7 +50,6 @@ interface Event {
 
 export default function EventRegistrations() {
   const params = useParams()
-  const router = useRouter()
   const eventId = params?.id as string
 
   const [registrations, setRegistrations] = useState<Registration[]>([])
@@ -65,6 +66,7 @@ export default function EventRegistrations() {
 
   const fetchEventDetails = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {}, 'response') as any
       
       if (response.error) {
@@ -80,6 +82,7 @@ export default function EventRegistrations() {
 
   const fetchRegistrations = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}/registrations`, {}, 'response') as any
       
       if (response.error) {
@@ -98,6 +101,7 @@ export default function EventRegistrations() {
 
   const handleExportRegistrations = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}/registrations/export`, {}, 'response') as any
       
       if (response.error) {

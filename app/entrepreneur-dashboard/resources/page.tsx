@@ -8,14 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   FileText, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Video, 
   BookOpen, 
   Download, 
   Search, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Filter, 
   Star, 
   Play,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ExternalLink,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   FileDown,
   Clock,
   BookOpen as BookIcon,

@@ -1,7 +1,7 @@
 // Adapted from https://ui.shadcn.com/
 // This file is a simplified version of the toast component that doesn't require external dependencies
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 
 export type ToastProps = {
   id: string
@@ -61,6 +61,7 @@ interface State {
   toasts: ToasterToast[]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const reducer = (state: State, action: Action): State => {

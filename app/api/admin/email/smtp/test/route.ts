@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get SMTP config
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = await (prisma as any).smtpConfig.findUnique({
       where: { id: configId },
     });

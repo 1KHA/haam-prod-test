@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
-import { Rocket, FileText, AlertCircle, CheckCircle, Clock, Plus, ExternalLink } from "lucide-react"
+import { Rocket, AlertCircle, CheckCircle, Clock, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 interface Startup {
@@ -20,6 +20,7 @@ interface Startup {
 
 export default function StartupsPage() {
   const router = useRouter()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, token } = useAuth()
   const [companies, setCompanies] = useState<Startup[]>([])
   const [isLoading, setIsLoading] = useState(true)

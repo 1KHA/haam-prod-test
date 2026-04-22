@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the payment record
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payment = await (prisma as any).payment.findUnique({
       where: { id: paymentId }
     });
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
     const updatedHistory = [...(payment.history || []), historyEntry];
 
     // Update the payment in the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updatedPayment = await (prisma as any).payment.update({
       where: { id: paymentId },
       data: {
@@ -191,6 +193,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the payment from the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payment = await (prisma as any).payment.findUnique({
       where: { id: paymentId },
       include: {
@@ -219,6 +222,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Format the history entries for the response
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const processingHistory = payment.history ? payment.history.map((entry: any) => {
       // Map status to action
       let action = 'updated';

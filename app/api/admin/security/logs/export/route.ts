@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { hasPermission } from '@/lib/permissions';
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
 
@@ -231,7 +230,8 @@ export async function GET(req: NextRequest) {
     }
     
     // Otherwise, build where clause for filtered logs
-    let where: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
     
     if (status) {
       where.status = status;
@@ -344,6 +344,7 @@ export async function GET(req: NextRequest) {
 /**
  * Helper function to generate a CSV response from logs using the CSV utilities
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generateCsvResponse(logs: any[], delimiter: string) {
   // Define CSV headers
   const headers = [

@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
-    const unreadOnly = searchParams.get('unread') === 'true';
     const typeFilter = searchParams.get('type');
     const priorityFilter = searchParams.get('priority');
     const search = searchParams.get('search') || '';
@@ -40,6 +39,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Build the database query
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let whereClause: any = {};
     
     // Filter by recipient for non-admin users
@@ -70,11 +70,13 @@ export async function GET(request: NextRequest) {
     }
     
     // Count total notifications matching criteria
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const totalCount = await (prisma as any).notification.count({
       where: whereClause,
     });
     
     // Get notifications with pagination
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const notifications = await (prisma as any).notification.findMany({
       where: whereClause,
       include: {
@@ -103,8 +105,10 @@ export async function GET(request: NextRequest) {
     });
     
     // Transform the data for the response
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedNotifications = notifications.map((notification: any) => {
       // For each notification, find the recipient record for this user
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recipientRecord = notification.recipients.find((r: any) => 
         !isAdmin ? r.userId === user.userId : true
       );
@@ -126,6 +130,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Calculate unread count for this user
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unreadCount = await (prisma as any).notificationRecipient.count({
       where: {
         userId: user.userId,

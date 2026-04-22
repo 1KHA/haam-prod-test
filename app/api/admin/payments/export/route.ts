@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
     const paymentIds = ids ? ids.split(',') : undefined;
 
     // Build filter conditions for the query
-    let where: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
 
     // Filter by specific IDs if provided
     if (paymentIds && paymentIds.length > 0) {
@@ -111,6 +112,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Fetch payments with filtering - using type assertion to bypass TypeScript
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let payments = await (prisma as any).payment.findMany({
       where,
       include: {
@@ -129,6 +131,7 @@ export async function GET(request: NextRequest) {
     
     // Post-process to filter by JSON metadata fields if needed
     if ((programId || startupId) && payments.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       payments = payments.filter((payment: any) => {
         const metadata = payment.metadata || {};
         
@@ -150,6 +153,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Format the data for export
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedPayments = payments.map((payment: any) => {
       // Map status for clarity in Arabic
       const statusMap: Record<string, string> = {
@@ -224,6 +228,7 @@ export async function GET(request: NextRequest) {
     // Create CSV content
     let csv = headers.join(',') + '\n';
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formattedPayments.forEach((payment: any) => {
       const row = [
         `"${payment.referenceNumber}"`,
@@ -272,9 +277,10 @@ function generateMockPayments(
   programId: string | null, 
   startupId: string | null,
   paymentIds: string[] | undefined
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any[] {
   // If specific payment IDs were requested, use those
-  let paymentsCount = paymentIds ? paymentIds.length : (50 + Math.floor(Math.random() * 100));
+  const paymentsCount = paymentIds ? paymentIds.length : (50 + Math.floor(Math.random() * 100));
   
   // Generate mock payment data
   return Array.from({ length: paymentsCount }, (_, i) => {

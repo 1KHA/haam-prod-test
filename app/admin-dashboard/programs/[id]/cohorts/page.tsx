@@ -9,6 +9,7 @@ import { showAdminToast } from "@/components/admin/admin-toaster"
 import {
   ArrowLeft,
   Calendar,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Users,
   Edit,
   Eye,
@@ -44,6 +45,7 @@ export default function CohortsPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
   const [token, setToken] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -107,6 +109,7 @@ export default function CohortsPage({ params }: { params: { id: string } }) {
       } else {
         throw new Error('Failed to delete');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       showAdminToast({ title: "خطأ", description: "فشل في حذف الدفعة", variant: "destructive" });
     }

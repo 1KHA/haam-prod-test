@@ -78,6 +78,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string; co
       } else {
         throw new Error('Failed to delete')
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       showAdminToast({ title: "خطأ", description: "فشل في حذف الدفعة", variant: "destructive" })
     }

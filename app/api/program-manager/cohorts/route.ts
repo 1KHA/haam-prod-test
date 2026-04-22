@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     
     // Build the where clause for filtering
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       managerId: user.userId // Only show cohorts managed by this program manager
     };

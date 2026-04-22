@@ -51,8 +51,11 @@ export async function POST(
         name,
         email,
         password: hashedPassword,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         role: 'ENTREPRENEUR' as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         approvalStatus: 'PENDING_APPROVAL' as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any
     });
 
@@ -72,6 +75,7 @@ export async function POST(
         startupId,
         userId: newUser.id,
         role,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         status: 'ACTIVE' as any,
         joinedAt: new Date()
       }

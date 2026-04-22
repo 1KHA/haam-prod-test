@@ -13,6 +13,7 @@ export async function POST(
       return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const campaign = await (prisma as any).scheduledEmail.update({
       where: { id: params.id },
       data: { status: 'paused' },

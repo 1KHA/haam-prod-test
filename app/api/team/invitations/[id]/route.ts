@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
-import { InvitationStatus, InvitationType } from '@prisma/client';
+import { isAuthenticated } from '@/lib/auth';
+import { InvitationStatus } from '@prisma/client';
 
 export async function PATCH(
   request: NextRequest,
@@ -47,7 +47,7 @@ export async function PATCH(
       );
     }
 
-    let updatedInvitation = await prisma.invitation.update({
+    const updatedInvitation = await prisma.invitation.update({
       where: { id },
       data: {
         status: status,
@@ -58,7 +58,7 @@ export async function PATCH(
     // If accepted, add the user as a CompanyMember for the associated startup
     if (status === InvitationStatus.ACCEPTED && invitation.startupId) {
       // Find or create the user by inviteeEmail
-      let inviteeUser = await prisma.user.findUnique({
+      const inviteeUser = await prisma.user.findUnique({
         where: { email: invitation.inviteeEmail },
       });
 
@@ -71,7 +71,7 @@ export async function PATCH(
       }
 
       // Check if CompanyMember already exists
-      let existingMember = await prisma.companyMember.findUnique({
+      const existingMember = await prisma.companyMember.findUnique({
         where: {
           startupId_userId: {
             startupId: invitation.startupId,
@@ -82,6 +82,7 @@ export async function PATCH(
 
       if (!existingMember) {
         // Create CompanyMember record
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const companyMember = await prisma.companyMember.create({
           data: {
             startupId: invitation.startupId,

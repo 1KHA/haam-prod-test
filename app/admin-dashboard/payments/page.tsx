@@ -122,7 +122,6 @@ export default function PaymentsManagement() {
       
       // Get token from localStorage
       // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const token = null; // Cookie-based auth - no localStorage token needed
       
       // Fetch payments from API
       const response = await fetch(`/api/admin/payments?${params.toString()}`, {

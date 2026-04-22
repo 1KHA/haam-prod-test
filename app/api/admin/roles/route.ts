@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Count users for each role
     const rolesWithUserCount = await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       roles.map(async (role: any) => {
         const userCount = await prisma.user.count({
           where: {
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
         // Transform permissions into a more usable format
         const permissionsMap: Record<string, Record<string, boolean>> = {};
         
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         role.permissions.forEach((rp: any) => {
           const { category, action } = rp.permission;
           

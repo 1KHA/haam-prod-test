@@ -33,6 +33,7 @@ export function generateToken(payload: TokenPayload): string {
 export function verifyToken(token: string): TokenPayload | null {
   try {
     return verify(token, JWT_SECRET) as TokenPayload;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return null;
   }
@@ -53,6 +54,7 @@ export function getTokenFromCookie(): string | null {
     const { cookies } = require('next/headers');
     const cookieStore = cookies();
     return cookieStore.get('token')?.value || null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     // Cookies() only works in Server Components/API routes
     return null;

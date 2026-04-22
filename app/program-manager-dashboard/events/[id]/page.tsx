@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -60,6 +60,7 @@ export default function EventDetail() {
 
   const fetchEventDetails = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {}, 'response') as any
       
       if (response.error) {
@@ -87,6 +88,7 @@ export default function EventDetail() {
     try {
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {
         method: 'DELETE'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }, 'response') as any
 
       if (response.error) {

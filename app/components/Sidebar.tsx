@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Home, Users, Flag, Award, Star, Book, Calendar } from "lucide-react"
+import { Home, Users, Flag, Star, Book, Calendar } from "lucide-react"
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: Home },

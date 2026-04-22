@@ -15,6 +15,7 @@ export async function GET(
       return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const template = await (prisma as any).emailTemplate.findUnique({
       where: { id: params.id },
       include: {
@@ -69,6 +70,7 @@ export async function PUT(
       isActive,
     } = body;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existing = await (prisma as any).emailTemplate.findUnique({
       where: { id: params.id },
     });
@@ -91,6 +93,7 @@ export async function PUT(
     const enVars = htmlBodyEn ? extractVariables(htmlBodyEn) : [];
     const allVars = Array.from(new Set(arVars.concat(enVars)));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const template = await (prisma as any).emailTemplate.update({
       where: { id: params.id },
       data: {
@@ -133,6 +136,7 @@ export async function DELETE(
       return NextResponse.json({ error: permissionCheck.error }, { status: 403 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existing = await (prisma as any).emailTemplate.findUnique({
       where: { id: params.id },
     });
@@ -144,6 +148,7 @@ export async function DELETE(
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).emailTemplate.delete({
       where: { id: params.id },
     });

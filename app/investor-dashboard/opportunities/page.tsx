@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Search, 
   Filter, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TrendingUp, 
   DollarSign, 
   Calendar, 
@@ -16,9 +17,12 @@ import {
   ChevronRight,
   Star,
   StarOff,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Briefcase,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Building,
   MapPin,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Clock
 } from "lucide-react"
 

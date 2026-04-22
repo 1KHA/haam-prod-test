@@ -63,6 +63,7 @@ export async function notifyMilestoneResponseReviewed(params: {
   reviewedByName: string;
   entrepreneurIds: string[];
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { milestoneTitle, status, feedback, reviewedByName, entrepreneurIds } = params;
 
   if (!entrepreneurIds || entrepreneurIds.length === 0) {
@@ -1660,6 +1661,7 @@ export async function notifyCohortCreated(params: {
   createdByName: string;
   startupIds: string[];
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { cohortId, cohortName, programName, startDate, createdByName, startupIds } = params;
 
   console.log(`[notifyCohortCreated] Notifying about new cohort: ${cohortName}`);

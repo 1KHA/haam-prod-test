@@ -92,6 +92,7 @@ export async function POST(
     try {
       const text = await request.text();
       if (text) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         body = JSON.parse(text);
       }
     } catch {
@@ -252,6 +253,7 @@ export async function POST(
         });
         console.log(`[Event Register] Registration notifications sent successfully`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Event Register] Failed to send notifications:', notifyError.message);
       // Don't fail the request if notification fails

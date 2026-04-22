@@ -122,6 +122,7 @@ export async function POST(
       return NextResponse.json({ error: 'Only the company creator can invite members' }, { status: 403 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { email, role } = await request.json();
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });

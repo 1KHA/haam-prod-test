@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search")
     
     // Build where clause for filtering
-    let whereClause: any = {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {}
     
     if (status && status !== 'all') {
       whereClause.status = status
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
     })
     
     // Format dates for export
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedFundingData = fundingData.map((item: any) => ({
       ...item,
       date: item.date?.toISOString()?.split('T')[0] || '',
@@ -81,6 +83,7 @@ export async function GET(request: NextRequest) {
       ]
       
       // Map funding data to CSV rows
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const csvRows = formattedFundingData.map((funding: any) => ({
         'رقم المعرف': funding.id || '',
         'العنوان': funding.title || '',

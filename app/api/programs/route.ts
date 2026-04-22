@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
 
     // Build the where clause for filtering
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
     if (search) {

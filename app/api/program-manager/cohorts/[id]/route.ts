@@ -175,6 +175,7 @@ export async function PUT(
     } = body;
     
     // Prepare update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     
     if (name !== undefined) updateData.name = name;

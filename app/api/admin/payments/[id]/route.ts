@@ -34,6 +34,7 @@ export async function GET(
     }
 
     // Fetch the payment from the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payment = await (prisma as any).payment.findUnique({
       where: { id },
       include: {
@@ -133,6 +134,7 @@ export async function PUT(
     const body = await request.json();
     
     // Check if the payment exists
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingPayment = await (prisma as any).payment.findUnique({
       where: { id },
       include: { 
@@ -147,10 +149,15 @@ export async function PUT(
     // Process data for update
     // Filter out fields that should not be directly updated
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       referenceNumber,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       createdAt,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       updatedAt,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       creatorId,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       creator,
       ...updateData
     } = body;
@@ -184,6 +191,7 @@ export async function PUT(
     }
 
     // Update the payment in the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updatedPayment = await (prisma as any).payment.update({
       where: { id },
       data: {
@@ -249,6 +257,7 @@ export async function DELETE(
     }
 
     // Check if the payment exists
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingPayment = await (prisma as any).payment.findUnique({
       where: { id }
     });
@@ -258,6 +267,7 @@ export async function DELETE(
     }
 
     // Delete the payment from the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).payment.delete({
       where: { id }
     });

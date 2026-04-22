@@ -14,7 +14,9 @@ import {
   Save,
   Shield,
   Eye,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   EyeOff,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Lock,
   Check,
   X
@@ -27,6 +29,7 @@ interface Permission {
   action: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RolePermission {
   id: string
   roleId: string
@@ -554,7 +557,6 @@ export default function RolesPermissions() {
       });
       
       if (response.ok) {
-        const data = await response.json();
         
         showAdminToast({
           title: "تم بنجاح",
@@ -668,7 +670,6 @@ export default function RolesPermissions() {
       });
       
       if (response.ok) {
-        const data = await response.json();
         
         showAdminToast({
           title: "تم بنجاح",

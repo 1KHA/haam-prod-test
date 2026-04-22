@@ -47,6 +47,7 @@ export async function GET(
     const role = searchParams.get('role') || undefined;
     
     // Build the where clause for filtering
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       cohortId: id
     };

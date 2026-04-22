@@ -51,6 +51,7 @@ export function DataTable<TData, TValue>({
       if (onRowSelectionChange) {
         const selectedRowIds = Object.keys(newSelection)
           .filter(index => newSelection[index])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map(index => (data[parseInt(index)] as any).id);
         onRowSelectionChange(selectedRowIds);
       }

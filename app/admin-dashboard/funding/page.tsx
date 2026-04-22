@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -17,13 +17,17 @@ import {
   XCircle,
   DollarSign,
   TrendingUp,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Calendar,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Building,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Users,
   Briefcase,
   PieChart,
   ArrowUpRight,
   ArrowDownRight,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   AlertTriangle,
   RefreshCw
 } from "lucide-react"
@@ -212,7 +216,6 @@ export default function FundingManagement() {
     
     try {
       setIsDeleting(true);
-      const token = localStorage.getItem('token');
       
       // In a real implementation, this would call the API
       // For now, we'll just simulate a successful deletion

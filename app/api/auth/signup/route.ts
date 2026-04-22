@@ -80,9 +80,11 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         name,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         role: role as any, // Type assertion to bypass type checking
         specialization, // Add specialization directly
         approvalStatus: role === UserRole.ENTREPRENEUR ? "PENDING_APPROVAL" : "ACTIVE",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
     });
 
@@ -181,6 +183,7 @@ export async function POST(request: NextRequest) {
 
     // Fire user_created email scenario if enabled
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scenario = await (prisma as any).emailScenarioSettings.findUnique({
         where: { scenarioType: 'user_created' },
         include: { template: { select: { name: true } } },

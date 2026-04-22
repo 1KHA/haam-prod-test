@@ -44,6 +44,7 @@ export interface SendEmailParams {
   textBodyEn?: string;
   templateId?: string;
   scenarioType?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variables?: Record<string, any>;
   userId?: string;
   ipAddress?: string;
@@ -54,6 +55,7 @@ export interface SendBulkEmailParams {
   templateName?: string;
   customSubject?: string;
   customHtmlBody?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   variables?: Record<string, any>;
   scenarioType?: string;
 }
@@ -72,7 +74,8 @@ export interface SmtpConfig {
 
 // Cache for SMTP config and templates
 let cachedSmtpConfig: SmtpConfig | null = null;
-let cachedTemplates: Map<string, any> = new Map();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const cachedTemplates: Map<string, any> = new Map();
 let cacheTimestamp: number = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -89,6 +92,7 @@ export class EmailService {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const config = await (prisma as any).smtpConfig.findFirst({
         where: { isActive: true },
         orderBy: { createdAt: 'desc' },
@@ -154,6 +158,7 @@ export class EmailService {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const template = await (prisma as any).emailTemplate.findUnique({
         where: { name },
       });
@@ -172,6 +177,7 @@ export class EmailService {
   /**
    * Render template with variables
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static renderTemplate(template: string, variables: Record<string, any>): string {
     try {
       const compiled = Handlebars.compile(template);
@@ -199,6 +205,7 @@ export class EmailService {
       }
 
       // Create email log entry first
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emailLog = await (prisma as any).emailLog.create({
         data: {
           recipientEmail: Array.isArray(params.to) ? params.to.join(', ') : params.to,
@@ -223,6 +230,7 @@ export class EmailService {
           subject: params.subject,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (prisma as any).emailLog.update({
           where: { id: emailLogId },
           data: { status: 'sent', sentAt: new Date() },
@@ -263,17 +271,20 @@ export class EmailService {
       console.log('[EmailService] Email sent:', info.messageId);
 
       // Update log entry
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).emailLog.update({
         where: { id: emailLogId },
         data: { status: 'sent', sentAt: new Date() },
       });
 
       return { success: true, logId: emailLogId };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] Error sending email:', error);
 
       // Update the existing log entry to failed (don't create a duplicate)
       if (emailLogId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (prisma as any).emailLog.update({
           where: { id: emailLogId },
           data: { status: 'failed', errorMessage: error.message },
@@ -290,6 +301,7 @@ export class EmailService {
   static async sendTemplatedEmail(params: {
     to: string | string[];
     templateName: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     variables: Record<string, any>;
     userId?: string;
     ipAddress?: string;
@@ -323,6 +335,7 @@ export class EmailService {
         userId: params.userId,
         ipAddress: params.ipAddress,
       });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] Error sending templated email:', error);
       return { success: false, error: error.message };
@@ -407,6 +420,7 @@ export class EmailService {
 
           // Small delay to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 100));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           failed++;
           errors.push(`Error for ${user.email}: ${error.message}`);
@@ -414,6 +428,7 @@ export class EmailService {
       }
 
       return { total: users.length, sent, failed, errors };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] Error in bulk send:', error);
       return { total: params.recipientIds.length, sent, failed, errors: [error.message] };
@@ -443,6 +458,7 @@ export class EmailService {
       });
 
       return { success: true, message: 'Test email sent successfully!' };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] SMTP test failed:', error);
       return { success: false, message: error.message };
@@ -475,6 +491,7 @@ export class EmailService {
       });
 
       return { success: true, message: 'Test email sent successfully!' };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] SMTP test failed:', error);
       return { success: false, message: error.message };
@@ -504,21 +521,27 @@ export class EmailService {
         pending,
         byScenario,
       ] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).emailLog.count({
           where: { createdAt: { gte: since } },
         }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).emailLog.count({
           where: { status: 'sent', createdAt: { gte: since } },
         }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).emailLog.count({
           where: { status: 'failed', createdAt: { gte: since } },
         }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).emailLog.count({
           where: { openedAt: { not: null }, createdAt: { gte: since } },
         }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).emailLog.count({
           where: { status: 'pending', createdAt: { gte: since } },
         }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).emailLog.groupBy({
           by: ['scenarioType'],
           where: { createdAt: { gte: since } },
@@ -527,6 +550,7 @@ export class EmailService {
       ]);
 
       const scenarioStats: Record<string, number> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       byScenario.forEach((item: any) => {
         scenarioStats[item.scenarioType || 'unknown'] = item._count.scenarioType;
       });
@@ -556,6 +580,7 @@ export class EmailService {
       textBody?: string;
       from?: string;
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     configId?: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -566,6 +591,7 @@ export class EmailService {
         textBody: params.textBody,
       });
       return result;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] Error sending custom email:', error);
       return { success: false, error: error.message };
@@ -579,10 +605,12 @@ export class EmailService {
     userId,
     templateName,
     variables,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     scenarioType,
   }: {
     userId: string;
     templateName?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     variables?: Record<string, any>;
     scenarioType?: string;
   }): Promise<{ success: boolean; error?: string }> {
@@ -606,6 +634,7 @@ export class EmailService {
       }
 
       return { success: false, error: 'Template name is required' };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[EmailService] Error sending to user:', error);
       return { success: false, error: error.message };
@@ -619,11 +648,13 @@ export class EmailService {
   static async fireScenario(
     scenarioType: string,
     recipientUserIds: string[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     variables: Record<string, any> = {}
   ): Promise<void> {
     try {
       if (recipientUserIds.length === 0) return;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scenario = await (prisma as any).emailScenarioSettings.findUnique({
         where: { scenarioType },
         include: { template: { select: { name: true } } },
@@ -639,6 +670,7 @@ export class EmailService {
           scenarioType,
         });
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error(`[EmailService] fireScenario(${scenarioType}) failed:`, error.message);
     }

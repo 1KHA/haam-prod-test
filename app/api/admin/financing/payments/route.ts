@@ -22,7 +22,7 @@ export interface PaymentItem {
 }
 
 // In-memory storage for payments data (in a real app, this would use Prisma/DB)
-export let paymentsData: PaymentItem[] = [
+export const paymentsData: PaymentItem[] = [
   {
     id: "1",
     invoiceNumber: "INV-001-2025",

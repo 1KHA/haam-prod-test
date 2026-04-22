@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import { format } from 'date-fns';
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
 
 // GET /api/admin/reports/export - Export reports
@@ -39,7 +38,8 @@ export async function GET(req: NextRequest) {
     const exportFormat = searchParams.get('exportFormat') || 'xlsx'; // Default to XLSX
 
     // Build filter conditions
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
 
     if (search) {
       whereClause.OR = [
@@ -121,6 +121,7 @@ export async function GET(req: NextRequest) {
     }));
     
     // Update download count for each exported report
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await Promise.all(reports.map((report: any) => 
       prisma.report.update({
         where: { id: report.id },

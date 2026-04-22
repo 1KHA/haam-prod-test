@@ -40,6 +40,7 @@ export async function GET(
     const status = searchParams.get('status') || undefined;
     
     // Build filter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: any = { eventId: id };
     
     if (status) {
@@ -69,6 +70,7 @@ export async function GET(
     let filteredRegistrations = registrations;
     if (search) {
       const searchLower = search.toLowerCase();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       filteredRegistrations = registrations.filter((reg: any) => 
         reg.user.name?.toLowerCase().includes(searchLower) ||
         reg.user.email.toLowerCase().includes(searchLower) ||

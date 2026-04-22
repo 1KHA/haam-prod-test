@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[Cohort Apply] No Program Managers found, skipping notification`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Cohort Apply] Failed to send notifications:', notifyError.message);
       console.error('[Cohort Apply] Stack:', notifyError.stack);

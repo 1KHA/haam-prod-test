@@ -87,6 +87,7 @@ export async function PUT(
     
     try {
       // First determine if this is a standard enum role or a custom role
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let userRoleUpdate: any = {};
       
       if (validEnumRoles.includes(role)) {
@@ -167,6 +168,7 @@ export async function PUT(
         message: 'User role updated successfully',
         user: updatedUser
       });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error updating user role:', error);
       

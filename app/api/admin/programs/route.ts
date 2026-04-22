@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     
     // Build the where clause for filtering
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
     
     if (search) {
@@ -230,6 +231,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[Programs API] No Program Managers found, skipping notification`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Programs API] Failed to send program creation notification:', notifyError.message);
       console.error('[Programs API] Stack:', notifyError.stack);

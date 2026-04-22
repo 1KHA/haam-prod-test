@@ -17,9 +17,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
     if (status) where.status = status;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const emails = await (prisma as any).scheduledEmail.findMany({
       where,
       orderBy: { scheduledFor: 'asc' },
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
     // Count total recipients based on filter
     let totalCount = 0;
     if (recipientFilter) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const where: any = {};
       if (recipientFilter.role) where.role = recipientFilter.role;
       if (recipientFilter.status) where.status = recipientFilter.status;
@@ -73,6 +76,7 @@ export async function POST(request: NextRequest) {
       totalCount = await prisma.user.count();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scheduledEmail = await (prisma as any).scheduledEmail.create({
       data: {
         name,
@@ -120,6 +124,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     if (status) updateData.status = status;
     if (name) updateData.name = name;
@@ -128,6 +133,7 @@ export async function PUT(request: NextRequest) {
     if (scheduledFor) updateData.scheduledFor = new Date(scheduledFor);
     if (recipientFilter) updateData.recipientFilter = recipientFilter;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const email = await (prisma as any).scheduledEmail.update({
       where: { id },
       data: updateData,
@@ -165,6 +171,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).scheduledEmail.delete({
       where: { id },
     });

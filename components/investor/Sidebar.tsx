@@ -11,6 +11,7 @@ import {
   MessageSquare, 
   ChevronLeft, 
   ChevronRight,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Rocket,
   DollarSign,
   TrendingUp,
@@ -18,8 +19,10 @@ import {
   Briefcase,
   Users,
   Search,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   PieChart,
   Video,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   UserPlus,
   FileCheck,
   Activity,

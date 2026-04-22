@@ -27,14 +27,23 @@ interface UserProfile {
   createdAt: string
   updatedAt: string
   status: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   startupProfile?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mentorProfile?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   investorProfile?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   acceleratorProfile?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adminProfile?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   programManagerProfile?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entrepreneurProfile?: any  // Added missing profile
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   startups?: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   teamMembers?: any[]
 }
 

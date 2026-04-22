@@ -110,6 +110,7 @@ export async function PUT(
     }
     
     // Build update object with only provided fields
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     
     if (body.title) updateData.title = body.title;

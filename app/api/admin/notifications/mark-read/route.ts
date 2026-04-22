@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     // If all=true, mark all notifications as read
     if (all) {
       // Update all notifications for this user
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (prisma as any).notificationRecipient.updateMany({
         where: {
           userId: user.userId,
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     else {
       // We need to make sure these notification IDs belong to the user
       // First, find valid recipient records
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recipientRecords = await (prisma as any).notificationRecipient.findMany({
         where: {
           userId: user.userId,
@@ -75,10 +77,12 @@ export async function POST(request: NextRequest) {
         },
       });
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validRecipientIds = recipientRecords.map((record: any) => record.id);
       
       // Now update those specific recipient records
       if (validRecipientIds.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = await (prisma as any).notificationRecipient.updateMany({
           where: {
             id: { in: validRecipientIds },

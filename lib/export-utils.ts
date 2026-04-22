@@ -75,6 +75,7 @@ export async function exportCSV(options: {
     filename,
     queryParams = new URLSearchParams(),
     token,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     successMessage = 'تم تصدير البيانات بنجاح',
     errorMessage = 'فشل في تصدير البيانات',
     onSuccess,

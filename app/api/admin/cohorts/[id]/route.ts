@@ -99,6 +99,7 @@ export async function PUT(
     const body = await request.json();
     const { name, description, startDate, endDate, status, capacity, managerId } = body;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;

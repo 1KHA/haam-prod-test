@@ -7,6 +7,7 @@
  */
 
 // Type for standard API response
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
@@ -22,10 +23,10 @@ export interface ApiResponse<T = any> {
  * @param mode 'response' for new ApiResponse format, 'direct' for backward compatibility
  * @returns Promise with the formatted API response or direct Response for backward compatibility
  */
-export async function fetchWithAuth<T = any>(url: string, options?: RequestInit): Promise<Response>;
-export async function fetchWithAuth<T = any>(url: string, options: RequestInit, mode: 'direct'): Promise<Response>;
-export async function fetchWithAuth<T = any>(url: string, options: RequestInit, mode: 'response'): Promise<ApiResponse<T>>;
-export async function fetchWithAuth<T = any>(
+export async function fetchWithAuth<T = any>(url: string, options?: RequestInit): Promise<Response>; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+export async function fetchWithAuth<T = any>(url: string, options: RequestInit, mode: 'direct'): Promise<Response>; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+export async function fetchWithAuth<T = any>(url: string, options: RequestInit, mode: 'response'): Promise<ApiResponse<T>>; // eslint-disable-line @typescript-eslint/no-explicit-any
+export async function fetchWithAuth<T = any>( // eslint-disable-line @typescript-eslint/no-explicit-any
   url: string, 
   options: RequestInit = {},
   mode: 'response' | 'direct' = 'direct'

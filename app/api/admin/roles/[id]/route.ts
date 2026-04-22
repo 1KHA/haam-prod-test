@@ -49,6 +49,7 @@ export async function GET(
     // Transform permissions into a more usable format
     const permissionsMap: Record<string, Record<string, boolean>> = {};
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     role.permissions.forEach((rp: any) => {
       const { category, action } = rp.permission;
       

@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Store token + expiry on user record
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma.user as any).update({
       where: { id: user.id },
       data: {

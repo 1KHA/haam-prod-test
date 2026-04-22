@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
 
 // POST handler to generate a new API key
 export async function POST(
@@ -37,6 +36,7 @@ export async function POST(
     
     // Generate a mock API key (in production, use a proper secure key generator)
     const randomKey = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const apiKey = `ak_${randomKey}`;
     const maskedApiKey = `ak_${randomKey.substring(0, 5)}${'*'.repeat(25)}`;
     

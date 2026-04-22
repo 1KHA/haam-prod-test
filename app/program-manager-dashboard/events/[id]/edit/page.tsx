@@ -77,6 +77,7 @@ export default function EditEvent() {
 
   const fetchEventDetails = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {}, 'response') as any
       
       if (response.error) {
@@ -140,6 +141,7 @@ export default function EditEvent() {
       const response = await fetchWithAuth(`/api/program-manager/events/${eventId}`, {
         method: 'PUT',
         body: JSON.stringify(payload)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }, 'response') as any
       
       if (response.error) {

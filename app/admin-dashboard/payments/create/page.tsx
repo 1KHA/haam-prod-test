@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { toast } from "react-hot-toast"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +19,7 @@ interface PaymentFormData {
   payerName: string;
   payerEmail: string;
   paymentMethod: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata: Record<string, any>;
 }
 
@@ -42,6 +43,7 @@ export default function CreatePaymentPage() {
   }
 
   // Handle metadata changes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleMetadataChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,

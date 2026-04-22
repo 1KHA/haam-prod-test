@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
-import { User, LogOut, LogIn } from "lucide-react"
+import { User, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {

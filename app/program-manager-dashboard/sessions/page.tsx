@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +30,7 @@ interface StartupOption { id: string; name: string }
 interface MentorOption { id: string; name: string; expertise?: string }
 
 export default function SessionsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { token } = useAuth()
   const { toast } = useToast()
   const [sessions, setSessions] = useState<SessionData[]>([])
@@ -80,10 +81,12 @@ export default function SessionsPage() {
       ])
       if (startupRes.ok) {
         const d = await startupRes.json()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setStartups((d.startups || d).map((s: any) => ({ id: s.id, name: s.name })))
       }
       if (mentorRes.ok) {
         const d = await mentorRes.json()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setMentors((d.users || []).map((u: any) => ({ id: u.id, name: u.name, expertise: u.mentorProfile?.expertise })))
       }
     } catch {}

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
-import { FundingItem } from '../route'
 
 // GET /api/admin/financing/funding/[id] - Get a single funding entry
 export async function GET(

@@ -8,12 +8,14 @@ export interface CSVExportOptions {
   includeUTF8BOM?: boolean;
   filename?: string;
   headers: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Array<Record<string, any>>;
 }
 
 /**
  * Escapes CSV field content and handles Arabic text properly
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function escapeCsvField(value: any): string {
   if (value === null || value === undefined) {
     return '""';
@@ -110,6 +112,7 @@ export function createCSVResponse(options: CSVExportOptions): Response {
  * Helper function to get field key from row data
  * This handles cases where header names don't directly match data keys
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getFieldKey(header: string, row: Record<string, any>): string {
   // First try direct match
   if (row.hasOwnProperty(header)) {
@@ -241,6 +244,7 @@ export function getDelimiterFromRequest(searchParams: URLSearchParams): string {
  */
 export function createExcelResponse(options: {
   headers: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Array<Record<string, any>>;
   filename?: string;
   sheetName?: string;
@@ -263,6 +267,7 @@ export function createExcelResponse(options: {
 
   // Set RTL view so Arabic columns read right-to-left
   if (!ws['!sheetView']) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (ws as any)['!sheetView'] = [{ rightToLeft: true }];
   }
 

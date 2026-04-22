@@ -132,9 +132,10 @@ export default function CohortsPage() {
     }
     
     try {
-      let endpoint = '/api/program-manager/cohorts';
-      let method = 'PUT';
-      let body: any = {
+      const endpoint = '/api/program-manager/cohorts';
+      const method = 'PUT';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: any = {
         cohortIds: selectedCohorts,
         action: ''
       };

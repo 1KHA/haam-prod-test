@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
         // Final verification - check if any startup notifications exist
         console.log(`[Create Startup] Verifying notifications were saved...`);
         try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const recentNotifications = await (prisma as any).notification.findMany({
             where: {
               title: {
@@ -186,12 +187,14 @@ export async function POST(request: NextRequest) {
           } else {
             console.error(`[Create Startup] ❌ NO notification found in DB for startup: ${startup.name}`);
           }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (verifyError: any) {
           console.error(`[Create Startup] ❌ Verification failed:`, verifyError.message);
         }
       } else {
         console.log(`[Create Startup] No recipients found (no PMs or Admins), skipping notification`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Create Startup] Failed to send notifications:', notifyError.message);
       console.error('[Create Startup] Stack:', notifyError.stack);

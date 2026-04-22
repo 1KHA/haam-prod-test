@@ -11,7 +11,9 @@ import {
   Rocket, 
   BookOpen, 
   Calendar, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   FileText, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   DollarSign, 
   Target, 
   HelpCircle,

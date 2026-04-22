@@ -43,12 +43,12 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: Prisma.UserWhereInput = {};
     if (role) {
-      where.role = role;
+      where.role = role as UserRole;
     }
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search } },
+        { email: { contains: search } },
       ];
     }
 
@@ -160,6 +160,7 @@ export async function POST(request: NextRequest) {
 
     // Fire user_created email scenario if enabled
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scenario = await (prisma as any).emailScenarioSettings.findUnique({
         where: { scenarioType: 'user_created' },
         include: { template: { select: { name: true } } },

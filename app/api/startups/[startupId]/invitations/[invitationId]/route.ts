@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth';
 import { InvitationStatus, InvitationType, MemberStatus } from '@prisma/client';
 import { EmailService } from '@/lib/services/email-service';
 import { notifyTeamInvitationAccepted, notifyTeamInvitationRejected } from '@/lib/services/notification-events';

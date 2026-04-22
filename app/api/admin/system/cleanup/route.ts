@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
 
 // POST handler to run a cleanup operation
 export async function POST(request: NextRequest) {

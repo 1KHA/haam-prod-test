@@ -138,6 +138,7 @@ export async function PUT(
     }
     
     // Prepare update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     
     if (name) updateData.name = name;
@@ -252,6 +253,7 @@ export async function PUT(
           ipAddress: request.headers.get('x-forwarded-for') || undefined,
         });
         console.log(`[Admin Users] Password change notification sent`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (notifyError: any) {
         console.error('[Admin Users] Failed to send password change notification:', notifyError.message);
       }
@@ -275,6 +277,7 @@ export async function PUT(
           updatedByName: updaterName,
         });
         console.log(`[Admin Users] Profile update notification sent`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (notifyError: any) {
         console.error('[Admin Users] Failed to send profile update notification:', notifyError.message);
       }
@@ -295,6 +298,7 @@ export async function PUT(
     };
     
     // Remove password from response
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = userWithStatus;
     
     return NextResponse.json(userWithoutPassword);
@@ -517,6 +521,7 @@ export async function DELETE(
         adminIds: admins.map(a => a.id),
       });
       console.log(`[Admin Users] User deletion notification sent to ${admins.length} admins`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Admin Users] Failed to send user deletion notification:', notifyError.message);
     }
@@ -525,6 +530,7 @@ export async function DELETE(
       success: true,
       message: 'User deleted successfully'
     });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error deleting user:', error);
     

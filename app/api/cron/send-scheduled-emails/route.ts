@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
   const now = new Date();
 
   // Find all campaigns due to send
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dueCampaigns = await (prisma as any).scheduledEmail.findMany({
     where: {
       status: 'scheduled',
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
 
   for (const campaign of dueCampaigns) {
     // Mark as sending to prevent duplicate execution
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).scheduledEmail.update({
       where: { id: campaign.id },
       data: { status: 'sending' },
@@ -49,6 +51,7 @@ export async function GET(request: NextRequest) {
         recipientEmails = Array.isArray(parsed) ? parsed : [];
       } else {
         // Filter-based recipients
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const where: any = {};
         if (campaign.recipientFilter) {
           const filter = JSON.parse(campaign.recipientFilter);
@@ -75,6 +78,7 @@ export async function GET(request: NextRequest) {
             scenarioType: 'campaign',
           });
           sentCount++;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           failedCount++;
           errorLog.push(`${email}: ${err.message}`);
@@ -84,6 +88,7 @@ export async function GET(request: NextRequest) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).scheduledEmail.update({
         where: { id: campaign.id },
         data: {
@@ -95,8 +100,10 @@ export async function GET(request: NextRequest) {
       });
 
       totalProcessed++;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(`[Cron] Failed to process campaign ${campaign.id}:`, err.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).scheduledEmail.update({
         where: { id: campaign.id },
         data: {

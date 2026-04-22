@@ -159,6 +159,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Format the data for export
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedData = filteredData.map((item: any) => {
       // Format dates
       const formatDate = (dateString: string) => {
@@ -210,6 +211,7 @@ export async function GET(req: NextRequest) {
     // Create CSV content with proper Arabic text handling
     const csvRows: string[] = [];
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formattedData.forEach((item: any) => {
       const row = [
         `"${item.id}"`,

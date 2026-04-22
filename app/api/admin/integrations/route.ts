@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
 
 // Sample integrations data structure (mock data)
 const mockIntegrations = [

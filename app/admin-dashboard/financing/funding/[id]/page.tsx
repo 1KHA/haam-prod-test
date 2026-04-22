@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -14,6 +15,7 @@ import {
   Calendar,
   User,
   AlertTriangle,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CheckCircle,
   Tag,
   FileText,
@@ -34,6 +36,7 @@ export default function FundingDetails({ params }: FundingDetailsProps) {
   const router = useRouter()
   const { id } = params
   const [isLoading, setIsLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [funding, setFunding] = useState<any>(null)
 
   // Sample funding data

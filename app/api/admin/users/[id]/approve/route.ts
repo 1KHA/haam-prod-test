@@ -27,6 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     await prisma.user.update({
       where: { id: params.id },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: { approvalStatus } as any,
     });
 

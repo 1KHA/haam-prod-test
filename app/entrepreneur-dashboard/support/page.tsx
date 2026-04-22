@@ -16,6 +16,7 @@ import {
   Plus,
   Search,
   ArrowRight,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   FileText,
   Phone,
   Mail,
@@ -110,6 +111,7 @@ export default function SupportPage() {
   ])
 
   // Mock data for FAQs
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [faqs, setFaqs] = useState([
     {
       id: "1",

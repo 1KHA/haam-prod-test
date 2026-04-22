@@ -150,6 +150,7 @@ export async function getUserPermissions(userId: string): Promise<PermissionRequ
     }
 
     // Find the role in the database - primary strategy: use roleEnum field
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let rolePermissions: any[] = [];
     
     // Strategy 1 (primary): Find role by roleEnum field - direct, reliable lookup

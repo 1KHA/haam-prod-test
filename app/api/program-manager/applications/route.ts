@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isAuthenticated, UserRole } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth";
 // Note: PUT handler moved to [id]/route.ts
 
 // GET /api/program-manager/applications
@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get("search");
 
     // Build the query
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
     
     if (status) {
       whereClause.status = status;
@@ -66,6 +67,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Transform the data to include application status
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const applications = startups.map((startup: any) => {
       const membership = startup.cohortMemberships[0]; // Get the first membership
       return {
@@ -89,9 +91,13 @@ export async function GET(req: NextRequest) {
     });
 
     // Count applications by status
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pendingCount = applications.filter((app: any) => app.status === "PENDING").length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const inReviewCount = applications.filter((app: any) => app.status === "IN_REVIEW").length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const activeCount = applications.filter((app: any) => app.status === "ACTIVE").length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rejectedCount = applications.filter((app: any) => app.status === "REJECTED").length;
 
     return NextResponse.json({

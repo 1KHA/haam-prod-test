@@ -58,7 +58,8 @@ export async function GET(req: NextRequest) {
     const role = searchParams.get('role') || '';
 
     // Build filter conditions
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
 
     if (search) {
       whereClause.OR = [
@@ -89,6 +90,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Format the data for export
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedUsers = users.map((user: any) => {
       // Determine profile data
       const roleProfile = 
@@ -100,6 +102,7 @@ export async function GET(req: NextRequest) {
         user.entrepreneurProfile;
 
       // Determine status
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const status = (user as any).approvalStatus || (roleProfile ? 'ACTIVE' : 'PENDING');
       const statusLabel = status === 'ACTIVE' ? 'نشط' : status === 'PENDING_APPROVAL' ? 'قيد المراجعة' : 'معلق';
 

@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
     // 1. Check for milestones due in 7 days or 24 hours
     const now = new Date();
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     const upcomingMilestones = await prisma.milestone.findMany({
       where: {
@@ -83,6 +82,7 @@ export async function GET(request: NextRequest) {
         if (daysUntil !== 7 && daysUntil !== 1) continue;
 
         // Check if notification already sent in the last 24 hours
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const recentNotification = await (prisma as any).notification.findFirst({
           where: {
             type: 'milestone_reminder',
@@ -168,6 +168,7 @@ export async function GET(request: NextRequest) {
         const todayEnd = new Date(now);
         todayEnd.setHours(23, 59, 59, 999);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const recentNotification = await (prisma as any).notification.findFirst({
           where: {
             type: 'milestone_reminder',
@@ -248,6 +249,7 @@ export async function GET(request: NextRequest) {
         if (hoursUntil !== 24 && hoursUntil !== 1) continue;
 
         // Check if notification already sent for this time window
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const recentNotification = await (prisma as any).notification.findFirst({
           where: {
             type: 'event_reminder',

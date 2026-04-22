@@ -97,7 +97,6 @@ export default function NewCohortPage() {
         throw new Error('Failed to create cohort');
       }
       
-      const data = await response.json();
       
       showAdminToast({
         title: "تم بنجاح",

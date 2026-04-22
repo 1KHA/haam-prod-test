@@ -1,5 +1,4 @@
 // SSE (Server-Sent Events) Helpers
-import { prisma } from './prisma';
 
 /**
  * Map to store active SSE connections
@@ -141,6 +140,7 @@ export async function emitPermissionsRefresh(
  * @param event Event name
  * @param data Event data
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function broadcastSystemMessage(event: string, data: any): void {
   const encoder = new TextEncoder();
   const message = encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);

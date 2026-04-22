@@ -185,6 +185,7 @@ export async function POST(
       } else {
         console.log(`[Milestone Review] No entrepreneurs found to notify`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Milestone Review API] Failed to send notification:', notifyError.message);
       console.error('[Milestone Review API] Stack:', notifyError.stack);

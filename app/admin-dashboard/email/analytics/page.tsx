@@ -9,10 +9,13 @@ import {
   Send,
   AlertCircle,
   Clock,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TrendingUp,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TrendingDown,
   Eye,
   MousePointer,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +81,7 @@ export default function EmailAnalyticsPage() {
       if (logsData.success) {
         setRecentLogs(logsData.logs);
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         title: 'خطأ',

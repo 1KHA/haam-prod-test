@@ -44,6 +44,7 @@ export async function getIntegrations(filters?: {
   
   const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations${queryString}`, {
     method: 'GET',
   }, 'response');
@@ -52,6 +53,7 @@ export async function getIntegrations(filters?: {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data;
 }
 
@@ -59,6 +61,7 @@ export async function getIntegrations(filters?: {
  * Fetches a single integration by ID
  */
 export async function getIntegration(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}`, {
     method: 'GET',
   }, 'response');
@@ -67,6 +70,7 @@ export async function getIntegration(id: string) {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.integration;
 }
 
@@ -74,6 +78,7 @@ export async function getIntegration(id: string) {
  * Creates a new integration
  */
 export async function createIntegration(data: Partial<Integration>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>('/api/admin/integrations', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -83,6 +88,7 @@ export async function createIntegration(data: Partial<Integration>) {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.integration;
 }
 
@@ -90,6 +96,7 @@ export async function createIntegration(data: Partial<Integration>) {
  * Updates an existing integration
  */
 export async function updateIntegration(id: string, data: Partial<Integration>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -99,6 +106,7 @@ export async function updateIntegration(id: string, data: Partial<Integration>) 
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.integration;
 }
 
@@ -106,6 +114,7 @@ export async function updateIntegration(id: string, data: Partial<Integration>) 
  * Deletes an integration
  */
 export async function deleteIntegration(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}`, {
     method: 'DELETE',
   }, 'response');
@@ -114,6 +123,7 @@ export async function deleteIntegration(id: string) {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data;
 }
 
@@ -121,6 +131,7 @@ export async function deleteIntegration(id: string) {
  * Connects an integration with provided credentials
  */
 export async function connectIntegration(id: string, credentials: { apiKey: string, webhookUrl?: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}/connect`, {
     method: 'POST',
     body: JSON.stringify(credentials),
@@ -130,6 +141,7 @@ export async function connectIntegration(id: string, credentials: { apiKey: stri
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.integration;
 }
 
@@ -137,6 +149,7 @@ export async function connectIntegration(id: string, credentials: { apiKey: stri
  * Disconnects an integration
  */
 export async function disconnectIntegration(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}/connect`, {
     method: 'DELETE',
   }, 'response');
@@ -145,6 +158,7 @@ export async function disconnectIntegration(id: string) {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.integration;
 }
 
@@ -152,6 +166,7 @@ export async function disconnectIntegration(id: string) {
  * Triggers a manual sync for an integration
  */
 export async function syncIntegration(id: string, options: { fullSync?: boolean } = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}/sync`, {
     method: 'POST',
     body: JSON.stringify(options),
@@ -162,7 +177,9 @@ export async function syncIntegration(id: string, options: { fullSync?: boolean 
   }
   
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     integration: (response as ApiResponse<any>).data?.integration,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     syncResults: (response as ApiResponse<any>).data?.syncResults,
   };
 }
@@ -171,6 +188,7 @@ export async function syncIntegration(id: string, options: { fullSync?: boolean 
  * Gets the sync history for an integration
  */
 export async function getSyncHistory(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}/sync`, {
     method: 'GET',
   }, 'response');
@@ -179,6 +197,7 @@ export async function getSyncHistory(id: string) {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.syncHistory;
 }
 
@@ -199,6 +218,7 @@ export function copyWebhookUrl(webhookUrl: string): boolean {
  * Generate a new API key (will be handled by the backend)
  */
 export async function renewApiKey(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await fetchWithAuth<any>(`/api/admin/integrations/${id}/apikey`, {
     method: 'POST',
   }, 'response');
@@ -207,5 +227,6 @@ export async function renewApiKey(id: string) {
     throw new Error(response.error);
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (response as ApiResponse<any>).data?.integration;
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import {
   DollarSign,
   Award,
   Eye,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Trash2
 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"

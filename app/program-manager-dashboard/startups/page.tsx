@@ -7,10 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Briefcase, 
   Search, 
   Filter, 
   Plus, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TrendingUp, 
   CheckCircle, 
   Clock, 

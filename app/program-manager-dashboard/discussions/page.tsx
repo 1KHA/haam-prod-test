@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -10,6 +10,7 @@ import {
   Filter, 
   MessageSquare, 
   Plus, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Users, 
   Clock,
   Heart,
@@ -190,7 +191,6 @@ export default function DiscussionsPage() {
 
   const announcementsCount = discussions.filter(discussion => discussion.isAnnouncement).length
   const totalReplies = discussions.reduce((acc, discussion) => acc + discussion.replies, 0)
-  const activeDiscussions = discussions.filter(discussion => discussion.replies > 5).length
 
   return (
     <div className="space-y-6 text-right">

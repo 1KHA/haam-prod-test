@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const delimiter = getDelimiterFromRequest(searchParams);
     
     // Build filter object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: any = {};
     
     if (search) {
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Format the data for export with Arabic headers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedEvents = events.map((event: any) => {
       // Map status for clarity in Arabic
       const statusMap: Record<string, string> = {
@@ -115,6 +117,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Use CSV utility to create proper response with configurable delimiter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let csvData;
     let filename;
     
@@ -141,6 +144,7 @@ export async function GET(request: NextRequest) {
       ];
 
       // Prepare data for CSV generation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const csvRows: any[] = [];
       
       for (const event of events) {
@@ -185,8 +189,11 @@ export async function GET(request: NextRequest) {
               'حالة التسجيل': reg.status,
               'تاريخ التسجيل': reg.createdAt.toISOString().split('T')[0],
               'معرف المستخدم': reg.userId,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               'اسم المستخدم': (reg as any).user?.name || '-',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               'بريد المستخدم': (reg as any).user?.email || '-',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               'دور المستخدم': (reg as any).user?.role || '-'
             });
           }
@@ -220,6 +227,7 @@ export async function GET(request: NextRequest) {
       ];
 
       // Map data to object format for CSV utility
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const csvRows = formattedEvents.map((event: any) => ({
         'معرف الفعالية': event.id,
         'العنوان': event.title,

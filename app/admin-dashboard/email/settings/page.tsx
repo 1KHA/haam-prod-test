@@ -89,6 +89,7 @@ export default function EmailSettingsPage() {
       if (data.success) {
         setConfigs(data.configs);
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         title: 'خطأ',
@@ -130,6 +131,7 @@ export default function EmailSettingsPage() {
           variant: 'destructive',
         });
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         title: 'خطأ',
@@ -164,6 +166,7 @@ export default function EmailSettingsPage() {
           variant: 'destructive',
         });
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         title: 'خطأ',
@@ -196,6 +199,7 @@ export default function EmailSettingsPage() {
           variant: 'destructive',
         });
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         title: 'خطأ',

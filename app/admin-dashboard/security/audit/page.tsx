@@ -13,6 +13,7 @@ import {
   XCircle,
   AlertCircle,
   Calendar,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   BarChart3,
   ListChecks,
   Info,
@@ -95,7 +96,6 @@ export default function SecurityAudit() {
       setIsLoading(true)
       
       // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const token = null; // Cookie-based auth - no localStorage token needed
       
       const response = await fetch(`/api/admin/security/audit?type=${type}`, {
         headers: {
@@ -133,7 +133,6 @@ export default function SecurityAudit() {
       setIsStartingAudit(true)
       
       // Token is now in HTTP-only cookie, credentials: "include" sends it automatically
-  const token = null; // Cookie-based auth - no localStorage token needed
       
       const response = await fetch('/api/admin/security/audit', {
         method: 'POST',

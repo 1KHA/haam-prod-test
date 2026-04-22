@@ -172,6 +172,7 @@ function clampProgress(value: string) {
 export function MilestonesDashboard({
   apiBase,
   title,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   description,
 }: MilestonesDashboardProps) {
   const searchParams = useSearchParams()

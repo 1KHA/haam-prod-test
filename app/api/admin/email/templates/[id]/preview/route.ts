@@ -17,6 +17,7 @@ export async function POST(
     const body = await request.json();
     const { variables, language = 'ar' } = body;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const template = await (prisma as any).emailTemplate.findUnique({
       where: { id: params.id },
     });

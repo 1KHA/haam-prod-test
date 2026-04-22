@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get existing settings
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const settings = await (prisma as any).emailScenarioSettings.findMany({
       include: {
         template: {
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Create a map of existing settings
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const settingsMap = new Map(settings.map((s: any) => [s.scenarioType, s]));
 
     // Ensure all default scenarios exist
@@ -109,12 +111,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if setting exists
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existing = await (prisma as any).emailScenarioSettings.findUnique({
       where: { scenarioType },
     });
 
     let setting;
     if (existing) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setting = await (prisma as any).emailScenarioSettings.update({
         where: { scenarioType },
         data: {
@@ -127,6 +131,7 @@ export async function PUT(request: NextRequest) {
         },
       });
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setting = await (prisma as any).emailScenarioSettings.create({
         data: {
           scenarioType,
@@ -173,6 +178,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete the custom setting to revert to default
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).emailScenarioSettings.delete({
       where: { scenarioType },
     });

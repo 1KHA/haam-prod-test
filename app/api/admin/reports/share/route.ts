@@ -7,15 +7,13 @@ export async function POST(req: NextRequest) {
   try {
     // Parse request for potential token
     const token = req.headers.get('x-token-param');
-    let permissionCheck;
-    
     if (token) {
       // If token is provided, use it for authorization
       req.headers.set('Authorization', `Bearer ${token}`);
     }
     
     // Check permission
-    permissionCheck = await checkPermission(req, { category: 'reports', action: 'edit' });
+    const permissionCheck = await checkPermission(req, { category: 'reports', action: 'edit' });
     
     if (!permissionCheck.authorized) {
       return NextResponse.json(
@@ -125,6 +123,7 @@ export async function POST(req: NextRequest) {
     
     // Create notification for each user
     await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       users.map((user: { id: string, name: string, email: string }) =>
         prisma.notification.create({
           data: {

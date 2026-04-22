@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Bell, Check, CheckCheck, Clock, AlertCircle, Info, Calendar, Users, FileCheck, Award, DollarSign, Shield } from 'lucide-react';
+import { Bell, Check, CheckCheck, Clock, Info, Calendar, Users, FileCheck, Award, DollarSign, Shield } from 'lucide-react';
 import { useNotifications, Notification } from '@/contexts/notification-context';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

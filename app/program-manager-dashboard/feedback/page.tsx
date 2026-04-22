@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -14,6 +14,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Users,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Calendar,
   ArrowUpRight
 } from "lucide-react"

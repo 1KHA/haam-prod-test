@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated } from '@/lib/auth';
 
 // GET /api/events - Get all public events
 export async function GET(request: NextRequest) {
@@ -16,6 +15,7 @@ export async function GET(request: NextRequest) {
     const past = searchParams.get('past') === 'true';
     
     // Build filter object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: any = {
       // Only show published events to the public
       status: 'published'
@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Transform events to include registration count and availability
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const transformedEvents = events.map((event: any) => {
       // Calculate if event is at capacity
       const isAtCapacity = event.capacity !== null && 

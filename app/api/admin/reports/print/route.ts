@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
-import path from 'path';
 
 // GET /api/admin/reports/print - Get a printable version of a report
 export async function GET(req: NextRequest) {
@@ -93,6 +92,7 @@ export async function GET(req: NextRequest) {
 /**
  * Generate HTML for a printable version of the report
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function generatePrintableHTML(report: any): string {
   const createdDate = new Date(report.createdAt).toLocaleDateString('ar-SA');
   const updatedDate = new Date(report.updatedAt).toLocaleDateString('ar-SA');

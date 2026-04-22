@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
 
 // POST handler to manually trigger a sync for an integration
 export async function POST(
@@ -33,6 +32,7 @@ export async function POST(
     let syncOptions = {};
     try {
       syncOptions = await request.json();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       // If no JSON body is provided, use default options
       syncOptions = { fullSync: false };

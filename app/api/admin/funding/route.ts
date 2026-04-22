@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
 
 // GET handler to fetch funding opportunities
 export async function GET(request: NextRequest) {
@@ -30,9 +29,6 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const status = searchParams.get('status');
     const type = searchParams.get('type');
-    const search = searchParams.get('search');
-    const sortBy = searchParams.get('sortBy') || 'createdAt';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Calculate pagination
     const skip = (page - 1) * pageSize;

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
 
     // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
     if (status) {
       where.status = status;
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Get logs
     const [logs, total] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.findMany({
         where,
         orderBy: { sentAt: 'desc' },
@@ -41,11 +43,13 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({ where }),
     ]);
 
     return NextResponse.json({
       success: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       logs: logs.map((log: any) => ({
         ...log,
         templateName: log.template?.name || null,

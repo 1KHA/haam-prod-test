@@ -153,6 +153,7 @@ export async function PUT(
     }
     
     // Prepare update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     
     if (name !== undefined) updateData.name = name;
@@ -233,6 +234,7 @@ export async function PUT(
           });
           console.log(`[Admin Startup API] Approval notification sent successfully`);
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (notifyError: any) {
         console.error('[Admin Startup API] Failed to send approval notification:', notifyError.message);
         // Don't fail the update if notification fails

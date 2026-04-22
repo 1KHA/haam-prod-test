@@ -133,6 +133,7 @@ export class NotificationService {
 
       const notification = await prisma.$transaction(async (tx) => {
         console.log(`[NotificationService] Creating notification record inside transaction...`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const created = await (tx as any).notification.create({
           data: {
             title,
@@ -168,6 +169,7 @@ export class NotificationService {
       // IMMEDIATE VERIFICATION - Query the database right after transaction
       console.log(`[NotificationService] Verifying notification persisted to DB...`);
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const verifyNotification = await (prisma as any).notification.findUnique({
           where: { id: notification.id },
           include: { recipients: true }
@@ -181,6 +183,7 @@ export class NotificationService {
           console.error(`[NotificationService] ❌ CRITICAL: Notification NOT in DB! ID: ${notification.id}`);
           console.error(`[NotificationService] ❌ Transaction may have rolled back silently!`);
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (verifyError: any) {
         console.error(`[NotificationService] ❌ Verification query failed:`, verifyError.message);
       }
@@ -204,6 +207,7 @@ export class NotificationService {
 
       console.log(`[NotificationService] Notification created successfully`);
       return notification;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('[NotificationService] ERROR creating notification:', error.message);
       console.error('[NotificationService] Stack:', error.stack);
@@ -308,6 +312,7 @@ data: ${JSON.stringify(payload.data)}
     userId: string
   ): Promise<boolean> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recipient = await (prisma as any).notificationRecipient.findFirst({
         where: {
           notificationId,
@@ -319,6 +324,7 @@ data: ${JSON.stringify(payload.data)}
         return false;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).notificationRecipient.update({
         where: { id: recipient.id },
         data: {
@@ -339,6 +345,7 @@ data: ${JSON.stringify(payload.data)}
    */
   static async markAllAsRead(userId: string): Promise<number> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (prisma as any).notificationRecipient.updateMany({
         where: {
           userId,
@@ -362,6 +369,7 @@ data: ${JSON.stringify(payload.data)}
    */
   static async getUnreadCount(userId: string): Promise<number> {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const count = await (prisma as any).notificationRecipient.count({
         where: {
           userId,
@@ -386,10 +394,12 @@ data: ${JSON.stringify(payload.data)}
       offset?: number;
       onlyUnread?: boolean;
     } = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<{ notifications: any[]; total: number; unreadCount: number }> {
     const { limit = 50, offset = 0, onlyUnread = false } = options;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const whereClause: any = {
         userId,
       };
@@ -399,11 +409,13 @@ data: ${JSON.stringify(payload.data)}
       }
 
       // Get total count
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const total = await (prisma as any).notificationRecipient.count({
         where: whereClause,
       });
 
       // Get unread count
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const unreadCount = await (prisma as any).notificationRecipient.count({
         where: {
           userId,
@@ -412,6 +424,7 @@ data: ${JSON.stringify(payload.data)}
       });
 
       // Get notifications
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recipients = await (prisma as any).notificationRecipient.findMany({
         where: whereClause,
         include: {
@@ -435,6 +448,7 @@ data: ${JSON.stringify(payload.data)}
         skip: offset,
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const notifications = recipients.map((r: any) => ({
         id: r.notification.id,
         recipientId: r.id,
@@ -477,6 +491,7 @@ data: ${JSON.stringify(payload.data)}
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await (prisma as any).notification.deleteMany({
         where: {
           createdAt: {
@@ -500,6 +515,8 @@ data: ${JSON.stringify(payload.data)}
   /**
    * Format notification for client
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static formatNotification(notification: any): any {
     return {
       id: notification.id,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
-import { prisma } from '@/lib/prisma'
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils'
 
 // Sample payments data for demonstration
@@ -174,6 +173,7 @@ export async function GET(request: NextRequest) {
       ]
       
       // Map payments data to CSV rows
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const csvRows = paymentsData.map((payment: any) => ({
         'رقم المعرف': payment.id || '',
         'رقم الفاتورة': payment.invoiceNumber || '',

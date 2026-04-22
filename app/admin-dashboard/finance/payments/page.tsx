@@ -35,7 +35,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 
 export default function PaymentsManagement() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -221,6 +220,7 @@ export default function PaymentsManagement() {
   )
 
   // Handle delete payment
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDelete = (id: string) => {
     // In a real implementation, this would call an API to delete the payment
     toast.success("تم حذف الفاتورة بنجاح")

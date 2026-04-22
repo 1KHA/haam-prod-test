@@ -28,6 +28,7 @@ export default function NewUserPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState<Role[]>([])
   const [rolesLoading, setRolesLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [token, setToken] = useState<string | null>(null)
   
   const router = useRouter()

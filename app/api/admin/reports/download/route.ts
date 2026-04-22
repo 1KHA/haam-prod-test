@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Resolve the absolute path by joining with the project root
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const absoluteFilePath = path.join(process.cwd(), 'public', filePath);
     
     // Determine content type based on file format
@@ -75,6 +76,7 @@ export async function GET(req: NextRequest) {
     } else if (report.format === 'PPTX') {
       contentType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
     } else if (report.format === 'CSV') {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       contentType = 'text/csv';
     }
 

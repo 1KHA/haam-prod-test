@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { Home, Users, Flag, Award, Star, Book, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
+import { Home, Users, Flag, Star, Book, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 

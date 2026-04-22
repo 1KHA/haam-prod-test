@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkPermission } from '@/lib/permissions';
-import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
+import { getDelimiterFromRequest } from '@/lib/csv-utils';
 
 // GET /api/admin/notifications/export - Export notifications data
 export async function GET(req: NextRequest) {
@@ -151,6 +151,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Format the data for export
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedData = filteredData.map((item: any) => {
       // Format dates with proper Arabic locale
       const formatDate = (dateString: string) => {
@@ -206,6 +207,7 @@ export async function GET(req: NextRequest) {
     // Create CSV content with enhanced Arabic text handling
     const csvRows: string[] = [];
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formattedData.forEach((item: any) => {
       const row = [
         `"${item.id}"`,
@@ -229,7 +231,6 @@ export async function GET(req: NextRequest) {
     const csv = [headers.join(delimiter), ...csvRows].join('\n');
 
     // Generate filename with current date in Arabic format
-    const currentDate = new Date().toLocaleDateString('ar-SA');
     const filename = `notifications-export-${new Date().toISOString().split('T')[0]}.csv`;
 
     // Set appropriate response headers

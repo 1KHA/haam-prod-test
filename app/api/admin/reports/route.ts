@@ -26,7 +26,8 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build filter conditions
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
 
     if (search) {
       // SQLite doesn't support 'insensitive' mode, using standard contains

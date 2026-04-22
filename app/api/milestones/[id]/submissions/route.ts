@@ -183,6 +183,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       } else {
         console.log(`[Milestone Submissions] Milestone not found, skipping notification`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Milestone Submissions API] Failed to send notification:', notifyError.message);
       console.error('[Milestone Submissions API] Stack:', notifyError.stack);

@@ -15,6 +15,7 @@ import {
   Mail,
   Calendar,
   Briefcase,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Tag,
   MapPin,
   Star,

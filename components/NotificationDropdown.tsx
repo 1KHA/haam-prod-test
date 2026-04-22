@@ -35,6 +35,7 @@ export function NotificationDropdown() {
 
   // State for notification detail dialog
   const [dialogOpen, setDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastViewed, setLastViewed] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export function NotificationDropdown() {
   };
   
   // Open notification detail dialog
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const openDetailDialog = (notification: any) => {
     setSelectedNotification(notification);
     setLastViewed(notification.id);

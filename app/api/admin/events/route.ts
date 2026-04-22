@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated, UserRole, hasRole, TokenPayload } from '@/lib/auth';
+import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
 import { notifyEventCreated, notifyEventCancelled } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const eventType = searchParams.get('eventType') || undefined;
     
     // Build filter object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: any = {};
     
     if (search) {
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Transform events to include registration count
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const transformedEvents = events.map((event: any) => ({
       ...event,
       registrationCount: event._count.registrations
@@ -164,6 +166,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[Events API] No active users found to notify`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[Events API] Failed to send event creation notification:', notifyError.message);
       console.error('[Events API] Stack:', notifyError.stack);

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { type } from "os"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -23,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TableCaption,
   TableCell,
   TableHead,
@@ -80,7 +80,7 @@ export default function FundingManagement() {
       setIsLoading(true)
       try {
         // Build query string based on filters
-        let queryParams = new URLSearchParams()
+        const queryParams = new URLSearchParams()
         if (statusFilter !== 'all') {
           queryParams.append('status', statusFilter)
         }

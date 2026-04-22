@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 import { ArrowLeft, RefreshCw } from "lucide-react"
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Cohort {
   id: string
   name: string

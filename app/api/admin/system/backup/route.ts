@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { prisma } from '@/lib/prisma';
-import fs from 'fs';
-import path from 'path';
 import { format } from 'date-fns';
 
 // GET handler to fetch available backups

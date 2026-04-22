@@ -21,6 +21,7 @@ const ARABIC_ROLE_MAP: Record<string, string> = {
   'رائد أعمال': 'ENTREPRENEUR',
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
   'ADMIN': 'مدير النظام',
   'PROGRAM_MANAGER': 'مدير برنامج',
@@ -60,6 +61,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         })
         if (response.ok) {
           const data = await response.json()
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const roles: RoleOption[] = data.map((r: any) => ({
             id: r.id,
             name: r.name,
@@ -132,6 +134,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     setIsLoading(true)
     
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userData: any = {
         name,
         email,

@@ -70,6 +70,7 @@ export async function GET(
     const cancelledRegistrations = registrations.filter(r => r.status === 'cancelled').length;
     
     // Group by role
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const registrationsByRole = registrations.reduce((acc: any, reg) => {
       const role = reg.user.role;
       if (!acc[role]) acc[role] = 0;

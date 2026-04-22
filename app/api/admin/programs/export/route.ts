@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || '';
 
     // Build filter conditions
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
 
     if (search) {
       whereClause.OR = [
@@ -81,6 +82,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format the data for export
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedPrograms = programs.map((program: any) => {
       // Map status for clarity
       const statusMap: Record<string, string> = {
@@ -108,10 +110,13 @@ export async function GET(request: NextRequest) {
       };
 
       // Count active cohorts
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const activeCohortsCount = program.cohorts.filter((c: any) => c.status === 'ACTIVE').length;
       
       // Calculate total startups and mentors
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const totalStartups = program.cohorts.reduce((acc: number, cohort: any) => acc + (cohort._count.members || 0), 0);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const totalMentors = program.cohorts.reduce((acc: number, cohort: any) => acc + (cohort._count.mentors || 0), 0);
 
       return {
@@ -165,6 +170,7 @@ export async function GET(request: NextRequest) {
     // Create CSV content
     let csv = headers.join(',') + '\n';
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formattedPrograms.forEach((program: any) => {
       const row = [
         program.id,

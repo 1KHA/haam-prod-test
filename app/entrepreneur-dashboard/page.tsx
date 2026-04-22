@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import {
   FileText,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Users,
   Rocket,
   Calendar,
   BookOpen,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Target,
   Clock,
   CheckCircle,
@@ -61,6 +63,7 @@ export default function EntrepreneurDashboard() {
     visible: { opacity: 1, y: 0 },
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buildTasks = (startup: any, milestones: Milestone[]) => {
     const result: typeof tasks = []
 

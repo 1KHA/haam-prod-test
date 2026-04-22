@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Calendar as CalendarIcon, 
   Clock, 
   Plus, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Save, 
   Trash2
 } from "lucide-react"
@@ -35,7 +36,6 @@ const daysOfWeek = [
 ]
 
 export default function MentorAvailabilityPage() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [newTimeSlot, setNewTimeSlot] = useState<Omit<TimeSlot, "id">>({

@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
 
     // Check if user exists
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest) {
             user: { name: user.name, email: user.email },
             attemptCount: currentAttempt.count,
           });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (notifyError: any) {
           console.error('[Signin] Failed to send login failed notification:', notifyError.message);
         }

@@ -32,6 +32,7 @@ interface CompanyMember {
     avatar?: string;
     position?: string;
     department?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   } | null;
 }
@@ -81,6 +82,7 @@ export default function TeamPage() {
         } else {
           setError("فشل في جلب بيانات الشركة.");
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setError("حدث خطأ أثناء جلب بيانات الشركة.");
       }
@@ -103,6 +105,7 @@ export default function TeamPage() {
         } else {
           setError("فشل في جلب بيانات الفريق.");
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setError("حدث خطأ أثناء جلب بيانات الفريق.");
       } finally {

@@ -56,7 +56,8 @@ export async function GET(req: NextRequest) {
     const delimiter = searchParams.get('delimiter') || ','; // Allow delimiter customization for Arabic environments
 
     // Build filter conditions
-    let whereClause: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
 
     if (search) {
       whereClause.OR = [
@@ -162,6 +163,7 @@ export async function GET(req: NextRequest) {
     // Create CSV content with enhanced Arabic text handling
     const csvRows: string[] = [];
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formattedStartups.forEach((startup: any) => {
       const row = [
         `"${startup.id}"`,

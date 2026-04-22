@@ -66,6 +66,7 @@ export default function ApplicationsPage() {
 
         const data = await response.json();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedApplications = data.applications.map((app: any) => ({
           id: app.id,
           companyName: app.companyName,

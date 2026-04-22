@@ -58,6 +58,7 @@ export default function NewStartup() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
 
@@ -93,6 +94,7 @@ export default function NewStartup() {
         const data = await response.json();
         
         if (data.users && data.users.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setUsers(data.users.map((user: any) => ({
             id: user.id,
             name: user.name,

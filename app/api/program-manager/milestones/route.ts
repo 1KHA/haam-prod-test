@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[PM Milestones API] Cohort not found`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[PM Milestones API] Failed to send milestone notification:', notifyError.message);
       console.error('[PM Milestones API] Stack:', notifyError.stack);

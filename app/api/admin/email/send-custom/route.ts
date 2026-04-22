@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Build recipient query
-    let recipientQuery: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recipientQuery: any = {};
     if (userIds && userIds.length > 0) {
       recipientQuery.id = { in: userIds };
     } else if (role) {
@@ -65,12 +66,12 @@ export async function POST(request: NextRequest) {
     const results = await Promise.allSettled(
       recipients.map(async (user) => {
         // Replace variables in content
-        let personalizedHtml = htmlBody
+        const personalizedHtml = htmlBody
           .replace(/{{user\.name}}/g, user.name || '')
           .replace(/{{user\.email}}/g, user.email)
           .replace(/{{date}}/g, new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'));
 
-        let personalizedText = (textBody || '')
+        const personalizedText = (textBody || '')
           .replace(/{{user\.name}}/g, user.name || '')
           .replace(/{{user\.email}}/g, user.email)
           .replace(/{{date}}/g, new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US'));
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
 
     // Count results
     const successful = results.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (r) => r.status === 'fulfilled' && (r.value as any).success
     ).length;
     const failed = results.length - successful;

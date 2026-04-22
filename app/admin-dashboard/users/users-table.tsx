@@ -304,6 +304,7 @@ export default function UsersTable() {
   // Handle export users data
   const handleExport = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filters: any = {};
 
       if (searchQuery) {

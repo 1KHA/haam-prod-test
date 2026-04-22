@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 interface DataTableProps {
   columns: string[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[]
 }
 

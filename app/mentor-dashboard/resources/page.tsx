@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ArrowRight, 
   BookOpen, 
   ExternalLink, 
@@ -44,7 +43,6 @@ interface Resource {
 }
 
 export default function MentorResourcesPage() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [resources, setResources] = useState<Resource[]>([])
   const [searchQuery, setSearchQuery] = useState("")

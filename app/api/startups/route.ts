@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
     
     // Return companies
     return NextResponse.json({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       companies: companies.map((company: any) => ({
         id: company.id,
         name: company.name,

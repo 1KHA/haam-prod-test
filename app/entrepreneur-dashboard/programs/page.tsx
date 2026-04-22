@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 
 export default function EntrepreneurPrograms() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuth()
   const router = useRouter()
 

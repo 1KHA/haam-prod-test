@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const eventType = searchParams.get('eventType') || undefined;
     
     // Build filter object - Program managers can see all published events and their own drafts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: any = {
       OR: [
         { status: 'published' }, // All published events
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Transform events to include registration count
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const transformedEvents = events.map((event: any) => ({
       ...event,
       registrationCount: event._count.registrations
@@ -202,6 +204,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[PM Events API] No active users found to notify`);
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[PM Events API] Failed to send event creation notification:', notifyError.message);
       console.error('[PM Events API] Stack:', notifyError.stack);
@@ -284,6 +287,7 @@ export async function DELETE(request: NextRequest) {
         }
       }
       console.log(`[PM Events API] Event cancellation notifications sent`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (notifyError: any) {
       console.error('[PM Events API] Failed to send event cancellation notification:', notifyError.message);
     }

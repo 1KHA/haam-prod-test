@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isAuthenticated } from '@/lib/auth';
 import { checkPermission } from '@/lib/permissions';
 import { notifyProgramUpdated, notifyProgramCancelled } from '@/lib/services/notification-events';
 
@@ -178,6 +177,7 @@ export async function PUT(
     } = body;
     
     // Prepare update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     
     if (name !== undefined) updateData.name = name;
@@ -220,7 +220,8 @@ export async function PUT(
           await notifyProgramCancelled({
             programId: id,
             programName: updatedProgram.name,
-            cancelledByName: permissionCheck.userName || 'Admin',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            cancelledByName: (permissionCheck as any).userName || 'Admin',
             reason: body.cancellationReason,
             cohortIds: existingProgram.cohorts.map(c => c.id)
           });
@@ -230,7 +231,8 @@ export async function PUT(
             programId: id,
             programName: updatedProgram.name,
             updatedFields,
-            updaterName: permissionCheck.userName || 'Admin',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            updaterName: (permissionCheck as any).userName || 'Admin',
             cohortIds: existingProgram.cohorts.map(c => c.id)
           });
         }

@@ -57,10 +57,12 @@ export function AdminToaster() {
     }
     
     // Add event listener
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window.addEventListener('admin-toast' as any, handleToast as EventListener)
     
     // Clean up
     return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       window.removeEventListener('admin-toast' as any, handleToast as EventListener)
     }
   }, [])

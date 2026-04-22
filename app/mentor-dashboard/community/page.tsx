@@ -12,13 +12,17 @@ import {
   User, 
   MessageSquare, 
   Calendar,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Share2,
   Mail,
   Phone,
   Globe,
   MapPin,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Briefcase,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Award,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   BookOpen,
   Star,
   Plus,

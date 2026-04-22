@@ -21,7 +21,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const token = authHeader.split(" ")[1]
     
     // Get the user from the database based on the token
     // This is a simplified example - in a real app, you would decode the JWT
@@ -103,7 +102,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    const token = authHeader.split(" ")[1]
     
     // Get the user from the database based on the token
     const user = await prisma.user.findFirst({

@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     
     // Build the where clause for filtering
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
     
     if (search) {
@@ -261,6 +262,7 @@ export async function PUT(request: NextRequest) {
     const newStatus = data.status?.toUpperCase();
     
     // Get startup details before update for notification
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let startupsToNotify: any[] = [];
     if (action === 'updateStatus' && newStatus === 'APPROVED') {
       console.log(`[Admin Startups API] Fetching startup details for approval notification...`);
@@ -308,6 +310,7 @@ export async function PUT(request: NextRequest) {
             for (const startup of startupsToNotify) {
               const entrepreneurIds = [
                 startup.creator?.id,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...startup.members.map((m: any) => m.userId),
               ].filter((id): id is string => !!id);
               
@@ -321,6 +324,7 @@ export async function PUT(request: NextRequest) {
                 console.log(`[Admin Startups API] Approval notification sent for ${startup.name}`);
               }
             }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (notifyError: any) {
             console.error('[Admin Startups API] Failed to send approval notifications:', notifyError.message);
             // Don't fail the update if notification fails

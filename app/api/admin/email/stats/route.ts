@@ -31,18 +31,26 @@ export async function GET(request: NextRequest) {
       todaySent,
       todayFailed,
     ] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({ where: { status: 'sent' } }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({ where: { status: 'failed' } }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({ where: { status: 'pending' } }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({ where: { openedAt: { not: null } } }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({ where: { clickedAt: { not: null } } }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({
         where: {
           status: 'sent',
           sentAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
         },
       }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.count({
         where: {
           status: 'failed',
@@ -53,10 +61,12 @@ export async function GET(request: NextRequest) {
 
     // Get daily stats — fetch sent and failed logs separately, group by date in JS
     const [sentLogs, failedLogs] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.findMany({
         where: { status: 'sent', sentAt: { gte: since } },
         select: { sentAt: true },
       }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma as any).emailLog.findMany({
         where: { status: 'failed', sentAt: { gte: since } },
         select: { sentAt: true },
@@ -93,6 +103,7 @@ export async function GET(request: NextRequest) {
     const formattedDailyStats = Array.from(dateMap.values()).reverse();
 
     // Get template usage
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const templateUsage = await (prisma as any).emailLog.groupBy({
       by: ['templateId'],
       _count: { templateId: true },
@@ -101,16 +112,20 @@ export async function GET(request: NextRequest) {
     });
 
     // Get template names
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const templateIds = templateUsage.map((t: any) => t.templateId).filter(Boolean);
     const templates = templateIds.length > 0
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ? await (prisma as any).emailTemplate.findMany({
           where: { id: { in: templateIds } },
           select: { id: true, name: true },
         })
       : [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const templateMap = new Map(templates.map((t: any) => [t.id, t.name]));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedTemplateUsage = templateUsage.map((t: any) => ({
       templateId: t.templateId || 'none',
       templateName: t.templateId ? templateMap.get(t.templateId) || 'Unknown' : 'No Template',
@@ -118,6 +133,7 @@ export async function GET(request: NextRequest) {
     }));
 
     // Get top recipients
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const topRecipients = await (prisma as any).emailLog.groupBy({
       by: ['recipientEmail'],
       _count: { recipientEmail: true },
@@ -125,6 +141,7 @@ export async function GET(request: NextRequest) {
       take: 5,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formattedTopRecipients = topRecipients.map((r: any) => ({
       email: r.recipientEmail,
       count: r._count.recipientEmail,

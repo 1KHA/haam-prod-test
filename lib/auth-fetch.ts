@@ -3,6 +3,7 @@
  * The browser automatically sends the cookie - no manual token needed
  */
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FetchOptions extends RequestInit {
   // Add any custom options here
 }

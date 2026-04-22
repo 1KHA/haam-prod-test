@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/lib/auth';
 import { NotificationService } from '@/lib/services/notification-service';
 
 // POST handler to send notifications
@@ -59,7 +58,8 @@ export async function POST(request: NextRequest) {
     
     if (recipientType) {
       // Get users based on role
-      let whereClause: any = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const whereClause: any = {};
       
       switch (recipientType) {
         case 'all':
@@ -120,6 +120,7 @@ export async function POST(request: NextRequest) {
     const isScheduled = data.scheduledFor && new Date(data.scheduledFor) > new Date();
     
     // Create the notification in the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const notification = await (prisma as any).notification.create({
       data: {
         title,

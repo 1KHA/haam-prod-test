@@ -238,6 +238,7 @@ export default function EmailScenariosPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -317,6 +318,28 @@ export default function EmailScenariosPage() {
       });
     } finally {
       setSaving(null);
+    }
+  };
+
+  const handleTestScenario = async (scenarioType: string) => {
+    setTesting(scenarioType);
+    try {
+      const response = await fetch('/api/admin/email/scenarios/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenarioType }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: 'تم الإرسال', description: 'تم إرسال بريد الاختبار إلى بريدك الإلكتروني' });
+      } else {
+        toast({ title: 'خطأ', description: data.error || 'فشل في إرسال البريد', variant: 'destructive' });
+      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({ title: 'خطأ', description: 'حدث خطأ غير متوقع', variant: 'destructive' });
+    } finally {
+      setTesting(null);
     }
   };
 
@@ -504,18 +527,34 @@ export default function EmailScenariosPage() {
                           />
                           <span className="text-sm">يتطلب موافقة قبل الإرسال</span>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleSave(scenario.type)}
-                          disabled={saving === scenario.type}
-                        >
-                          {saving === scenario.type ? (
-                            <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                          ) : (
-                            <Save className="h-4 w-4 ml-2" />
-                          )}
-                          حفظ
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleTestScenario(scenario.type)}
+                            disabled={testing === scenario.type || !setting.templateId}
+                            title={!setting.templateId ? 'اختر قالباً أولاً' : 'إرسال بريد اختبار إلى بريدك'}
+                          >
+                            {testing === scenario.type ? (
+                              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                            ) : (
+                              <Mail className="h-4 w-4 ml-2" />
+                            )}
+                            اختبار
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSave(scenario.type)}
+                            disabled={saving === scenario.type}
+                          >
+                            {saving === scenario.type ? (
+                              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                            ) : (
+                              <Save className="h-4 w-4 ml-2" />
+                            )}
+                            حفظ
+                          </Button>
+                        </div>
                       </div>
                     </>
                   )}

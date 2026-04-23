@@ -264,13 +264,13 @@ export default function ResourcesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div></div>
         <h1 className="text-3xl font-bold">الموارد التعليمية</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="justify-end">
+        <TabsList className="justify-end w-full overflow-x-auto">
           <TabsTrigger value="videos">الفيديوهات</TabsTrigger>
           <TabsTrigger value="courses">الدورات</TabsTrigger>
           <TabsTrigger value="templates">القوالب</TabsTrigger>

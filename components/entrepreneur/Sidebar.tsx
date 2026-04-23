@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { 
   Home, 
   User, 
@@ -11,16 +11,13 @@ import {
   Rocket, 
   BookOpen, 
   Calendar, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  FileText, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  DollarSign, 
   Target, 
   HelpCircle,
   ChevronLeft,
   ChevronRight,
   Briefcase,
-  Bell
+  Bell,
+  X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -90,8 +87,14 @@ const navItems = [
   },
 ]
 
-export default function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+interface SidebarProps {
+  mobileOpen?: boolean
+  onMobileClose?: () => void
+  collapsed?: boolean
+  onCollapseChange?: (collapsed: boolean) => void
+}
+
+export default function Sidebar({ mobileOpen = false, onMobileClose, collapsed = false, onCollapseChange }: SidebarProps) {
   const pathname = usePathname()
   const { hasPermission, loading } = usePermissions()
 
@@ -113,41 +116,108 @@ export default function Sidebar() {
     return pathname === item.href || pathname.startsWith(`${item.href}/`)
   }
 
+  const handleLinkClick = () => {
+    if (onMobileClose) {
+      onMobileClose()
+    }
+  }
+
   return (
-    <motion.aside
-      className={cn(
-        "fixed top-12 right-0 bg-card text-card-foreground border-l h-[calc(100vh-3rem)]",
-        isCollapsed ? "w-16" : "w-64",
-      )}
-      animate={{ width: isCollapsed ? 64 : 256 }}
-    >
-      <div className="flex flex-col h-full text-right">
-        <div className="flex items-center justify-end p-4 border-b">
-          <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </Button>
+    <>
+      {/* Mobile overlay backdrop */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={onMobileClose}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <motion.aside
+        className={cn(
+          "fixed top-12 right-0 bg-card text-card-foreground border-l h-[calc(100vh-3rem)] z-50",
+          "hidden lg:block",
+          collapsed ? "w-16" : "w-64",
+        )}
+        animate={{ width: collapsed ? 64 : 256 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+      >
+        <div className="flex flex-col h-full text-right">
+          <div className="flex items-center justify-end p-4 border-b">
+            <Button variant="ghost" size="icon" onClick={() => onCollapseChange?.(!collapsed)}>
+              {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </Button>
+          </div>
+          <nav className="flex-1 overflow-y-auto">
+            <ul className="py-2">
+              {filteredNavItems.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-start p-2 mx-2 rounded-lg",
+                      isActive(item)
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <span className={cn("mr-2", { "sr-only": collapsed })}>{item.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-        <nav className="flex-1 overflow-y-auto">
-          <ul className="py-2">
-            {filteredNavItems.map((item) => (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center justify-start p-2 mx-2 rounded-lg",
-                    isActive(item)
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
-                  )}
-                >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
-                  <span className={cn("mr-2", { "sr-only": isCollapsed })}>{item.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
-    </motion.aside>
+      </motion.aside>
+
+      {/* Mobile sidebar drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.aside
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween", duration: 0.2 }}
+            className="fixed top-12 right-0 bg-card text-card-foreground border-l h-[calc(100vh-3rem)] w-64 z-50 lg:hidden"
+          >
+            <div className="flex flex-col h-full text-right">
+              <div className="flex items-center justify-between p-4 border-b">
+                <span className="font-semibold">القائمة</span>
+                <Button variant="ghost" size="icon" onClick={onMobileClose}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <nav className="flex-1 overflow-y-auto">
+                <ul className="py-2">
+                  {filteredNavItems.map((item) => (
+                    <li key={item.name}>
+                      <Link
+                        href={item.href}
+                        onClick={handleLinkClick}
+                        className={cn(
+                          "flex items-center justify-start p-2 mx-2 rounded-lg",
+                          isActive(item)
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-[#e0f2fe] hover:text-accent-foreground",
+                        )}
+                      >
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        <span className="mr-2">{item.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

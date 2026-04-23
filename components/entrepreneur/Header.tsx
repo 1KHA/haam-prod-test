@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
-import { User, LogIn } from "lucide-react"
+import { User, LogIn, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -16,16 +16,27 @@ import {
 import { useTheme } from "next-themes"
 import { NotificationBell } from "@/components/NotificationBell"
 
-export default function Header() {
+export default function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { user, signOut } = useAuth()
   const router = useRouter()
   const { setTheme, theme } = useTheme()
 
   return (
-    <header className="bg-background border-b px-4 py-3 flex items-center justify-between mb-4 text-right mt-12">
-      <div className="flex-1">
-        <h1 className="text-xl font-bold">لوحة تحكم رائد الأعمال</h1>
-        <p className="text-sm text-muted-foreground">أدر شركاتك الناشئة وقدم على البرامج المتاحة</p>
+    <header className="bg-background border-b px-4 py-3 flex items-center justify-between mb-4 text-right">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={onMenuToggle}
+          aria-label="فتح القائمة"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold">لوحة تحكم رائد الأعمال</h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">أدر شركاتك الناشئة وقدم على البرامج المتاحة</p>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <NotificationBell />

@@ -378,19 +378,19 @@ export default function EventDetail() {
                   <h3 className="font-semibold text-lg">معلومات التسجيل</h3>
                   
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="font-medium">{event.registrationCount}</div>
                       <div className="text-muted-foreground">عدد المسجلين</div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="font-medium">
                         {event.capacity ? event.capacity : 'غير محدود'}
                       </div>
                       <div className="text-muted-foreground">السعة</div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="font-medium">
                         {event.registrationDeadline 
                           ? formatDate(event.registrationDeadline)
@@ -399,7 +399,7 @@ export default function EventDetail() {
                       <div className="text-muted-foreground">آخر موعد للتسجيل</div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="font-medium">
                         {event.isRegistrationOpen 
                           ? <span className="text-green-600">مفتوح</span> 

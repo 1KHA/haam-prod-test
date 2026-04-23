@@ -229,7 +229,7 @@ export default function EntrepreneurDashboard() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">مرحباً، {user?.name}</h1>
         <Button onClick={() => router.push("/entrepreneur-dashboard/startup/new")}>
           إنشاء شركة ناشئة
@@ -237,7 +237,7 @@ export default function EntrepreneurDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="justify-end">
+        <TabsList className="justify-end w-full overflow-x-auto">
           <TabsTrigger value="events">الفعاليات</TabsTrigger>
           <TabsTrigger value="programs">البرامج</TabsTrigger>
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>

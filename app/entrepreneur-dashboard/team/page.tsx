@@ -190,7 +190,7 @@ export default function TeamPage() {
       requiredRole={UserRole.ENTREPRENEUR}
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold">فريق العمل</h1>
           <PermissionGate
             requirement={{ category: 'users', action: 'add' }}
@@ -214,7 +214,7 @@ export default function TeamPage() {
           </div>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="relative w-64">
             <UserPlus className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

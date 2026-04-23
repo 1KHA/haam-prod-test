@@ -306,7 +306,7 @@ export default function SupportPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <Button 
           onClick={() => {
             setIsCreatingTicket(true)
@@ -322,7 +322,7 @@ export default function SupportPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="justify-end">
+        <TabsList className="justify-end w-full overflow-x-auto">
           <TabsTrigger value="contact">اتصل بنا</TabsTrigger>
           <TabsTrigger value="faq">الأسئلة الشائعة</TabsTrigger>
           <TabsTrigger value="tickets">تذاكر الدعم</TabsTrigger>

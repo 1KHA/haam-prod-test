@@ -123,7 +123,7 @@ export default function FundingPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">إدارة التمويل</h1>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
@@ -157,7 +157,7 @@ export default function FundingPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
@@ -166,7 +166,7 @@ export default function FundingPage() {
                 <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
+                  className="pl-3 pr-9 w-full md:w-[250px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -177,7 +177,7 @@ export default function FundingPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
+            <TabsList className="justify-end w-full overflow-x-auto">
               <TabsTrigger value="rejected">مرفوضة</TabsTrigger>
               <TabsTrigger value="approved">معتمدة</TabsTrigger>
               <TabsTrigger value="pending">قيد المراجعة</TabsTrigger>
@@ -187,7 +187,7 @@ export default function FundingPage() {
             {filteredRequests.map((request) => (
               <div key={request.id} className="border rounded-lg overflow-hidden mt-4">
                 <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className={`px-3 py-1 rounded-full text-xs ${getStatusColor(request.status)}`}>
                       {getStatusText(request.status)}
                     </div>

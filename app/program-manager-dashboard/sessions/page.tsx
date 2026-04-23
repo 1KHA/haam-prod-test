@@ -174,7 +174,7 @@ export default function SessionsPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">جدولة الجلسات</h1>
         <Button className="flex items-center gap-2" onClick={() => setShowNewDialog(true)}>
           <Plus className="h-4 w-4" />
@@ -208,7 +208,7 @@ export default function SessionsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
@@ -217,7 +217,7 @@ export default function SessionsPage() {
                 <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
+                  className="pl-3 pr-9 w-full md:w-[250px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -233,7 +233,7 @@ export default function SessionsPage() {
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="justify-end">
+              <TabsList className="justify-end w-full overflow-x-auto">
                 <TabsTrigger value="cancelled">ملغية</TabsTrigger>
                 <TabsTrigger value="completed">مكتملة</TabsTrigger>
                 <TabsTrigger value="upcoming">قادمة</TabsTrigger>
@@ -245,7 +245,7 @@ export default function SessionsPage() {
               ) : filteredSessions.map((session) => (
                 <div key={session.id} className="border rounded-lg overflow-hidden mt-4">
                   <div className="p-4 border-b">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
                         <div className={`px-3 py-1 rounded-full text-xs ${session.sessionType === "GROUP" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
                           {session.sessionType === "GROUP" ? "جماعية" : "فردية"}

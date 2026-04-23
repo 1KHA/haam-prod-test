@@ -142,7 +142,7 @@ export default function StartupsPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">إدارة الشركات الناشئة</h1>
         <Button 
           className="flex items-center gap-2"
@@ -200,7 +200,7 @@ export default function StartupsPage() {
               <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="بحث..."
-                className="pl-3 pr-9 w-[250px]"
+                className="pl-3 pr-9 w-full md:w-[250px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -212,7 +212,7 @@ export default function StartupsPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
+            <TabsList className="justify-end w-full overflow-x-auto">
               {industries.map(industry => (
                 <TabsTrigger key={industry} value={industry}>{industry}</TabsTrigger>
               ))}
@@ -230,7 +230,7 @@ export default function StartupsPage() {
                       onClick={() => router.push(`/program-manager-dashboard/startups/${startup.id}`)}
                     >
                       <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <h3 className="font-bold text-lg">{startup.name}</h3>
                           <div className={`w-3 h-3 rounded-full ${getStatusColor(startup.status, startup.progress)}`}></div>
                         </div>

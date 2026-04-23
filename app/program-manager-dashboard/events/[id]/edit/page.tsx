@@ -171,7 +171,7 @@ export default function EditEvent() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">تعديل الفعالية</h1>
         <Link href={`/program-manager-dashboard/events/${eventId}`}>
           <Button variant="outline" size="sm" className="flex items-center gap-1">

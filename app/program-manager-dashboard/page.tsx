@@ -98,7 +98,7 @@ export default function ProgramManagerDashboard() {
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
+            <TabsList className="justify-end w-full overflow-x-auto">
               <TabsTrigger value="sessions">الجلسات</TabsTrigger>
               <TabsTrigger value="cohorts">الدفعات</TabsTrigger>
               <TabsTrigger value="overview">نظرة عامة</TabsTrigger>

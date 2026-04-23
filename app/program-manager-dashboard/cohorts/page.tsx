@@ -304,7 +304,7 @@ export default function CohortsPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">إدارة الدفعات</h1>
         <Button 
           variant="default" 
@@ -406,7 +406,7 @@ export default function CohortsPage() {
         
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-full md:w-[150px]">
               <SelectValue placeholder="الحالة" />
             </SelectTrigger>
             <SelectContent>
@@ -418,7 +418,7 @@ export default function CohortsPage() {
           </Select>
           
           <Select value={programFilter} onValueChange={setProgramFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-full md:w-[150px]">
               <SelectValue placeholder="البرنامج" />
             </SelectTrigger>
             <SelectContent>
@@ -471,7 +471,7 @@ export default function CohortsPage() {
       />
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="text-sm text-muted-foreground">
           عرض {cohorts.length} من أصل {statistics?.total || 0} دفعة
         </div>

@@ -248,7 +248,7 @@ export default function CohortMembersPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">أعضاء الدفعة</h1>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
@@ -301,7 +301,7 @@ export default function CohortMembersPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <CardTitle>الشركات في الدفعة ({members.length})</CardTitle>
             <div className="relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -309,7 +309,7 @@ export default function CohortMembersPage() {
                 placeholder="بحث..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-9 w-[250px]"
+                className="pr-9 w-full md:w-[250px]"
               />
             </div>
           </div>

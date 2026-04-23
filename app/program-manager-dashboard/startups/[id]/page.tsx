@@ -182,7 +182,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">{startup.name}</h1>
         <Button 
           variant="outline" 
@@ -267,7 +267,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
       
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="justify-end">
+        <TabsList className="justify-end w-full overflow-x-auto">
           <TabsTrigger value="mentors">المرشدين</TabsTrigger>
           <TabsTrigger value="funding">التمويل</TabsTrigger>
           <TabsTrigger value="team">الفريق</TabsTrigger>
@@ -378,7 +378,7 @@ export default function StartupDetailPage({ params }: { params: { id: string } }
                   startup.milestones.map((milestone) => (
                     <div key={milestone.id} className="border rounded-lg overflow-hidden">
                       <div className="p-4 border-b">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className={`${getMilestoneStatusColor(milestone.status)}`}>
                             {milestone.status === "upcoming" && <Clock className="h-5 w-5" />}
                             {milestone.status === "in_progress" && <Clock className="h-5 w-5" />}

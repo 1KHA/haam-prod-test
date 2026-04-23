@@ -1,6 +1,6 @@
 "use client"
 
-import { User, Search, LogOut } from "lucide-react"
+import { User, Search, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -16,18 +16,27 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { NotificationBell } from "@/components/NotificationBell"
 
-export default function Header() {
+export default function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { setTheme, theme } = useTheme()
   const { signOut } = useAuth()
   const router = useRouter()
 
   return (
     <header className="bg-background border-b h-14 px-4 flex items-center justify-between mb-4 text-right">
-      <div className="flex-1">
-        <h1 className="text-xl font-bold">لوحة تحكم مدير البرنامج</h1>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={onMenuToggle}
+          aria-label="فتح القائمة"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-bold hidden sm:block">لوحة تحكم مدير البرنامج</h1>
       </div>
       <div className="flex items-center gap-4">
-        <div className="relative w-64">
+        <div className="relative w-40 md:w-64">
           <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="بحث..." className="pr-8 w-full" />
         </div>

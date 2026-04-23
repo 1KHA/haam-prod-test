@@ -194,7 +194,7 @@ export default function DiscussionsPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">المناقشات</h1>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
@@ -228,7 +228,7 @@ export default function DiscussionsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
@@ -237,7 +237,7 @@ export default function DiscussionsPage() {
                 <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
+                  className="pl-3 pr-9 w-full md:w-[250px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -248,7 +248,7 @@ export default function DiscussionsPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
+            <TabsList className="justify-end w-full overflow-x-auto">
               <TabsTrigger value="survey">استطلاعات</TabsTrigger>
               <TabsTrigger value="management">إدارة</TabsTrigger>
               <TabsTrigger value="growth">نمو</TabsTrigger>
@@ -260,7 +260,7 @@ export default function DiscussionsPage() {
             {filteredDiscussions.map((discussion) => (
               <div key={discussion.id} className="border rounded-lg overflow-hidden mt-4">
                 <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                       {discussion.isPinned && <Pin className="h-4 w-4 text-red-500" />}
                       <div className={`px-3 py-1 rounded-full text-xs ${getCategoryColor(discussion.category)}`}>
@@ -335,7 +335,7 @@ export default function DiscussionsPage() {
                               </div>
                             </div>
                             <p className="text-sm text-muted-foreground mb-2">{comment.content}</p>
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                               <div className="flex items-center gap-1">
                                 <Heart className="h-3 w-3 text-red-500" />
                                 <span className="text-xs text-muted-foreground">{comment.likes}</span>

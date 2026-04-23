@@ -126,7 +126,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
   
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">تفاصيل الدفعة</h1>
         <div className="flex gap-2">
           <Button 
@@ -212,7 +212,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <span>عدد الشركات</span>
@@ -220,7 +220,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
                   <span className="font-bold">{cohort.stats?.membersCount || 0}</span>
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-blue-500" />
                     <span>عدد المرشدين</span>
@@ -228,7 +228,7 @@ export default function CohortDetailsPage({ params }: { params: { id: string } }
                   <span className="font-bold">{cohort.stats?.mentorsCount || 0}</span>
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                     <span>المدة</span>

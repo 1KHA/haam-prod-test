@@ -217,7 +217,7 @@ export default function CohortApplicationsPage({ params }: { params: { id: strin
   
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">طلبات الانضمام للدفعة</h1>
         <Button 
           variant="outline" 
@@ -279,7 +279,7 @@ export default function CohortApplicationsPage({ params }: { params: { id: strin
       
       {/* Applications Tabs */}
       <Tabs defaultValue="all" value={currentTab} onValueChange={setCurrentTab}>
-        <TabsList className="grid grid-cols-5 mb-4">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 mb-4 w-full">
           <TabsTrigger value="all">الكل ({stats.total})</TabsTrigger>
           <TabsTrigger value="pending">قيد المراجعة ({stats.pending})</TabsTrigger>
           <TabsTrigger value="active">مقبول ({stats.active})</TabsTrigger>

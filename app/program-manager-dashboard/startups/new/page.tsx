@@ -152,7 +152,7 @@ export default function NewStartup() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">إضافة شركة ناشئة جديدة</h1>
         <div className="flex gap-2">
           <Button 

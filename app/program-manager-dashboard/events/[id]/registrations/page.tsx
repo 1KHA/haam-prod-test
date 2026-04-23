@@ -170,7 +170,7 @@ export default function EventRegistrations() {
   return (
     <div className="space-y-6 text-right">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">إدارة التسجيلات</h1>
           {event && (
@@ -246,7 +246,7 @@ export default function EventRegistrations() {
       {/* Search and Actions */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <CardTitle>قائمة المسجلين</CardTitle>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -274,7 +274,8 @@ export default function EventRegistrations() {
               </p>
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">اسم المتقدم</TableHead>
@@ -305,6 +306,7 @@ export default function EventRegistrations() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

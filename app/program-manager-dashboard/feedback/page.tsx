@@ -155,7 +155,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="space-y-6 text-right">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">التقييم والملاحظات</h1>
         <Button className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function FeedbackPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
@@ -198,7 +198,7 @@ export default function FeedbackPage() {
                 <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="بحث..."
-                  className="pl-3 pr-9 w-[250px]"
+                  className="pl-3 pr-9 w-full md:w-[250px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -209,7 +209,7 @@ export default function FeedbackPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="justify-end">
+            <TabsList className="justify-end w-full overflow-x-auto">
               <TabsTrigger value="event">فعاليات</TabsTrigger>
               <TabsTrigger value="program">برامج</TabsTrigger>
               <TabsTrigger value="startup">شركات ناشئة</TabsTrigger>
@@ -220,7 +220,7 @@ export default function FeedbackPage() {
             {filteredFeedback.map((item) => (
               <div key={item.id} className="border rounded-lg overflow-hidden mt-4">
                 <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                       {renderStars(item.rating)}
                       <div className={`px-3 py-1 rounded-full text-xs ${getTypeColor(item.type)}`}>

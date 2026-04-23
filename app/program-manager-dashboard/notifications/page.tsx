@@ -109,7 +109,7 @@ export default function PMNotificationsPage() {
   return (
     <div className="space-y-6 text-right" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">الإشعارات</h1>
           {unreadCount > 0 && (
@@ -136,7 +136,7 @@ export default function PMNotificationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className={cn("cursor-pointer transition-colors", filter === "milestone" && "border-primary")} onClick={() => setFilter(filter === "milestone" ? "all" : "milestone")}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">ردود المهام</p>
                 <p className="text-2xl font-bold">{milestoneCount}</p>
@@ -147,7 +147,7 @@ export default function PMNotificationsPage() {
         </Card>
         <Card className={cn("cursor-pointer transition-colors", filter === "application" && "border-primary")} onClick={() => setFilter(filter === "application" ? "all" : "application")}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">طلبات جديدة</p>
                 <p className="text-2xl font-bold">{applicationCount}</p>
@@ -158,7 +158,7 @@ export default function PMNotificationsPage() {
         </Card>
         <Card className={cn("cursor-pointer transition-colors", filter === "high" && "border-primary")} onClick={() => setFilter(filter === "high" ? "all" : "high")}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">أولوية عالية</p>
                 <p className="text-2xl font-bold">{notifications.filter(n => n.priority === "high" && !n.isRead).length}</p>

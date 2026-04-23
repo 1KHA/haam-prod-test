@@ -1,0 +1,820 @@
+// PostgreSQL schema for Supabase (production / online)
+// Use with: npm run dev:online  or  npm run migrate:online
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole
+  specialization String?
+  approvalStatus String   @default("ACTIVE")  // PENDING_APPROVAL, ACTIVE, SUSPENDED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profile       Profile?
+  startupProfile StartupProfile?
+  mentorProfile MentorProfile?
+  investorProfile InvestorProfile?
+  adminProfile AdminProfile?
+  programManagerProfile ProgramManagerProfile?
+  entrepreneurProfile EntrepreneurProfile?
+  startups      Startup[] // Added relation to startups
+  teamMembers   TeamMember[] // Added relation to team members
+  rolePermissions RolePermission[] // Added relation to role permissions
+  programs      Program[] // Added relation to programs
+  managedCohorts Cohort[] // Added relation to cohorts as manager
+  cohortMentorships CohortMentor[] // Added relation to cohort mentorships
+  invitationsSent Invitation[] @relation("InviterToInvitation")
+  companyMemberships CompanyMember[] @relation("UserToCompanyMember")
+  invitationsReceived Invitation[] @relation("InviteeToInvitation") // Added for clarity, though not strictly required by error
+  milestonesCreated Milestone[] @relation("UserToMilestone")
+  milestoneSubmissions MilestoneSubmission[] @relation("UserToMilestoneSubmission")
+  eventRegistrations EventRegistration[] // Relation to event registrations
+  createdEvents Event[] // Relation to events created by this user
+  mentorSessions MentorSession[] @relation("MentorToSession")
+  createdSessions MentorSession[] @relation("SessionCreator")
+  createdFundings Funding[] @relation("UserToFunding") // Relation to funding created by this user
+  fundingOpportunities FundingOpportunity[] @relation("UserToFundingOpportunity") // Relation to funding opportunities
+  reports Report[] // Relation to reports created by this user
+  sharedReports ReportShare[] @relation("SharerToReportShare") // Reports shared by this user
+  receivedReports ReportShare[] @relation("ReceiverToReportShare") // Reports shared with this user
+  createdNotifications Notification[] @relation("CreatedNotifications") // Notifications created by this user
+  receivedNotifications NotificationRecipient[] // Notifications received by this user
+  createdPayments Payment[] @relation("UserToPayment") // Payments created by this user
+  integrations Integration[] // Integrations connected by this user
+  integrationSyncs IntegrationSync[] // Integration syncs triggered by this user
+  
+  // Email system relations
+  createdEmailTemplates EmailTemplate[] @relation("CreatedEmailTemplates") // Email templates created by this user
+  receivedEmails EmailLog[] @relation("ReceivedEmails") // Emails sent to this user
+  createdScheduledEmails ScheduledEmail[] @relation("CreatedScheduledEmails") // Scheduled emails created by this user
+
+  // Password reset
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+}
+
+model Profile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio           String?
+  avatar        String?
+  phone         String?
+  address       String?
+  city          String?
+  country       String?
+  position      String?   // Added position field
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model StartupProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String
+  industry      String?
+  stage         String?
+  foundingDate  DateTime?
+  website       String?
+  description   String?
+  teamSize      Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model MentorProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertise     String?
+  experience    String?
+  availability  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model InvestorProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String?
+  investmentFocus String?
+  investmentStage String?
+  investmentSize String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+
+model AdminProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department    String?
+  permissions   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ProgramManagerProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programs      String?
+  responsibilities String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model EntrepreneurProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationName String
+  industry      String?
+  focusAreas    String?
+  programLength String?
+  website       String?
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// New model for team members
+model TeamMember {
+  id            String    @id @default(uuid())
+  name          String
+  position      String
+  email         String
+  phone         String
+  avatar        String?
+  department    String
+  creatorId     String
+  creator       User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// New model for startups
+model Startup {
+  id                  String         @id @default(uuid())
+  name                String
+  industry            String
+  stage               String
+  description         String
+  problem             String
+  solution            String
+  targetMarket        String?
+  businessModel       String?
+  competitiveAdvantage String?
+  teamSize            Int            @default(1)
+  fundingNeeds        String?
+  pitchDeckUrl        String?
+  status              String         @default("PENDING") // PENDING, APPROVED, REJECTED
+  creatorId           String
+  creator             User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  cohortMemberships   CohortMember[]
+  invitations         Invitation[] @relation("StartupToInvitation")
+  members             CompanyMember[] @relation("StartupToCompanyMember")
+  mentorSessions      MentorSession[]
+  milestoneSubmissions MilestoneSubmission[] @relation("StartupToMilestoneSubmission")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+}
+
+
+model Milestone {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  dueDate     DateTime
+  status      String   // e.g., "upcoming", "in_progress", "completed", "overdue"
+  progress    Int      // 0-100
+  priority    String   // "high", "medium", "low"
+  category    String   // e.g., "product", "business", "funding", "team", "other"
+  cohortId    String
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  createdBy   String
+  creator     User     @relation("UserToMilestone", fields: [createdBy], references: [id], onDelete: Cascade)
+  submissions MilestoneSubmission[] @relation("MilestoneToSubmission")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MilestoneSubmission {
+  id               String   @id @default(uuid())
+  milestoneId      String
+  milestone        Milestone @relation("MilestoneToSubmission", fields: [milestoneId], references: [id], onDelete: Cascade)
+  startupId        String
+  startup          Startup  @relation("StartupToMilestoneSubmission", fields: [startupId], references: [id], onDelete: Cascade)
+  submittedBy      String
+  submitter        User     @relation("UserToMilestoneSubmission", fields: [submittedBy], references: [id], onDelete: Cascade)
+  message          String?
+  status           String   @default("SUBMITTED") // SUBMITTED, REOPENED, SUPERSEDED
+  submissionNumber Int      @default(1)
+  attachments      MilestoneSubmissionAttachment[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([milestoneId, startupId])
+  @@unique([milestoneId, startupId, submissionNumber])
+}
+
+model MilestoneSubmissionAttachment {
+  id           String   @id @default(uuid())
+  submissionId String
+  submission   MilestoneSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileUrl      String
+  fileType     String?
+  fileSize     Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+// New models for roles and permissions
+model Role {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  description   String?
+  roleEnum      UserRole? // Links Role table to UserRole enum for direct lookup
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  permissions   RolePermission[]
+}
+
+model Permission {
+  id            String    @id @default(uuid())
+  category      String    // e.g., dashboard, users, programs, etc.
+  action        String    // e.g., view, edit, add, delete
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  roles         RolePermission[]
+
+  @@unique([category, action])
+}
+
+model RolePermission {
+  id            String    @id @default(uuid())
+  roleId        String
+  role          Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId  String
+  permission    Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  userId        String?   // Optional: for user-specific permissions
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([roleId, permissionId, userId])
+}
+
+enum UserRole {
+  ADMIN
+  PROGRAM_MANAGER
+  MENTOR
+  INVESTOR
+  ENTREPRENEUR
+}
+
+enum InvitationType {
+  ENTREPRENEUR
+  COMPANY
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum MemberStatus {
+  ACTIVE
+  INVITED
+  REJECTED
+}
+
+// Models for programs and cohorts
+model Program {
+  id                  String    @id @default(uuid())
+  name                String
+  description         String?
+  startDate           DateTime?
+  endDate             DateTime?
+  location            String?
+  type                String    // e.g., Accelerator, Incubator, Workshop
+  status              String    @default("DRAFT") // DRAFT, ACTIVE, COMPLETED, CANCELLED
+  capacity            Int?
+  applicationDeadline DateTime?
+  requirements        String?
+  benefits            String?
+  creatorId           String
+  creator             User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  cohorts             Cohort[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Cohort {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String         @default("UPCOMING") // UPCOMING, ACTIVE, COMPLETED
+  capacity    Int?
+  programId   String
+  program     Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  managerId   String
+  manager     User           @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  members        CohortMember[]
+  mentors        CohortMentor[]
+  milestones     Milestone[]
+  mentorSessions MentorSession[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model CohortMember {
+  id        String   @id @default(uuid())
+  cohortId  String
+  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  startupId String
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE") // ACTIVE, GRADUATED, DROPPED
+  joinDate  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cohortId, startupId])
+}
+
+model CohortMentor {
+  id        String   @id @default(uuid())
+  cohortId  String
+  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String?  // e.g., Lead Mentor, Technical Mentor, Business Mentor
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cohortId, userId])
+}
+
+model Invitation {
+  id           String           @id @default(uuid())
+  type         InvitationType
+  inviterId    String
+  inviter      User             @relation("InviterToInvitation", fields: [inviterId], references: [id])
+  inviteeEmail String
+  invitee      User?            @relation("InviteeToInvitation", fields: [inviteeEmail], references: [email]) // Link to User model if invitee exists
+  startupId    String?
+  startup      Startup?         @relation("StartupToInvitation", fields: [startupId], references: [id])
+  status       InvitationStatus  @default(PENDING)
+  respondedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  companyMember CompanyMember? // This is the back-relation, no fields/references here
+}
+
+model CompanyMember {
+  id           String      @id @default(uuid())
+  startupId    String
+  startup      Startup     @relation("StartupToCompanyMember", fields: [startupId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation("UserToCompanyMember", fields: [userId], references: [id], onDelete: Cascade)
+  role         String      @default("Member")
+  status       MemberStatus @default(INVITED)
+  invitationId String?     @unique // Ensure uniqueness for one-to-one relation
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
+  joinedAt     DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([startupId, userId])
+}
+
+model Event {
+  id                  String            @id @default(uuid())
+  title               String
+  description         String
+  eventType           String            // e.g., "workshop", "conference", "hackathon", etc.
+  startDate           DateTime
+  endDate             DateTime
+  location            String
+  capacity            Int?
+  status              String            @default("draft") // "draft", "published", "cancelled", "completed"
+  organizer           String
+  organizerId         String?           // Optional reference to the organizer's ID (could be admin, program manager, etc.)
+  registrationDeadline DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  registrations       EventRegistration[]
+  creatorId           String?
+  creator             User?             @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+}
+
+model EventRegistration {
+  id              String    @id @default(uuid())
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          String    @default("confirmed") // "confirmed", "cancelled", "waitlist"
+  notes           String?   @default("")
+  registeredBy    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([eventId, userId])
+}
+
+// Funding models
+model Funding {
+  id              String    @id @default(uuid())
+  title           String
+  amount          String
+  startupId       String
+  startupName     String
+  status          String    // "مكتمل", "قيد المراجعة", "مرفوض"
+  date            DateTime
+  fundingType     String
+  investorName    String
+  description     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       String?
+  creator         User?     @relation("UserToFunding", fields: [createdBy], references: [id], onDelete: SetNull)
+}
+
+model FundingOpportunity {
+  id              String    @id @default(uuid())
+  title           String
+  description     String
+  fundingType     String    // "GRANT", "INVESTMENT", "LOAN"
+  amount          Int?
+  minAmount       Int?
+  maxAmount       Int?
+  currency        String    @default("SAR")
+  deadline        DateTime?
+  requirements    String?
+  applicationLink String?
+  contactEmail    String?
+  sectors         String?  // Comma-separated list of sectors
+  entrepreneurId  String?
+  entrepreneur    User?     @relation("UserToFundingOpportunity", fields: [entrepreneurId], references: [id], onDelete: SetNull)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Payment model for system-wide payment functionality
+model Payment {
+  id              String    @id @default(uuid())
+  referenceNumber String    @unique
+  paymentDate     DateTime
+  amount          Float
+  currency        String    @default("SAR")
+  status          PaymentStatus
+  type            PaymentType
+  description     String
+  payerName       String
+  payerEmail      String?
+  paymentMethod   String
+  metadata        Json?     // Flexible JSON for additional data
+  history         Json?     // Array of payment status change history
+  creatorId       String
+  creator         User      @relation("UserToPayment", fields: [creatorId], references: [id], onDelete: Cascade)
+  relatedDocuments Json?    // Array of related document metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum PaymentStatus {
+  COMPLETED
+  PENDING
+  FAILED
+  REJECTED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentType {
+  PROGRAM_FEE
+  MENTORSHIP_FEE
+  EVENT_REGISTRATION
+  SERVICE_FEE
+}
+
+// Report model for system reports
+model Report {
+  id              String       @id @default(uuid())
+  title           String
+  description     String
+  category        String    // "أداء البرامج", "التمويل", "الشركات الناشئة", "المستخدمين", "الفعاليات", "تقني", "التوجيه", "مالي"
+  format          String    // "PDF", "XLSX", "PPTX", "CSV"
+  status          String    // "published", "draft", "scheduled", "archived"
+  publishDate     DateTime?
+  scheduledTime   String?
+  fileUrl         String?
+  filePath        String?
+  fileSize        Int?
+  downloadCount   Int       @default(0)
+  printCount      Int       @default(0)
+  viewCount       Int       @default(0)
+  shareCount      Int       @default(0)
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  shares          ReportShare[] // Relation to shared reports
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Model for report sharing
+model ReportShare {
+  id              String    @id @default(uuid())
+  reportId        String
+  report          Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  sharedById      String
+  sharedBy        User      @relation("SharerToReportShare", fields: [sharedById], references: [id], onDelete: Cascade)
+  sharedWithId    String
+  sharedWith      User      @relation("ReceiverToReportShare", fields: [sharedWithId], references: [id], onDelete: Cascade)
+  message         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([reportId])
+  @@index([sharedById])
+  @@index([sharedWithId])
+}
+
+// Model for system notifications
+model Notification {
+  id              String        @id @default(uuid())
+  title           String        // Notification title (Arabic)
+  message         String        // Notification message/content (Arabic)
+  titleEn         String?       // Notification title (English)
+  messageEn       String?       // Notification message/content (English)
+  type            String?       // Type of notification (e.g., "system", "application", "reminder", "security")
+  priority        String        @default("medium") // Priority level: "low", "medium", "high"
+  status          String        @default("sent") // Status: "sent", "scheduled", "draft"
+  scheduledFor    DateTime?     // When to deliver scheduled notifications
+  sendEmail       Boolean       @default(false) // Whether to also send as email
+  sendPush        Boolean       @default(false) // Whether to also send as push notification
+  emailSent       Boolean       @default(false) // Track if email was actually sent
+  emailLogId      String?       // Link to EmailLog
+  emailLog        EmailLog?     @relation(fields: [emailLogId], references: [id])
+  actionUrl       String?       // Deep link URL for action button
+  actionLabel     String?       // Action button label (Arabic)
+  actionLabelEn   String?       // Action button label (English)
+  metadata        String?       // JSON string for additional data
+  createdAt       DateTime      @default(now()) // Creation timestamp
+  updatedAt       DateTime      @updatedAt // Last update timestamp
+  createdById     String        // User who created the notification
+  createdBy       User          @relation("CreatedNotifications", fields: [createdById], references: [id], onDelete: Cascade)
+  recipients      NotificationRecipient[] // Link to recipients
+
+  // Indexes for performance
+  @@index([type])
+  @@index([priority])
+  @@index([createdAt])
+  @@index([emailSent])
+}
+
+// Junction table for notification recipients
+model NotificationRecipient {
+  id              String        @id @default(uuid())
+  notificationId  String        // Notification ID
+  notification    Notification  @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId          String        // Recipient user ID
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isRead          Boolean       @default(false) // Whether the user has read this notification
+  readAt          DateTime?     // When the notification was read
+  deliveredAt     DateTime?     // When the notification was delivered
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([notificationId, userId]) // Each user can only have one recipient record per notification
+  @@index([userId]) // Index for faster queries by user
+  @@index([notificationId]) // Index for faster queries by notification
+}
+
+// ============================================================================
+// EMAIL SYSTEM MODELS
+// ============================================================================
+
+// SMTP Configuration (Single record, system-wide)
+model SmtpConfig {
+  id            String   @id @default(uuid())
+  host          String   // smtp.sendgrid.net, smtp.gmail.com, etc.
+  port          Int      // 587, 465, 25
+  secure        Boolean  @default(true) // TLS/SSL
+  username      String   // API key or username
+  password      String   // Encrypted password/API key
+  fromEmail     String   // noreply@haam.com
+  fromName      String   @default("HAAM Platform")
+  isActive      Boolean  @default(false)
+  testMode      Boolean  @default(true) // Don't send real emails in test mode
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Email Templates (Editable via admin UI)
+model EmailTemplate {
+  id                String   @id @default(uuid())
+  name              String   @unique // "welcome_user", "milestone_due", etc.
+  description       String?  // Human-readable description
+  subject           String   // Email subject line with {{variables}}
+  subjectEn         String?  // English subject
+  htmlBody          String   // HTML template with {{variables}}
+  htmlBodyEn        String?  // English HTML template
+  textBody          String?  // Plain text fallback
+  textBodyEn        String?  // English plain text fallback
+  scenarioType      String?  // "user_created", "milestone_created", etc.
+  isActive          Boolean  @default(true)
+  allowCustomEdit   Boolean  @default(true) // Can admin modify content?
+  category          String   // "system", "milestone", "event", "application"
+  variables         String?  // JSON array of available variables
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdById       String?
+  createdBy         User?    @relation("CreatedEmailTemplates", fields: [createdById], references: [id])
+  
+  // Relations
+  scenarioSettings  EmailScenarioSettings[]
+  emailLogs         EmailLog[]
+  scheduledEmails   ScheduledEmail[]
+  
+  @@index([scenarioType])
+  @@index([category])
+  @@index([isActive])
+}
+
+// Email Notification Settings per Scenario
+model EmailScenarioSettings {
+  id                String   @id @default(uuid())
+  scenarioType      String   @unique // "user_created", "milestone_created", etc.
+  isEnabled         Boolean  @default(true) // Master on/off switch
+  templateId        String?  // Which template to use (optional)
+  template          EmailTemplate? @relation(fields: [templateId], references: [id])
+  sendToRoles       String?  // JSON array ["ADMIN", "PROGRAM_MANAGER"]
+  delayMinutes      Int      @default(0) // Delay before sending
+  digestMode        String   @default("immediate") // "immediate", "hourly", "daily"
+  requireApproval   Boolean  @default(false) // For bulk emails
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Email Log (Audit trail)
+model EmailLog {
+  id              String   @id @default(uuid())
+  recipientEmail  String
+  recipientId     String?  // User ID if registered
+  recipient       User?    @relation("ReceivedEmails", fields: [recipientId], references: [id])
+  subject         String
+  templateId      String?
+  template        EmailTemplate? @relation(fields: [templateId], references: [id])
+  scenarioType    String?  // Which triggered this
+  status          String   @default("pending") // "pending", "sent", "failed", "bounced", "opened"
+  errorMessage    String?
+  sentAt          DateTime?
+  openedAt        DateTime?
+  clickedAt       DateTime?
+  ipAddress       String?
+  metadata        String?  // JSON with variables used
+  createdAt       DateTime @default(now())
+  
+  // Relation to Notification
+  notification    Notification[]
+  
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([createdAt])
+  @@index([scenarioType])
+}
+
+// Scheduled Emails (For marketing/campaigns)
+model ScheduledEmail {
+  id              String   @id @default(uuid())
+  name            String   // Campaign name
+  subject         String
+  subjectEn       String?
+  htmlBody        String
+  htmlBodyEn      String?
+  templateId      String?  // Optional: use template instead of custom body
+  template        EmailTemplate? @relation(fields: [templateId], references: [id])
+  recipientFilter String?  // JSON filter criteria
+  recipientList   String?  // JSON array of specific emails
+  scheduledFor    DateTime
+  status          String   @default("scheduled") // "scheduled", "sending", "completed", "cancelled", "paused"
+  sentCount       Int      @default(0)
+  failedCount     Int      @default(0)
+  totalCount      Int      @default(0)
+  errorLog        String?  // JSON array of failed sends
+  createdById     String
+  createdBy       User     @relation("CreatedScheduledEmails", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+// Model for system integrations (e.g., Stripe, Google Calendar, Slack, etc.)
+model Integration {
+  id                String            @id @default(uuid())
+  name              String            // Name of the integration (e.g., "Stripe")
+  description       String?           // Description of the integration
+  category          String            // Category (e.g., "المدفوعات", "الجدولة", "التواصل")
+  provider          String            // Provider identifier (e.g., "stripe", "google", "slack")
+  icon              String?           // Icon identifier for UI
+  status            String            @default("غير متصل") // "متصل", "غير متصل", "معلق"
+  apiKey            String?           // Encrypted API key (should be securely stored)
+  webhookUrl        String?           // Webhook URL for this integration
+  webhookSecret     String?           // Secret for validating incoming webhooks
+  oauthClientId     String?           // OAuth client ID if using OAuth
+  oauthClientSecret String?           // OAuth client secret if using OAuth
+  oauthRefreshToken String?           // OAuth refresh token
+  oauthAccessToken  String?           // OAuth access token
+  oauthTokenExpiry  DateTime?         // OAuth token expiry date
+  syncFrequency     String?           // How often to sync (e.g., "hourly", "daily", "weekly")
+  lastSync          DateTime?         // Last time the integration was synced
+  dataAccess        String?           // JSON string of data access permissions
+  settings          String?           // JSON string of integration-specific settings
+  connectedById     String?           // User who connected this integration
+  connectedBy       User?             @relation(fields: [connectedById], references: [id], onDelete: SetNull)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  syncs             IntegrationSync[] // Relation to sync history
+  webhooks          IntegrationWebhook[] // Relation to webhook logs
+}
+
+// Model for mentor sessions
+model MentorSession {
+  id          String   @id @default(uuid())
+  startupId   String
+  startup     Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+  mentorId    String
+  mentor      User     @relation("MentorToSession", fields: [mentorId], references: [id], onDelete: Cascade)
+  cohortId    String?
+  cohort      Cohort?  @relation(fields: [cohortId], references: [id])
+  topic       String
+  sessionType String   @default("INDIVIDUAL") // "INDIVIDUAL" or "GROUP"
+  status      String   @default("scheduled")  // "scheduled", "completed", "cancelled"
+  date        DateTime
+  duration    Int      @default(60)           // minutes
+  location    String?
+  notes       String?
+  createdById String
+  createdBy   User     @relation("SessionCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Model for integration sync history
+model IntegrationSync {
+  id              String      @id @default(uuid())
+  integrationId   String
+  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  status          String      // "completed", "failed", "in_progress"
+  startTime       DateTime
+  endTime         DateTime?
+  itemsProcessed  Int         @default(0)
+  itemsCreated    Int         @default(0)
+  itemsUpdated    Int         @default(0)
+  itemsDeleted    Int         @default(0)
+  itemsFailed     Int         @default(0)
+  error           String?     // Error message if sync failed
+  triggeredById   String?     // User who triggered the sync, null for automatic syncs
+  triggeredBy     User?       @relation(fields: [triggeredById], references: [id], onDelete: SetNull)
+  createdAt       DateTime    @default(now())
+}
+
+// Model for integration webhook logs
+model IntegrationWebhook {
+  id              String      @id @default(uuid())
+  integrationId   String
+  integration     Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  provider        String      // Provider identifier (e.g., "stripe", "github")
+  eventType       String      // Event type (e.g., "payment.succeeded", "push")
+  status          String      // "success", "error", "pending"
+  payload         String      // JSON string of the webhook payload
+  processedAt     DateTime?   // When the webhook was processed
+  error           String?     // Error message if processing failed
+  createdAt       DateTime    @default(now())
+}

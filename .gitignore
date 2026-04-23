@@ -29,6 +29,8 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.local
+.env.online
 
 # vercel
 .vercel
@@ -56,3 +58,7 @@ seucrefunc/
 emailtasks/
 tests/
 smtp-gmail.md
+
+
+.env.server
+.env.online

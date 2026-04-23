@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "dotenv -e .env.local -- next dev",
+    "dev:online": "dotenv -e .env.online -- next dev",
+    "build": "dotenv -e .env.local -- next build",
+    "build:online": "dotenv -e .env.online -- next build",
     "start": "next start",
     "lint": "next lint",
     "start-app": "node run.js",
     "db:seed": "prisma db seed",
     "prisma:generate": "prisma generate",
-    "seed:roles": "node scripts/seed-roles.js"
+    "prisma:generate:online": "dotenv -e .env.online -- prisma generate --schema=prisma/schema.prod.prisma",
+    "migrate:local": "dotenv -e .env.local -- prisma migrate dev --schema=prisma/schema.prisma",
+    "migrate:online": "dotenv -e .env.online -- prisma migrate deploy --schema=prisma/schema.prod.prisma",
+    "seed:roles": "node scripts/seed-roles.js",
+    "seed:roles:online": "dotenv -e .env.online -- node scripts/seed-roles.js"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
@@ -57,6 +63,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.16",
     "node-fetch": "^3.3.2",

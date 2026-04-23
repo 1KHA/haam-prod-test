@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserRole, isAuthenticated } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import {
-
-export const dynamic = 'force-dynamic';  MilestoneError,
+  MilestoneError,
   canManageCohortMilestones,
   updateSubmissionRecord,
 } from '@/lib/milestones';
+
+export const dynamic = 'force-dynamic';
 
 async function ensureManagerAccess(
   milestoneId: string,

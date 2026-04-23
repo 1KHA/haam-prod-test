@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkPermission } from '@/lib/permissions';
 import {
-
-export const dynamic = 'force-dynamic';  buildMilestoneStats,
+  buildMilestoneStats,
   createMilestoneRecord,
   listMilestoneCohorts,
   listMilestones,
 } from '@/lib/milestones';
+
+export const dynamic = 'force-dynamic';
 
 function matchesSearch(value: string, query: string) {
   return value.toLowerCase().includes(query.toLowerCase());

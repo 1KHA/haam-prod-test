@@ -11,6 +11,7 @@ import { notifyMilestoneCreated } from '@/lib/services/notification-events';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 function matchesSearch(value: string, query: string) {
   return value.toLowerCase().includes(query.toLowerCase());
 }

@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { format } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
 // GET handler to fetch available backups
 export async function GET(request: NextRequest) {
   try {

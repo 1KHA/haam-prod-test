@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // GET - Get single template
 export async function GET(
   request: NextRequest,

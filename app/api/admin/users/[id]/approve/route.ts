@@ -4,6 +4,7 @@ import { checkPermission } from '@/lib/permissions';
 import { notifyAccountApproved, notifyAccountSuspended } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const permissionCheck = await checkPermission(req, { category: 'users', action: 'edit' });
   if (!permissionCheck.authorized) {

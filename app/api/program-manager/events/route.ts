@@ -4,6 +4,7 @@ import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
 import { notifyEventCreated, notifyEventCancelled } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // GET /api/program-manager/events - Get all events accessible to program manager
 export async function GET(request: NextRequest) {
   try {

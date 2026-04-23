@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 // PUT /api/notifications/read-all - Mark all notifications as read for current user
 export async function PUT(request: NextRequest) {
   try {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, hashPassword } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 // POST /api/company/[id]/create-member
 // Creates a new user account and associates them with the startup
 export async function POST(

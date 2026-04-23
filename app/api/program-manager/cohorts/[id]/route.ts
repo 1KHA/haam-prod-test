@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 // GET /api/program-manager/cohorts/[id] - Get a specific cohort by ID
 export async function GET(
   request: NextRequest,

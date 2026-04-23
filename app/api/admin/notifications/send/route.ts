@@ -4,6 +4,7 @@ import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 import { NotificationService } from '@/lib/services/notification-service';
 
+export const dynamic = 'force-dynamic';
 // POST handler to send notifications
 export async function POST(request: NextRequest) {
   try {

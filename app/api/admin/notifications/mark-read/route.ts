@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
 // POST handler to mark notifications as read
 export async function POST(request: NextRequest) {
   try {

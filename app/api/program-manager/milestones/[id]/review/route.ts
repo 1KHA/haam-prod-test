@@ -11,6 +11,7 @@ import { isAuthenticated, UserRole } from '@/lib/auth';
 import { notifyMilestoneResponseReviewed } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }

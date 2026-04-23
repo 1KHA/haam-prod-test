@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 /**
  * POST /api/admin/email/send-custom
  * Send custom HTML email to users

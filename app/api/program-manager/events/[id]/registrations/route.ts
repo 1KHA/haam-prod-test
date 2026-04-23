@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
 import { notifyEventRegistrationRemoved } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 // GET /api/program-manager/events/[id]/registrations - Get event registrations
 export async function GET(
   request: NextRequest,

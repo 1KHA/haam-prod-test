@@ -4,6 +4,7 @@ import { checkPermission } from '@/lib/permissions';
 import { notifyProgramCreated } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/programs - Get all programs with pagination and filtering
 export async function GET(request: NextRequest) {
   try {

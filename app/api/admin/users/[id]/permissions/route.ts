@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { emitPermissionsRefresh } from '@/lib/sse-helpers';
 
+export const dynamic = 'force-dynamic';
 interface PermissionSummary {
   id: string;
   category: string;

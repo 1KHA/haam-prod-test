@@ -24,6 +24,7 @@ import { prisma } from '@/lib/prisma';
 import { notifyMilestoneDueSoon, notifyEventReminder } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // Run every hour
 export async function GET(request: NextRequest) {
   try {

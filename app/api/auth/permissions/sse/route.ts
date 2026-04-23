@@ -3,6 +3,7 @@ import { isAuthenticated, verifyToken } from '@/lib/auth';
 import { getUserPermissions } from '@/lib/permissions';
 import { registerSseController, unregisterSseController } from '@/lib/sse-helpers';
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     // Get auth either from header or URL param

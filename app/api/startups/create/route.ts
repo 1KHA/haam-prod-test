@@ -7,6 +7,7 @@ import { mkdir } from 'fs/promises';
 import { notifyStartupCreated } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // Define the allowed file types
 const ALLOWED_FILE_TYPES = [
   'application/pdf',

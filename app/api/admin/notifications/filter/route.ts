@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
 // GET handler to filter notifications
 export async function GET(request: NextRequest) {
   try {

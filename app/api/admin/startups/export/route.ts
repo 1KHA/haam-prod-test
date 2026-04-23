@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 
+export const dynamic = 'force-dynamic';
 // Define Startup interface based on our schema
 interface Startup {
   id: string;

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/reports/download - Download a report file
 export async function GET(req: NextRequest) {
   try {

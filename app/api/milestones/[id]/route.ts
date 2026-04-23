@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserRole, isAuthenticated } from '@/lib/auth';
 import { canManageCohortMilestones, canViewStartupMilestones, getMilestoneDetail, listStartupMilestones } from '@/lib/milestones';
 
+export const dynamic = 'force-dynamic';
 // GET /api/milestones/[id]?startupId=...
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {

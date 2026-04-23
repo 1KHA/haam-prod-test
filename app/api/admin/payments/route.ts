@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
 // Define Payment interface to avoid TypeScript errors
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Payment {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/events/export - Export events as CSV
 export async function GET(request: NextRequest) {
   try {

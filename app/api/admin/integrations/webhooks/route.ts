@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
 /**
  * This route handles incoming webhooks from various integration providers.
  * It doesn't require authentication because external services call this endpoint.

@@ -5,6 +5,7 @@ import { notifyStartupApproved } from '@/lib/services/notification-events';
 import { isAuthenticated } from '@/lib/auth';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/startups - Get all startups with pagination and filtering
 export async function GET(request: NextRequest) {
   try {

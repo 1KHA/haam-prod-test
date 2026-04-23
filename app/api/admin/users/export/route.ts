@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { createExcelResponse } from '@/lib/csv-utils';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/users/export - Export users data
 export async function GET(req: NextRequest) {
   try {

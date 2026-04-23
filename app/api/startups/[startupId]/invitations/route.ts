@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { InvitationType, InvitationStatus } from '@prisma/client';
 import { sendEmail, generateInvitationEmailHtml } from '@/lib/email'; // Import email functions
 
+export const dynamic = 'force-dynamic';
 export async function POST(
   request: NextRequest,
   { params }: { params: { startupId: string } }

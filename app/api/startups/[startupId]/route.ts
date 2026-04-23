@@ -5,6 +5,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { mkdir } from 'fs/promises';
 
+export const dynamic = 'force-dynamic';
 // Define the allowed file types
 const ALLOWED_FILE_TYPES = [
   'application/pdf',

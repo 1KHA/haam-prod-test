@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkPermission } from '@/lib/permissions';
 
+export const dynamic = 'force-dynamic';
 // POST handler to restore from a backup
 // System restore is not yet implemented
 export async function POST(request: NextRequest) {

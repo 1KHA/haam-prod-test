@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkPermission } from '@/lib/permissions';
 import { getDelimiterFromRequest } from '@/lib/csv-utils';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/notifications/export - Export notifications data
 export async function GET(req: NextRequest) {
   try {

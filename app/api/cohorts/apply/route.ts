@@ -4,6 +4,7 @@ import { isAuthenticated, UserRole } from '@/lib/auth';
 import { notifyApplicationSubmitted } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // POST /api/cohorts/apply - Apply to a cohort with a startup
 export async function POST(request: NextRequest) {
   try {

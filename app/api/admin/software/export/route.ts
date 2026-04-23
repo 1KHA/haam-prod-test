@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkPermission } from '@/lib/permissions';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/software/export - Export software/integrations data
 export async function GET(req: NextRequest) {
   try {

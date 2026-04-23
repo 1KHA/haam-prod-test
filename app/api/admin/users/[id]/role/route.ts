@@ -4,6 +4,7 @@ import { checkPermission } from '@/lib/permissions';
 import { UserRole } from '@/lib/auth';
 import { emitPermissionsRefresh } from '@/lib/sse-helpers';
 
+export const dynamic = 'force-dynamic';
 // PUT /api/admin/users/[id]/role - Update a user's role
 export async function PUT(
   request: NextRequest,

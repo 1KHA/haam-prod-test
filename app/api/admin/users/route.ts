@@ -5,6 +5,7 @@ import { checkPermission } from '@/lib/permissions';
 import { hashPassword } from '@/lib/auth';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 function normalizeApprovalStatus(status?: string | null) {
   if (status === 'PENDING') {
     return 'PENDING_APPROVAL';

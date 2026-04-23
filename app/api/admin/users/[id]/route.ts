@@ -5,6 +5,7 @@ import { UserRole } from '@/lib/auth';
 import { checkPermission } from '@/lib/permissions';
 import { notifyPasswordChanged, notifyUserUpdated, notifyUserDeleted } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/users/[id] - Get a single user by ID
 export async function GET(
   request: NextRequest,

@@ -4,6 +4,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { notifyApplicationStatusChanged, notifyCohortMemberAdded } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // PUT /api/program-manager/applications/[id]
 // Update application (CohortMember) status for a startup
 export async function PUT(

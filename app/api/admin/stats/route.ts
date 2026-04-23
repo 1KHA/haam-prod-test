@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/stats - Get admin dashboard statistics
 export async function GET(request: NextRequest) {
   try {

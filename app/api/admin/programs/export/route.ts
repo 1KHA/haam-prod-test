@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/programs/export - Export programs data
 export async function GET(request: NextRequest) {
   try {

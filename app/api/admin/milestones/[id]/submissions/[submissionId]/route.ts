@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { MilestoneError, updateSubmissionRecord } from '@/lib/milestones';
 
+export const dynamic = 'force-dynamic';
 async function ensureAdminAccess(
   request: NextRequest,
   milestoneId: string,

@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic';
 // Define the funding item interface
 export interface FundingItem {
   id: string

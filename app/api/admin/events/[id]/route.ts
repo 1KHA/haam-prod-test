@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole, hasRole } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/events/[id] - Get event by ID
 export async function GET(
   request: NextRequest,

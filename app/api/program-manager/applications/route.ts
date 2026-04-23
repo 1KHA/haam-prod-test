@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
-// Note: PUT handler moved to [id]/route.ts
+
+export const dynamic = 'force-dynamic';// Note: PUT handler moved to [id]/route.ts
 
 // GET /api/program-manager/applications
 // Get all applications across all cohorts

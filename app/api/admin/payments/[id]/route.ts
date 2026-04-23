@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
 // GET handler to fetch a specific payment by ID
 export async function GET(
   request: NextRequest,

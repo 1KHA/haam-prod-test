@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 // GET /api/mentor - Get list of all mentors (available to authenticated users)
 export async function GET(request: NextRequest) {
   try {

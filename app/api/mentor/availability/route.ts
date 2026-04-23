@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { UserRole } from "@/lib/auth"
 
+export const dynamic = 'force-dynamic';
 // Define the TimeSlot model
 interface TimeSlot {
   id: string

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkPermission } from '@/lib/permissions';
 import {
-  buildMilestoneStats,
+
+export const dynamic = 'force-dynamic';  buildMilestoneStats,
   createMilestoneRecord,
   listMilestoneCohorts,
   listMilestones,

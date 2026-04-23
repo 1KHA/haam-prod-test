@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     // Get authorization header

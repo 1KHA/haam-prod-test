@@ -14,6 +14,7 @@ import { notifyMilestoneResponseSubmitted } from '@/lib/services/notification-ev
 import { EmailService } from '@/lib/services/email-service';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 async function ensureEntrepreneurStartupAccess(milestoneId: string, startupId: string, authHeader?: string | null) {

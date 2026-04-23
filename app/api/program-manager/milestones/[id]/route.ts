@@ -3,6 +3,7 @@ import { UserRole, isAuthenticated } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { canManageCohortMilestones, getMilestoneDetail, updateMilestoneRecord } from '@/lib/milestones';
 
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const authHeader = request.headers.get('authorization');

@@ -5,6 +5,7 @@ import { hasPermission } from '@/lib/permissions'
 // Importing from the main payments API to reuse the data
 import { paymentsData, PaymentItem } from '../route'
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/financing/payments/[id] - Get a single payment entry
 export async function GET(
   request: NextRequest,

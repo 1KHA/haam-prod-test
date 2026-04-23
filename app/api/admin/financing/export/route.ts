@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils'
 
+export const dynamic = 'force-dynamic';
 // Define types for our data
 interface FundingItem {
   id: string;

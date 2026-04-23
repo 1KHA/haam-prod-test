@@ -5,6 +5,7 @@ import { join } from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 import { randomUUID } from 'crypto';
 
+export const dynamic = 'force-dynamic';
 // Maximum file size (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 

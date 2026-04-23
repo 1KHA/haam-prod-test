@@ -3,6 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils';
 
+export const dynamic = 'force-dynamic';
 /**
  * GET /api/admin/security/logs/export
  * Export security logs as CSV based on filter criteria or selected IDs

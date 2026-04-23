@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { notifyApplicationStatusChanged, notifyCohortMemberAdded } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 // GET /api/program-manager/cohorts/[id]/applications - Get all applications for a cohort
 export async function GET(
   request: NextRequest,

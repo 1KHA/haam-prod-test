@@ -4,6 +4,7 @@ import { checkPermission } from '@/lib/permissions';
 import crypto from 'crypto';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // Encryption helpers for SMTP passwords
 const ENCRYPTION_KEY = process.env.JWT_SECRET || 'default-key-32-chars-long!!!!!'; // Must be 32 chars for AES-256
 const IV_LENGTH = 16;

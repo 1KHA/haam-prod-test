@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { getUserPermissions } from '@/lib/permissions';
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     // Get auth header

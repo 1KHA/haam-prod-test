@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
 import { notifyStartupApproved } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/startups/[startupId] - Get a specific startup by ID
 export async function GET(
   request: NextRequest,

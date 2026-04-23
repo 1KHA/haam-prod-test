@@ -4,6 +4,7 @@ import { comparePassword, generateToken, UserRole } from '@/lib/auth';
 import { notifyLoginFailed } from '@/lib/services/notification-events';
 import { EmailService } from '@/lib/services/email-service';
 
+export const dynamic = 'force-dynamic';
 // In-memory store for failed login attempts (use Redis in production)
 const failedAttempts = new Map<string, { count: number; lastAttempt: Date; notified: boolean }>();
 const MAX_ATTEMPTS = 3;

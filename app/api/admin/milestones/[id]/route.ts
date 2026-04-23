@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { getMilestoneDetail, updateMilestoneRecord } from '@/lib/milestones';
 
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const permissionCheck = await checkPermission(request, { category: 'startups', action: 'view' });

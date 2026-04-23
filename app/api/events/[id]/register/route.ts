@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
 import { notifyEventRegistration, notifyEventWaitlisted, notifyEventPromotedFromWaitlist, notifyEventRegistrationRemoved } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 // GET /api/events/[id]/register - Check registration status for an event
 export async function GET(
   request: NextRequest,

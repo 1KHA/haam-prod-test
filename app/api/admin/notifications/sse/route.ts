@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { NotificationService } from '@/lib/services/notification-service';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/notifications/sse - Server-Sent Events endpoint for real-time notifications
 export async function GET(req: NextRequest) {
   try {

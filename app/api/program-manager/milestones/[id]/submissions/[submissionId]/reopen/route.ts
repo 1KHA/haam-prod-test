@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserRole, isAuthenticated } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import {
-  MilestoneError,
+
+export const dynamic = 'force-dynamic';  MilestoneError,
   canManageCohortMilestones,
   reopenSubmissionRecord,
 } from '@/lib/milestones';

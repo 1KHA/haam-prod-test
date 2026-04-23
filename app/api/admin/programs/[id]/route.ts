@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { checkPermission } from '@/lib/permissions';
 import { notifyProgramUpdated, notifyProgramCancelled } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 // GET /api/admin/programs/[id] - Get a specific program by ID
 export async function GET(
   request: NextRequest,

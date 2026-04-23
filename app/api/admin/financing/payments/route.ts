@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { hasPermission } from '@/lib/permissions'
 
+export const dynamic = 'force-dynamic';
 // Define the payment item interface
 export interface PaymentItem {
   id: string

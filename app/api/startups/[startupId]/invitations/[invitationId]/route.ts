@@ -5,6 +5,7 @@ import { InvitationStatus, InvitationType, MemberStatus } from '@prisma/client';
 import { EmailService } from '@/lib/services/email-service';
 import { notifyTeamInvitationAccepted, notifyTeamInvitationRejected } from '@/lib/services/notification-events';
 
+export const dynamic = 'force-dynamic';
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { startupId: string, invitationId: string } }

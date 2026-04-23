@@ -4,6 +4,7 @@ import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { createCSVResponse, getDelimiterFromRequest } from '@/lib/csv-utils'
 
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Authentication

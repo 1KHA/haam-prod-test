@@ -196,11 +196,11 @@ export default function TeamPage() {
             requirement={{ category: 'users', action: 'add' }}
           >
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowInviteDialog(true)}>
+              <Button variant="outline" onClick={() => setShowInviteDialog(true)} disabled={!companyId}>
                 <UserPlus className="ml-2 h-4 w-4" />
                 دعوة عبر البريد
               </Button>
-              <Button onClick={() => { setCreatedCredentials(null); setShowCreateDialog(true); }}>
+              <Button onClick={() => { setCreatedCredentials(null); setShowCreateDialog(true); }} disabled={!companyId}>
                 <UserPlus className="ml-2 h-4 w-4" />
                 إنشاء حساب عضو
               </Button>
@@ -209,8 +209,13 @@ export default function TeamPage() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md flex items-center">
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md flex flex-col gap-2">
             <span>{error}</span>
+            {!companyId && (
+              <a href="/entrepreneur-dashboard/startup/new" className="underline font-semibold text-sm">
+                إنشاء شركة جديدة ←
+              </a>
+            )}
           </div>
         )}
 

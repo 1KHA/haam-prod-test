@@ -475,23 +475,17 @@ export async function DELETE(
         where: { creatorId: userId }
       });
       
-      // Only check for critical records that truly cannot be deleted (programs and cohorts)
-      const criticalRecords = await tx.user.findUnique({
-        where: { id: userId },
-        include: {
-          programs: true,
-          managedCohorts: true
-        }
+      // Reassign programs created by this user to the admin performing the deletion
+      await tx.program.updateMany({
+        where: { creatorId: userId },
+        data: { creatorId: permissionCheck.userId },
       });
-      
-      if (criticalRecords) {
-        const hasCriticalRecords = criticalRecords.programs.length > 0 ||
-                                  criticalRecords.managedCohorts.length > 0;
-        
-        if (hasCriticalRecords) {
-          throw new Error('Cannot delete user: user has created programs or manages cohorts that must be handled first');
-        }
-      }
+
+      // Reassign cohorts managed by this user to the admin performing the deletion
+      await tx.cohort.updateMany({
+        where: { managerId: userId },
+        data: { managerId: permissionCheck.userId },
+      });
       
       // Finally, delete the user
       await tx.user.delete({

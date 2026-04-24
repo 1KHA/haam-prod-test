@@ -47,7 +47,8 @@ import {
   UserX,
   Shield,
   RefreshCw,
-  Ban
+  Ban,
+  Loader2
 } from "lucide-react"
 import { showAdminToast } from "@/components/admin/admin-toaster"
 import { exportPresets } from "@/lib/export-utils"
@@ -72,6 +73,7 @@ export default function UsersTable() {
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
   const [selectedRole, setSelectedRole] = useState("")
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [bulkStatusLoading, setBulkStatusLoading] = useState<'approve' | 'suspend' | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalUsers, setTotalUsers] = useState(0)
@@ -274,6 +276,40 @@ export default function UsersTable() {
     }
   }
 
+  // Bulk approve or suspend selected users
+  const bulkChangeStatus = async (action: 'approve' | 'suspend') => {
+    if (selectedUsers.length === 0) return
+    setBulkStatusLoading(action)
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    let successCount = 0, failCount = 0
+
+    for (const userId of selectedUsers) {
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ action })
+        })
+        if (res.ok) successCount++; else failCount++
+      } catch { failCount++ }
+    }
+
+    if (successCount > 0) {
+      const msg = action === 'approve' ? `تم قبول ${successCount} مستخدم` : `تم رفض ${successCount} مستخدم`
+      showAdminToast({ title: "تم بنجاح", description: msg })
+    }
+    if (failCount > 0) {
+      showAdminToast({ title: "تحذير", description: `فشل في تغيير حالة ${failCount} مستخدم`, variant: "destructive" })
+    }
+
+    setBulkStatusLoading(null)
+    setSelectedUsers([])
+    fetchUsers()
+  }
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -390,6 +426,22 @@ export default function UsersTable() {
           <span className="text-muted-foreground ml-auto">
             تم تحديد {selectedUsers.length} مستخدم
           </span>
+          <Button
+            variant="outline" size="sm" className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
+            onClick={() => bulkChangeStatus('approve')}
+            disabled={bulkStatusLoading !== null}
+          >
+            {bulkStatusLoading === 'approve' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
+            قبول
+          </Button>
+          <Button
+            variant="outline" size="sm" className="gap-1 text-red-700 border-red-300 hover:bg-red-50"
+            onClick={() => bulkChangeStatus('suspend')}
+            disabled={bulkStatusLoading !== null}
+          >
+            {bulkStatusLoading === 'suspend' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserX className="h-4 w-4" />}
+            رفض
+          </Button>
           <Button variant="outline" size="sm" className="gap-1" onClick={() => setIsRoleDialogOpen(true)}>
             <Shield className="h-4 w-4" />
             تغيير الدور

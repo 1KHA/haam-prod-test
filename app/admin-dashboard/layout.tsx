@@ -7,7 +7,6 @@ import { UserRole } from "@/lib/auth"
 import Sidebar from "@/components/admin/Sidebar"
 import Header from "@/components/admin/Header"
 import TopBar from "@/components/admin/TopBar"
-import { AdminToaster } from "@/components/admin/admin-toaster"
 import { cn } from "@/lib/utils"
 
 export default function AdminDashboardLayout({
@@ -42,7 +41,6 @@ export default function AdminDashboardLayout({
             onCollapseChange={setSidebarCollapsed}
           />
         </div>
-        <AdminToaster />
       </div>
     </RouteGuard>
   )

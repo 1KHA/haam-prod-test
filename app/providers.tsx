@@ -4,9 +4,7 @@ import React from "react";
 import { AuthProvider } from "@/contexts/auth-context";
 import { PermissionsProvider } from "@/contexts/permissions-context";
 import { NotificationProvider } from "@/contexts/notification-context";
-import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Toaster as HotToaster } from "react-hot-toast";
-import { AdminToaster } from "@/components/admin/admin-toaster";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,9 +14,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <PermissionsProvider>
         <NotificationProvider>
           {children}
-          <ShadcnToaster />
-          <HotToaster position="top-right" />
-          <AdminToaster />
+          <HotToaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                maxWidth: "360px",
+                padding: "12px 14px",
+                borderRadius: "12px",
+                fontSize: "14px",
+                lineHeight: "1.4",
+              },
+            }}
+          />
         </NotificationProvider>
       </PermissionsProvider>
     </AuthProvider>

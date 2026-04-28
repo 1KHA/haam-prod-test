@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "sonner"
+import { toast } from "react-hot-toast"
 import { 
   ArrowRight, 
   Save, 
@@ -87,7 +87,7 @@ export default function NewStartup() {
           })));
         } else {
           console.warn('No users found in the system');
-          toast.warning("لم يتم العثور على مستخدمين في النظام");
+          toast("لم يتم العثور على مستخدمين في النظام");
         }
       } catch (err) {
         console.error('Error fetching users:', err);

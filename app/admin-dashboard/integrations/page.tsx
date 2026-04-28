@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { toast, Toaster } from "sonner"
+import { toast } from "react-hot-toast"
 import {
   getIntegrations,
   connectIntegration,
@@ -415,7 +415,6 @@ export default function IntegrationsManagement() {
 
   return (
     <div className="space-y-6 text-right">
-      <Toaster />
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">إدارة التكاملات</h1>
         <div className="flex gap-2">

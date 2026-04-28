@@ -32,13 +32,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update profile data with position field
-    await prisma.profile.update({
-      where: { userId: user.userId },
-      data: {
+    // Upsert profile data — creates the row if it doesn't exist yet
+    await prisma.profile.upsert({
+      where:  { userId: user.userId },
+      update: {
         phone: personal.phone,
         bio: personal.bio,
-        position: personal.position, // Now using the dedicated position field
+        position: personal.position,
+        address: company?.address,
+      },
+      create: {
+        userId: user.userId,
+        phone: personal.phone,
+        bio: personal.bio,
+        position: personal.position,
         address: company?.address,
       },
     });

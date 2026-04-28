@@ -14,6 +14,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'scenarioType is required' }, { status: 400 });
   }
 
+  if (!permissionCheck.userId) {
+    return NextResponse.json({ error: 'User ID not found in session' }, { status: 401 });
+  }
+
   // Get admin's own email as the test recipient
   const admin = await prisma.user.findUnique({
     where: { id: permissionCheck.userId },

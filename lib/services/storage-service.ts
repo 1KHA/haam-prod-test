@@ -1,127 +1,120 @@
 /**
  * StorageService
  *
- * Uploads files to Supabase Storage when credentials are present,
- * falls back to local filesystem for development without Supabase.
+ * Uploads files to Supabase Storage (haambucket) when credentials are present,
+ * falls back to local filesystem for development.
  *
- * Buckets used (create these in Supabase Dashboard → Storage as PUBLIC):
- *   - avatars
- *   - pitchdecks
- *   - reports
- *   - submissions
+ * Bucket structure in Supabase:
+ *   haambucket/
+ *     avatars/
+ *     pitchdecks/
+ *     reports/
+ *     submissions/
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
-export type StorageBucket = 'avatars' | 'pitchdecks' | 'reports' | 'submissions';
+export type StorageFolder = 'avatars' | 'pitchdecks' | 'reports' | 'submissions';
+
+const SUPABASE_BUCKET = 'haambucket';
+
+// Local filesystem folder mapping
+const LOCAL_FOLDER_MAP: Record<StorageFolder, string> = {
+  avatars: 'avatars',
+  pitchdecks: 'pitchdecks',
+  reports: 'reports',
+  submissions: 'milestone-submissions',
+};
 
 export interface UploadResult {
   url: string;
-  path: string;
-  bucket: StorageBucket;
+  path: string;   // full path inside bucket, e.g. "avatars/filename.jpg"
+  folder: StorageFolder;
   provider: 'supabase' | 'local';
 }
 
-// Singleton Supabase client — only created when env vars are present
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { persistSession: false },
-  });
+  return createClient(url, key, { auth: { persistSession: false } });
 }
 
 export const StorageService = {
   /**
-   * Upload a file buffer to the configured storage provider.
-   * Returns a publicly accessible URL and metadata.
+   * Upload a file buffer to Supabase Storage (or local filesystem in dev).
    *
-   * @param bucket  - Supabase bucket name (must exist and be public)
-   * @param path    - Object path within bucket, e.g. "userId/filename.jpg"
-   * @param buffer  - File content as Buffer
-   * @param contentType - MIME type, e.g. "image/jpeg"
+   * @param folder      - Target folder inside haambucket
+   * @param filename    - Filename only (no path prefix), e.g. "avatar-123.jpg"
+   * @param buffer      - File content as Buffer
+   * @param contentType - MIME type
    */
   async upload(
-    bucket: StorageBucket,
-    path: string,
+    folder: StorageFolder,
+    filename: string,
     buffer: Buffer,
     contentType: string
   ): Promise<UploadResult> {
     const supabase = getSupabaseClient();
-
     if (supabase) {
-      return StorageService._uploadToSupabase(supabase, bucket, path, buffer, contentType);
+      return StorageService._uploadToSupabase(supabase, folder, filename, buffer, contentType);
     }
-
-    return StorageService._uploadToLocal(bucket, path, buffer);
+    return StorageService._uploadToLocal(folder, filename, buffer);
   },
 
   async _uploadToSupabase(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase: any,
-    bucket: StorageBucket,
-    path: string,
+    folder: StorageFolder,
+    filename: string,
     buffer: Buffer,
     contentType: string
   ): Promise<UploadResult> {
+    const path = `${folder}/${filename}`;
+
     const { error } = await supabase.storage
-      .from(bucket)
-      .upload(path, buffer, {
-        contentType,
-        upsert: true,
-      });
+      .from(SUPABASE_BUCKET)
+      .upload(path, buffer, { contentType, upsert: true });
 
     if (error) {
-      throw new Error(`Supabase storage upload failed: ${error.message}`);
+      throw new Error(`Supabase upload failed [${folder}/${filename}]: ${error.message}`);
     }
 
-    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
-    const publicUrl = urlData.publicUrl;
+    const { data: urlData } = supabase.storage
+      .from(SUPABASE_BUCKET)
+      .getPublicUrl(path);
 
-    return { url: publicUrl, path, bucket, provider: 'supabase' };
+    return { url: urlData.publicUrl, path, folder, provider: 'supabase' };
   },
 
   async _uploadToLocal(
-    bucket: StorageBucket,
-    path: string,
+    folder: StorageFolder,
+    filename: string,
     buffer: Buffer
   ): Promise<UploadResult> {
-    // Map bucket → local subfolder
-    const folderMap: Record<StorageBucket, string> = {
-      avatars: 'avatars',
-      pitchdecks: 'pitchdecks',
-      reports: 'reports',
-      submissions: 'milestone-submissions',
-    };
-
-    const folder = folderMap[bucket];
-    const fileName = path.split('/').pop() || path;
-    const uploadDir = join(process.cwd(), 'public', 'uploads', folder);
+    const localFolder = LOCAL_FOLDER_MAP[folder];
+    const uploadDir = join(process.cwd(), 'public', 'uploads', localFolder);
     await mkdir(uploadDir, { recursive: true });
-    await writeFile(join(uploadDir, fileName), buffer);
-
-    const url = `/uploads/${folder}/${fileName}`;
-    return { url, path: fileName, bucket, provider: 'local' };
+    await writeFile(join(uploadDir, filename), buffer);
+    const url = `/uploads/${localFolder}/${filename}`;
+    return { url, path: filename, folder, provider: 'local' };
   },
 
   /**
    * Delete a file from storage.
-   * path should be the object path within the bucket (not the full URL).
+   * @param path - Full path inside bucket, e.g. "avatars/file.jpg"
    */
-  async delete(bucket: StorageBucket, path: string): Promise<void> {
+  async delete(path: string): Promise<void> {
     const supabase = getSupabaseClient();
-    if (!supabase) return; // local files not cleaned up automatically
-
-    const { error } = await supabase.storage.from(bucket).remove([path]);
+    if (!supabase) return;
+    const { error } = await supabase.storage.from(SUPABASE_BUCKET).remove([path]);
     if (error) {
-      console.error(`[StorageService] delete failed for ${bucket}/${path}:`, error.message);
+      console.error(`[StorageService] delete failed (${path}):`, error.message);
     }
   },
 
-  /** Returns true when Supabase storage is configured and active. */
   isSupabaseEnabled(): boolean {
     return !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
   },

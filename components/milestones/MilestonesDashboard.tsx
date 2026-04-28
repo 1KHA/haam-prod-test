@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { authFetch } from "@/lib/auth-fetch"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -179,7 +180,6 @@ export function MilestonesDashboard({
   const initialCohortId = searchParams.get("cohortId") || "all"
   const initialMilestoneId = searchParams.get("milestoneId")
 
-  const [token, setToken] = useState<string | null>(null)
   const [milestones, setMilestones] = useState<MilestoneItem[]>([])
   const [stats, setStats] = useState<MilestoneStats>(emptyStats)
   const [cohorts, setCohorts] = useState<CohortOption[]>([])
@@ -196,27 +196,12 @@ export function MilestonesDashboard({
   const [milestoneForm, setMilestoneForm] = useState<MilestoneFormState>(emptyMilestoneForm)
   const [submissionEditor, setSubmissionEditor] = useState<SubmissionEditorState | null>(null)
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token")
-    if (storedToken) {
-      setToken(storedToken)
-    }
-  }, [])
-
   const fetchMilestones = useCallback(async () => {
-    if (!token) {
-      return
-    }
-
     setLoading(true)
     setError(null)
 
     try {
-      const response = await fetch(apiBase, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await authFetch(apiBase)
 
       const data: MilestonesResponse & { error?: string } = await response.json()
       if (!response.ok) {
@@ -239,10 +224,10 @@ export function MilestonesDashboard({
     } finally {
       setLoading(false)
     }
-  }, [apiBase, selectedMilestoneId, token])
+  }, [apiBase, selectedMilestoneId])
 
   const fetchMilestoneDetail = useCallback(async () => {
-    if (!token || !selectedMilestoneId) {
+    if (!selectedMilestoneId) {
       setSelectedMilestone(null)
       return
     }
@@ -251,11 +236,7 @@ export function MilestonesDashboard({
     setError(null)
 
     try {
-      const response = await fetch(`${apiBase}/${selectedMilestoneId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await authFetch(`${apiBase}/${selectedMilestoneId}`)
 
       const data: { milestone?: MilestoneDetail; error?: string } = await response.json()
       if (!response.ok || !data.milestone) {
@@ -269,7 +250,7 @@ export function MilestonesDashboard({
     } finally {
       setDetailLoading(false)
     }
-  }, [apiBase, selectedMilestoneId, token])
+  }, [apiBase, selectedMilestoneId])
 
   useEffect(() => {
     fetchMilestones()
@@ -328,10 +309,6 @@ export function MilestonesDashboard({
   }
 
   const handleSaveMilestone = async () => {
-    if (!token) {
-      return
-    }
-
     setSubmitting(true)
     setError(null)
 
@@ -347,14 +324,10 @@ export function MilestonesDashboard({
         status: milestoneForm.status,
       }
 
-      const response = await fetch(
+      const response = await authFetch(
         milestoneForm.id ? `${apiBase}/${milestoneForm.id}` : apiBase,
         {
           method: milestoneForm.id ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(payload),
         }
       )
@@ -378,7 +351,7 @@ export function MilestonesDashboard({
   }
 
   const handleDeleteMilestone = async (milestoneId: string) => {
-    if (!token || !window.confirm("سيتم حذف هذه المرحلة وكل عمليات التسليم المرتبطة بها. هل تريد المتابعة؟")) {
+    if (!window.confirm("سيتم حذف هذه المرحلة وكل عمليات التسليم المرتبطة بها. هل تريد المتابعة؟")) {
       return
     }
 
@@ -386,11 +359,8 @@ export function MilestonesDashboard({
     setError(null)
 
     try {
-      const response = await fetch(`${apiBase}/${milestoneId}`, {
+      const response = await authFetch(`${apiBase}/${milestoneId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       })
 
       const data = await response.json().catch(() => ({}))
@@ -412,7 +382,7 @@ export function MilestonesDashboard({
   }
 
   const handleSaveSubmission = async () => {
-    if (!token || !submissionEditor) {
+    if (!submissionEditor) {
       return
     }
 
@@ -420,14 +390,10 @@ export function MilestonesDashboard({
     setError(null)
 
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${apiBase}/${submissionEditor.milestoneId}/submissions/${submissionEditor.submissionId}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify({ message: submissionEditor.message }),
         }
       )
@@ -448,19 +414,12 @@ export function MilestonesDashboard({
   }
 
   const handleReopenSubmission = async (milestoneId: string, submissionId: string) => {
-    if (!token) {
-      return
-    }
-
     setSubmitting(true)
     setError(null)
 
     try {
-      const response = await fetch(`${apiBase}/${milestoneId}/submissions/${submissionId}/reopen`, {
+      const response = await authFetch(`${apiBase}/${milestoneId}/submissions/${submissionId}/reopen`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       })
 
       const data = await response.json()
@@ -599,10 +558,6 @@ export function MilestonesDashboard({
     if (size < 1024) return `${size} B`
     if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
     return `${(size / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  if (!token) {
-    return <div className="py-8 text-center">يجب تسجيل الدخول أولاً</div>
   }
 
   return (

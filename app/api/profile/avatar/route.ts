@@ -41,9 +41,10 @@ export async function POST(request: NextRequest) {
 
     const result = await StorageService.upload('avatars', fileName, buffer, avatar.type);
 
-    await prisma.profile.update({
-      where: { userId: user.userId },
-      data: { avatar: result.url },
+    await prisma.profile.upsert({
+      where:  { userId: user.userId },
+      update: { avatar: result.url },
+      create: { userId: user.userId, avatar: result.url },
     });
 
     return NextResponse.json({ message: 'Avatar uploaded successfully', avatar: result.url });

@@ -27,6 +27,10 @@ const DEFAULT_SCENARIOS = [
   'document_approved',
   'announcement',
   'weekly_digest',
+  'team_invitation_sent',
+  'team_member_account_created',
+  'team_invitation_accepted',
+  'team_invitation_rejected',
 ];
 
 /**

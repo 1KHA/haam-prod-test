@@ -215,6 +215,34 @@ const scenarios = [
     icon: BarChart3,
     category: 'التقارير',
   },
+  {
+    type: 'team_invitation_sent',
+    label: 'دعوة عضو فريق',
+    description: 'عند إرسال دعوة لشخص للانضمام إلى فريق الشركة الناشئة',
+    icon: Mail,
+    category: 'الفريق',
+  },
+  {
+    type: 'team_member_account_created',
+    label: 'إنشاء حساب عضو فريق',
+    description: 'عند إنشاء حساب مباشر لعضو جديد في الفريق',
+    icon: User,
+    category: 'الفريق',
+  },
+  {
+    type: 'team_invitation_accepted',
+    label: 'قبول دعوة الفريق',
+    description: 'إشعار للمؤسس عند قبول الشخص المدعو للدعوة',
+    icon: CheckCircle,
+    category: 'الفريق',
+  },
+  {
+    type: 'team_invitation_rejected',
+    label: 'رفض دعوة الفريق',
+    description: 'إشعار للمؤسس عند رفض الشخص المدعو للدعوة',
+    icon: XCircle,
+    category: 'الفريق',
+  },
 ];
 
 const digestOptions = [

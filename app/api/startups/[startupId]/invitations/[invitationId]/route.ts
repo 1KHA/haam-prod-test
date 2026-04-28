@@ -114,28 +114,19 @@ export async function PATCH(
       return updated;
     });
 
-    // Send notification email to inviter
-    const inviter = await prisma.user.findUnique({
-      where: { id: invitation.inviterId },
-      select: { email: true, name: true },
-    });
+    // Send scenario-based email to inviter about the response
+    try {
+      const scenarioType = status === InvitationStatus.ACCEPTED
+        ? 'team_invitation_accepted'
+        : 'team_invitation_rejected';
 
-    if (inviter) {
-      try {
-        await EmailService.sendEmail({
-          to: inviter.email,
-          subject: `Company Invitation ${status.toLowerCase()}: ${invitation.startup?.name || 'Your Startup'}`,
-          htmlBody: `
-            <p>Hello ${inviter.name},</p>
-            <p>Your invitation to ${invitation.inviteeEmail} to join ${invitation.startup?.name || 'your startup'} has been ${status.toLowerCase()}.</p>
-            <p>Thank you,</p>
-            <p>The Accelerator Dashboard Team</p>
-          `,
-          scenarioType: 'team_invitation_response',
-        });
-      } catch (emailError) {
-        console.error('[Invitation Response] Failed to send notification email:', emailError);
-      }
+      await EmailService.fireScenario(scenarioType, [invitation.inviterId], {
+        invitee: { email: invitation.inviteeEmail },
+        startup: { name: invitation.startup?.name || '' },
+        status: status.toLowerCase(),
+      });
+    } catch (emailError) {
+      console.error('[Invitation Response] fireScenario email failed:', emailError);
     }
 
     // Get user details for notification

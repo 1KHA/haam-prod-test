@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated } from '@/lib/auth';
 import { InvitationType, InvitationStatus } from '@prisma/client';
-import { sendEmail, generateInvitationEmailHtml } from '@/lib/email'; // Import email functions
+import { EmailService } from '@/lib/services/email-service';
+import { notifyTeamInvitationSent } from '@/lib/services/notification-events';
+import { generateInvitationEmailHtml } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 export async function POST(
@@ -17,7 +19,6 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch the full user object to get the name
     const inviterUser = await prisma.user.findUnique({
       where: { id: user.userId },
       select: { name: true, email: true },
@@ -35,7 +36,6 @@ export async function POST(
       return NextResponse.json({ error: 'Missing invitee email or role' }, { status: 400 });
     }
 
-    // Verify the startup exists and the current user is its creator
     const startup = await prisma.startup.findUnique({
       where: { id: startupId },
     });
@@ -51,12 +51,10 @@ export async function POST(
       );
     }
 
-    // Prevent inviting self to company
     if (inviteeEmail === user.email) {
       return NextResponse.json({ error: 'Cannot invite yourself to the company' }, { status: 400 });
     }
 
-    // Check if an invitation already exists for this email to this startup
     const existingInvitation = await prisma.invitation.findFirst({
       where: {
         startupId: startupId,
@@ -73,7 +71,12 @@ export async function POST(
       );
     }
 
-    // Create the invitation
+    // Check if invitee is an existing registered user
+    const inviteeUser = await prisma.user.findUnique({
+      where: { email: inviteeEmail },
+      select: { id: true },
+    });
+
     const invitation = await prisma.invitation.create({
       data: {
         type: InvitationType.COMPANY,
@@ -84,18 +87,55 @@ export async function POST(
       },
     });
 
-    // TODO: Send invitation email to inviteeEmail
-
-    // Construct accept/reject links (these would typically point to frontend routes that call the PATCH API)
     const acceptLink = `${request.nextUrl.origin}/entrepreneur-dashboard/startups/invitations/${invitation.id}?status=accepted`;
     const rejectLink = `${request.nextUrl.origin}/entrepreneur-dashboard/startups/invitations/${invitation.id}?status=rejected`;
 
-    // Send invitation email
-    await sendEmail({
-      to: inviteeEmail,
-      subject: `Invitation to join ${startup.name} from ${inviterUser.name}`,
-      html: generateInvitationEmailHtml(inviterUser.name, inviteeEmail, InvitationType.COMPANY.toLowerCase() as 'company', acceptLink, rejectLink, startup.name),
-    });
+    // Send invitation email via real SMTP (works for registered and non-registered invitees)
+    try {
+      await EmailService.sendEmail({
+        to: inviteeEmail,
+        subject: `دعوة للانضمام إلى ${startup.name} من ${inviterUser.name}`,
+        subjectEn: `Invitation to join ${startup.name} from ${inviterUser.name}`,
+        htmlBody: generateInvitationEmailHtml(
+          inviterUser.name,
+          inviteeEmail,
+          'company',
+          acceptLink,
+          rejectLink,
+          startup.name
+        ),
+        scenarioType: 'team_invitation_sent',
+      });
+    } catch (emailError) {
+      console.error('[Invitation POST] Email send failed:', emailError);
+    }
+
+    // Fire scenario-based email for registered invitees (uses admin-configured template if set up)
+    if (inviteeUser) {
+      try {
+        await EmailService.fireScenario('team_invitation_sent', [inviteeUser.id], {
+          inviter: { name: inviterUser.name, email: inviterUser.email },
+          startup: { name: startup.name, id: startupId },
+          invitation: { acceptLink, rejectLink, role },
+        });
+      } catch (scenarioError) {
+        console.error('[Invitation POST] fireScenario failed:', scenarioError);
+      }
+    }
+
+    // In-app notification (only fires if invitee is a registered user)
+    try {
+      await notifyTeamInvitationSent({
+        invitationId: invitation.id,
+        startupName: startup.name,
+        invitedByName: inviterUser.name,
+        inviteeEmail,
+        inviteeId: inviteeUser?.id,
+        role,
+      });
+    } catch (notifyError) {
+      console.error('[Invitation POST] notifyTeamInvitationSent failed:', notifyError);
+    }
 
     return NextResponse.json(
       { message: 'Company invitation sent successfully', invitation },
@@ -124,7 +164,6 @@ export async function GET(
 
     const { startupId } = params;
 
-    // Verify the startup exists and the current user is its creator or a member
     const startup = await prisma.startup.findUnique({
       where: { id: startupId },
       include: {
@@ -148,7 +187,6 @@ export async function GET(
       );
     }
 
-    // Get invitations for this startup
     const invitations = await prisma.invitation.findMany({
       where: {
         startupId: startupId,

@@ -1,5 +1,4 @@
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { StorageService } from '@/lib/services/storage-service';
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { UserRole, isAuthenticated } from '@/lib/auth';
@@ -105,9 +104,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'A message or at least one file is required' }, { status: 400 });
     }
 
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'milestone-submissions');
-    await mkdir(uploadDir, { recursive: true });
-
     const attachments = [];
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
@@ -115,14 +111,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
 
       const uniqueFileName = `${randomUUID()}-${file.name}`;
-      const filePath = join(uploadDir, uniqueFileName);
-      const fileBuffer = Buffer.from(await file.arrayBuffer());
-
-      await writeFile(filePath, fileBuffer);
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const result = await StorageService.upload('submissions', uniqueFileName, buffer, file.type || 'application/octet-stream');
 
       attachments.push({
         fileName: file.name,
-        fileUrl: `/uploads/milestone-submissions/${uniqueFileName}`,
+        fileUrl: result.url,
         fileType: file.type,
         fileSize: file.size,
       });

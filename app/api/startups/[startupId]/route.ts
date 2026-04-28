@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isAuthenticated, UserRole } from '@/lib/auth';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
-import { mkdir } from 'fs/promises';
+import { StorageService } from '@/lib/services/storage-service';
 
 export const dynamic = 'force-dynamic';
 // Define the allowed file types
@@ -174,21 +172,11 @@ export async function PUT(
         );
       }
       
-      // Create directory for uploads if it doesn't exist
-      const uploadsDir = join(process.cwd(), 'public', 'uploads', 'pitchdecks');
-      await mkdir(uploadsDir, { recursive: true });
-      
-      // Generate unique filename
       const fileExtension = pitchDeck.name.split('.').pop();
       const fileName = `${Date.now()}-${user.userId}.${fileExtension}`;
-      const filePath = join(uploadsDir, fileName);
-      
-      // Save file
-      const fileBuffer = await pitchDeck.arrayBuffer();
-      await writeFile(filePath, Buffer.from(fileBuffer));
-      
-      // Set path for database
-      pitchDeckPath = `/uploads/pitchdecks/${fileName}`;
+      const buffer = Buffer.from(await pitchDeck.arrayBuffer());
+      const result = await StorageService.upload('pitchdecks', fileName, buffer, pitchDeck.type);
+      pitchDeckPath = result.url;
     }
     
     // Update company in database

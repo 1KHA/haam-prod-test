@@ -62,3 +62,6 @@ smtp-gmail.md
 
 .env.server
 .env.online
+
+.agents/
+.claude/

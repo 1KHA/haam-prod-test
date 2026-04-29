@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { authFetch } from "@/lib/auth-fetch"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -57,7 +58,6 @@ export default function ApplyPage() {
   const [companies, setCompanies] = useState<Startup[]>([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
   const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null)
   const [selectedStartup, setSelectedStartup] = useState<string>("")
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
@@ -70,22 +70,13 @@ export default function ApplyPage() {
   })
   const [dialogOpen, setDialogOpen] = useState(false)
   
-  // Get token from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
-  
   // Fetch active cohorts
   useEffect(() => {
     const fetchCohorts = async () => {
       setLoading(true);
 
       try {
-        const response = await fetch('/api/cohorts/active', {
-        });
+        const response = await authFetch('/api/cohorts/active');
         
         if (!response.ok) {
           throw new Error('Failed to fetch active cohorts');
@@ -106,14 +97,13 @@ export default function ApplyPage() {
     };
     
     fetchCohorts();
-  }, [token, toast]);
+  }, [toast]);
 
   // Fetch user's companies
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await fetch('/api/startups', {
-        });
+        const response = await authFetch('/api/startups');
         
         if (!response.ok) {
           throw new Error('Failed to fetch companies');
@@ -139,7 +129,7 @@ export default function ApplyPage() {
     };
     
     fetchCompanies();
-  }, [token, toast]);
+  }, [toast]);
   
   // Handle adding a team member
   const handleAddTeamMember = () => {
@@ -184,11 +174,8 @@ export default function ApplyPage() {
     setApplying(true);
     
     try {
-      const response = await fetch('/api/cohorts/apply', {
+      const response = await authFetch('/api/cohorts/apply', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           cohortId: selectedCohort.id,
           startupId: selectedStartup,
